@@ -10,6 +10,8 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from article_models import SlimArticle
+
 RAW_DIR = Path("archive_raw")
 SLIM_DIR = Path("archive_slim")
 
@@ -71,12 +73,13 @@ def transform_month(year: int, month: int, overwrite: bool = False) -> bool:
         data = json.load(f)
 
     docs = data.get("response", {}).get("docs", [])
-    slim = [extract_slim_article(doc) for doc in docs]
+    slim_dicts = [extract_slim_article(doc) for doc in docs]
 
     slim_path.parent.mkdir(parents=True, exist_ok=True)
     with open(slim_path, "w") as f:
-        for rec in slim:
-            f.write(json.dumps(rec) + "\n")
+        for rec in slim_dicts:
+            article = SlimArticle.model_validate(rec)
+            f.write(article.model_dump_json(mode="json") + "\n")
 
     print(f"  Transformed {year}/{month:02d}.")
     return True
