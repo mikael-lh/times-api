@@ -36,7 +36,9 @@ class SlimArticle(BaseModel):
     keywords, byline_person, multimedia_count_by_type.
     """
 
-    _id: str | None = None
+    model_config = ConfigDict(populate_by_name=True)
+
+    article_id: str | None = Field(None, alias="_id")
     uri: str | None = None
     pub_date: str | None = None
     section_name: str | None = None
