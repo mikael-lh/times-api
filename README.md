@@ -55,7 +55,7 @@ Reasons:
 - **Config**: `START_YEAR`, `END_YEAR` (e.g. 1920–2020 for 100 years), `SLEEP_SECONDS` (12+ between requests).
 - **Idempotent**: Skips months that already have a file in `archive_raw/` (safe to resume).
 - **Error handling**: Catches HTTP errors (e.g. 4xx/5xx); prints and continues to next month instead of stopping the whole run.
-- **User feedback**: Separate “Fetched” and “Ingested” messages; can distinguish fetch failure vs. success with 0 articles (empty `docs`).
+- **User feedback**: Separate "Fetched" and "Ingested" messages; can distinguish fetch failure vs. success with 0 articles (empty `docs`).
 - **Output**: One JSON file per month: full API response (e.g. `response.docs`, `response.meta`).
 
 ---
@@ -65,7 +65,7 @@ Reasons:
 - **Input**: All `archive_raw/*/*.json` (discovered via `RAW_DIR.glob("*/*.json")`), sorted.
 - **Output**: One NDJSON file per month in `archive_slim/YYYY/MM.ndjson` (one JSON object per line; good for BigQuery).
 - **Idempotent**: Skips months that already have a slim file unless `overwrite=True`.
-- **Extraction**: Each raw article doc is reduced to a “slim” dict (see fields below).
+- **Extraction**: Each raw article doc is reduced to a "slim" dict (see fields below).
 
 ---
 
@@ -83,7 +83,7 @@ Chosen for analytics, BigQuery, and dbt:
 | `byline_person` | Full list of person dicts (author analysis) |
 | `multimedia_count_by_type` | Dict of counts by type (e.g. `{"image": 5}`) |
 
-Defensive handling: list fields use `or []` so they’re always lists (safe to iterate). Scalars can be `None` when missing.
+Defensive handling: list fields use `or []` so they're always lists (safe to iterate). Scalars can be `None` when missing.
 
 ---
 
