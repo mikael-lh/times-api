@@ -66,6 +66,7 @@ Reasons:
 - **Output**: One NDJSON file per month in `archive_slim/YYYY/MM.ndjson` (one JSON object per line; good for BigQuery).
 - **Idempotent**: Skips months that already have a slim file unless `overwrite=True`.
 - **Extraction**: Each raw article doc is reduced to a "slim" dict (see fields below).
+- **Validation**: Slim dicts are validated with **Pydantic** (`SlimArticle.model_validate`); invalid records are skipped and logged instead of stopping the run.
 
 ---
 
@@ -87,18 +88,20 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 ---
 
+## Models (`article_models.py`)
+
+- **Pydantic** models define the slim schema and nested structures: **`SlimArticle`**, **`Keyword`**, **`BylinePerson`**.
+- Used for validation when transforming (each slim dict is validated before writing) and for parsing NDJSON (e.g. `SlimArticle.model_validate_json(line)`).
+- `_id` is exposed as `article_id` in Python (alias `"_id"` in JSON) to avoid Pydantic treating it as a private field.
+
+---
+
 ## Conventions and Tech
 
 - **Secrets**: `.env` with `NYTIMES_API_KEY` (and optional secret); loaded via `python-dotenv`.
 - **Paths**: `pathlib.Path` for `archive_raw/`, `archive_slim/`.
-- **Dependencies**: `requests`, `python-dotenv` (see `requirements.txt`).
+- **Dependencies**: `requests`, `python-dotenv`, `pydantic` (see `requirements.txt`).
 - **.gitignore**: `.env`, `archive_raw/`, `archive_slim/`.
-
----
-
-## Next Step (Decision)
-
-- Use **Pydantic** for modeling the slim article (and related structures) to get validation, parsing from JSON, and a clear schema. Dataclasses were considered; Pydantic chosen for validation and JSON integration.
 
 ---
 
@@ -109,10 +112,11 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 ├── .env                    # API key (not committed)
 ├── .gitignore
 ├── requirements.txt
+├── article_models.py       # Pydantic models: SlimArticle, Keyword, BylinePerson
 ├── request.py              # Exploratory script
 ├── ingest_archive.py       # Pipeline: fetch → raw
-├── transform_archive.py    # Pipeline: raw → slim
-├── fetch_archive_slim.py    # Legacy combined script
+├── transform_archive.py    # Pipeline: raw → slim (validates with SlimArticle)
+├── fetch_archive_slim.py   # Legacy combined script
 ├── archive_raw/            # Raw API responses (YYYY/MM.json)
 └── archive_slim/            # Slim NDJSON (YYYY/MM.ndjson)
 ```
