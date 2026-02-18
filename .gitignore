@@ -1,0 +1,4 @@
+.env
+archive_raw/
+archive_slim/
+test_*.py
