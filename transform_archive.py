@@ -83,7 +83,7 @@ def transform_month(year: int, month: int, overwrite: bool = False) -> bool:
         for rec in slim_dicts:
             try:
                 article = SlimArticle.model_validate(rec)
-                f.write(article.model_dump_json(mode="json") + "\n")
+                f.write(article.model_dump_json() + "\n")
             except ValidationError as e:
                 skipped += 1
                 print(f"  Validation error (skipping) _id={rec.get('_id')!r}: {e}")
