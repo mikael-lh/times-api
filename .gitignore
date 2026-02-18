@@ -1,5 +1,6 @@
 .env
 archive_raw/
 archive_slim/
-test_request.py
+test_*.py
 archive-api-spec.yaml
+__pycache__/

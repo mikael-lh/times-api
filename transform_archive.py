@@ -10,6 +10,10 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from pydantic import ValidationError
+
+from article_models import SlimArticle
+
 RAW_DIR = Path("archive_raw")
 SLIM_DIR = Path("archive_slim")
 
@@ -71,14 +75,23 @@ def transform_month(year: int, month: int, overwrite: bool = False) -> bool:
         data = json.load(f)
 
     docs = data.get("response", {}).get("docs", [])
-    slim = [extract_slim_article(doc) for doc in docs]
+    slim_dicts = [extract_slim_article(doc) for doc in docs]
 
     slim_path.parent.mkdir(parents=True, exist_ok=True)
+    skipped = 0
     with open(slim_path, "w") as f:
-        for rec in slim:
-            f.write(json.dumps(rec) + "\n")
+        for rec in slim_dicts:
+            try:
+                article = SlimArticle.model_validate(rec)
+                f.write(article.model_dump_json() + "\n")
+            except ValidationError as e:
+                skipped += 1
+                print(f"  Validation error (skipping) _id={rec.get('_id')!r}: {e}")
 
-    print(f"  Transformed {year}/{month:02d}.")
+    if skipped:
+        print(f"  Transformed {year}/{month:02d} ({skipped} record(s) skipped).")
+    else:
+        print(f"  Transformed {year}/{month:02d}.")
     return True
 
 
