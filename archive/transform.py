@@ -12,7 +12,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from article_models import SlimArticle
+from archive.models import SlimArticle
 
 RAW_DIR = Path("archive_raw")
 SLIM_DIR = Path("archive_slim")
@@ -96,10 +96,10 @@ def transform_month(year: int, month: int, overwrite: bool = False) -> bool:
 
 
 def main():
-    # Process all raw files found (or specify a list like ingest_archive.py)
+    # Process all raw files found (or specify a list like ingest)
     raw_files = sorted(RAW_DIR.glob("*/*.json"))
     if not raw_files:
-        print(f"No raw files found in {RAW_DIR}. Run ingest_archive.py first.")
+        print(f"No raw files found in {RAW_DIR}. Run archive ingest first.")
         return
 
     for raw_path in raw_files:

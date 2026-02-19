@@ -11,45 +11,48 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from most_popular_models import MostPopularArticle, MostPopularResponse
+from most_popular.models import SlimMostPopularArticle
 
 RAW_DIR = Path("most_popular_raw")
 SLIM_DIR = Path("most_popular_slim")
 
 
-class SlimMostPopularArticle:
+def media_counts_by_type(media: list) -> dict:
+    """Count media items by their 'type' field (e.g. image, video)."""
+    if not media:
+        return {}
+    types = (m.get("type") for m in media if m.get("type"))
+    return dict(Counter(types))
+
+
+def extract_slim_most_popular(doc: dict) -> dict:
     """
-    Slim representation of a Most Popular article for analytics.
-
-    Extracts key fields and computes derived metrics.
+    Extract analysis-ready fields from a raw Most Popular article doc.
+    Includes media count by type.
     """
+    media = doc.get("media") or []
 
-    @staticmethod
-    def from_article(article: MostPopularArticle) -> dict:
-        """Convert a MostPopularArticle to a slim dict."""
-        media_counts = Counter(m.type for m in article.media if m.type)
-
-        return {
-            "id": article.id,
-            "uri": article.uri,
-            "url": article.url,
-            "asset_id": article.asset_id,
-            "source": article.source,
-            "published_date": article.published_date,
-            "updated": article.updated,
-            "section": article.section,
-            "subsection": article.subsection,
-            "byline": article.byline,
-            "type": article.type,
-            "title": article.title,
-            "abstract": article.abstract,
-            "des_facet": article.des_facet,
-            "org_facet": article.org_facet,
-            "per_facet": article.per_facet,
-            "geo_facet": article.geo_facet,
-            "media_count_by_type": dict(media_counts),
-            "adx_keywords": article.adx_keywords,
-        }
+    return {
+        "id": doc.get("id"),
+        "uri": doc.get("uri"),
+        "url": doc.get("url"),
+        "asset_id": doc.get("asset_id"),
+        "source": doc.get("source"),
+        "published_date": doc.get("published_date"),
+        "updated": doc.get("updated"),
+        "section": doc.get("section"),
+        "subsection": doc.get("subsection"),
+        "byline": doc.get("byline"),
+        "type": doc.get("type"),
+        "title": doc.get("title"),
+        "abstract": doc.get("abstract"),
+        "des_facet": doc.get("des_facet") or [],
+        "org_facet": doc.get("org_facet") or [],
+        "per_facet": doc.get("per_facet") or [],
+        "geo_facet": doc.get("geo_facet") or [],
+        "media_count_by_type": media_counts_by_type(media),
+        "adx_keywords": doc.get("adx_keywords"),
+    }
 
 
 def transform_file(raw_path: Path, overwrite: bool = False) -> bool:
@@ -80,26 +83,21 @@ def transform_file(raw_path: Path, overwrite: bool = False) -> bool:
     with open(raw_path) as f:
         raw_data = json.load(f)
 
-    try:
-        response = MostPopularResponse.model_validate(raw_data)
-    except ValidationError as e:
-        print(f"Error: Invalid response structure: {e}")
-        return False
+    results = raw_data.get("results", [])
+    slim_dicts = [extract_slim_most_popular(doc) for doc in results]
 
     slim_path.parent.mkdir(parents=True, exist_ok=True)
     skipped = 0
-    written = 0
-
     with open(slim_path, "w") as f:
-        for article in response.results:
+        for rec in slim_dicts:
             try:
-                slim_dict = SlimMostPopularArticle.from_article(article)
-                f.write(json.dumps(slim_dict) + "\n")
-                written += 1
-            except Exception as e:
+                article = SlimMostPopularArticle.model_validate(rec)
+                f.write(article.model_dump_json() + "\n")
+            except ValidationError as e:
                 skipped += 1
-                print(f"  Error processing article id={article.id}: {e}")
+                print(f"  Validation error (skipping) id={rec.get('id')!r}: {e}")
 
+    written = len(slim_dicts) - skipped
     if skipped:
         print(f"Transformed {written} articles ({skipped} skipped) -> {slim_path}")
     else:
@@ -113,7 +111,7 @@ def transform_all(overwrite: bool = False) -> None:
     raw_files = sorted(RAW_DIR.glob("*/*.json"))
 
     if not raw_files:
-        print(f"No raw files found in {RAW_DIR}. Run ingest_most_popular.py first.")
+        print(f"No raw files found in {RAW_DIR}. Run most_popular ingest first.")
         return
 
     print(f"Found {len(raw_files)} raw file(s) to transform.")

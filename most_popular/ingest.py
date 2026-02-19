@@ -29,10 +29,10 @@ PERIOD = 30
 def fetch_most_viewed(period: int = PERIOD) -> dict | None:
     """
     Fetch most viewed articles for the given period (days).
-    
+
     Args:
         period: Number of days (1, 7, or 30)
-    
+
     Returns:
         Raw API response as dict, or None on error.
     """
@@ -75,7 +75,7 @@ def fetch_most_viewed(period: int = PERIOD) -> dict | None:
 
 def ingest_most_viewed(
     period: int = PERIOD,
-    skip_existing: bool = False,
+    skip_existing: bool = True,
     date_str: str | None = None,
 ) -> bool:
     """
@@ -83,7 +83,7 @@ def ingest_most_viewed(
 
     Args:
         period: Number of days (1, 7, or 30)
-        skip_existing: If True, skip if output file already exists
+        skip_existing: If True, skip if output file already exists (default: True, idempotent)
         date_str: Override date string for output path (default: today)
 
     Returns:
