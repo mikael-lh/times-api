@@ -1,6 +1,8 @@
 .env
 archive_raw/
 archive_slim/
+most_popular_raw/
+most_popular_slim/
 test_*.py
 archive-api-spec.yaml
 __pycache__/
