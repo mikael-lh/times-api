@@ -1,0 +1,51 @@
+# Daily ingestion: Most Popular API → transform → upload to GCS
+# Runs at 06:00 UTC daily; can also be triggered manually.
+name: Daily ingest (Most Popular → GCS)
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+env:
+  GCS_PREFIX: nyt-ingest
+
+jobs:
+  ingest-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env with API key
+        run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
+
+      - name: Ingest most popular (30-day viewed)
+        run: python -m most_popular.ingest
+
+      - name: Transform to slim NDJSON
+        run: python -m most_popular.transform
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Upload to GCS
+        run: |
+          BUCKET="${{ secrets.GCS_BUCKET }}"
+          if [ -z "$BUCKET" ]; then echo "GCS_BUCKET secret is not set"; exit 1; fi
+          gsutil -m cp -r most_popular_raw "gs://${BUCKET}/${GCS_PREFIX}/"
+          gsutil -m cp -r most_popular_slim "gs://${BUCKET}/${GCS_PREFIX}/"

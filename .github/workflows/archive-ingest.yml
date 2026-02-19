@@ -1,0 +1,51 @@
+# Archive ingestion: Archive API → transform → upload to GCS
+# Manual trigger only. For full 100-year run, consider reducing years in archive/ingest.py
+# or running in chunks (job timeout is 6 hours on GitHub-hosted runners).
+name: Archive ingest (Archive API → GCS)
+
+on:
+  workflow_dispatch:
+
+env:
+  GCS_PREFIX: nyt-ingest
+
+jobs:
+  ingest-and-upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours max for GitHub-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create .env with API key
+        run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
+
+      - name: Ingest archive (raw JSON per month)
+        run: python -m archive.ingest
+
+      - name: Transform to slim NDJSON
+        run: python -m archive.transform
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Upload to GCS
+        run: |
+          BUCKET="${{ secrets.GCS_BUCKET }}"
+          if [ -z "$BUCKET" ]; then echo "GCS_BUCKET secret is not set"; exit 1; fi
+          gsutil -m cp -r archive_raw "gs://${BUCKET}/${GCS_PREFIX}/"
+          gsutil -m cp -r archive_slim "gs://${BUCKET}/${GCS_PREFIX}/"
