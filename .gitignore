@@ -4,3 +4,4 @@ archive_slim/
 test_*.py
 archive-api-spec.yaml
 __pycache__/
+.cursor/rules/git-and-shell.mdc
