@@ -73,6 +73,7 @@ Reasons:
 2. `python -m most_popular.transform`
 
 **Automation (choose one):**
+- **GitHub Actions**: Daily workflow runs at 06:00 UTC, then uploads to GCS. See [GitHub Actions (GCS)](#github-actions-gcs) below.
 - **Cron**: `0 6 * * * /path/to/run_daily_ingestion.sh >> /var/log/nyt_ingestion.log 2>&1`
 - **Python scheduler**: `python -m most_popular.scheduler` (runs in foreground, executes daily at 06:00)
 
@@ -163,3 +164,37 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 ├── most_popular_raw/           # Raw API responses (YYYY-MM-DD/viewed_30.json)
 └── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
 ```
+
+---
+
+## GitHub Actions (GCS)
+
+Ingestion is automated with GitHub Actions so that **ingested files end up in GCS**. No Cloud Run or scheduler to configure; the same repo that runs locally runs in the cloud.
+
+### Workflows
+
+| Workflow | Trigger | Steps | GCS path |
+|----------|---------|--------|----------|
+| **Daily ingest** (`.github/workflows/daily-ingest.yml`) | Schedule 06:00 UTC daily + manual | Most Popular ingest → transform → upload | `gs://BUCKET/nyt-ingest/most_popular_raw/`, `.../most_popular_slim/` |
+| **Archive ingest** (`.github/workflows/archive-ingest.yml`) | Manual only | Archive ingest → transform → upload | `gs://BUCKET/nyt-ingest/archive_raw/`, `.../archive_slim/` |
+
+**Archive note:** A full 100-year archive run (12s+ per month) can approach the 6-hour job limit. Adjust `START_YEAR`/`END_YEAR` in `archive/ingest.py` to run in chunks, or trigger the workflow periodically to resume (ingest skips existing months).
+
+### Required repository secrets
+
+Add these in **Settings → Secrets and variables → Actions**:
+
+| Secret | Description |
+|--------|-------------|
+| `NYTIMES_API_KEY` | Your NYT API key (same as in `.env` locally). |
+| `GCP_SA_KEY` | **Full JSON** of a GCP service account key that can write to your bucket. Create a key for a service account with **Storage Object Creator** (or **Storage Admin**) on the target bucket, then paste the entire JSON as the secret value. |
+| `GCS_BUCKET` | Name of the GCS bucket (e.g. `my-nyt-data`). No `gs://` prefix. |
+
+### One-time GCP setup
+
+1. Create a GCS bucket (e.g. `gsutil mb gs://my-nyt-data`).
+2. Create a service account (or use an existing one) with permission to create/overwrite objects in that bucket (e.g. role **Storage Object Admin** or **Storage Object Creator** on the bucket).
+3. Create a JSON key for that service account: **IAM & Admin → Service accounts → Keys → Add key → JSON**. Copy the entire JSON.
+4. In GitHub: **Settings → Secrets and variables → Actions** → **New repository secret** for `GCP_SA_KEY` (paste the JSON) and `GCS_BUCKET` (bucket name). Add `NYTIMES_API_KEY` as above.
+
+After that, daily runs will ingest most popular data and upload to GCS; use **Actions → Archive ingest** when you want to run (or resume) the archive pipeline.
