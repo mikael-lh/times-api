@@ -1,4 +1,4 @@
-# NYT Archive API – Project Summary
+# NYT Article Ingestion – Project Summary
 
 Context for agents: high-level goal, architecture, and decisions made so far.
 
@@ -7,16 +7,25 @@ Context for agents: high-level goal, architecture, and decisions made so far.
 ## Goal
 
 - Ingest **last 100 years** of NYT article metadata via the **NYT Archive API**.
+- Ingest **most popular articles** (most viewed, last 30 days) via the **NYT Most Popular API** with daily automation.
 - Store data so it can be loaded into **Google Cloud Storage (GCS)**, then **BigQuery**, then modeled with **dbt** for analytics.
 
 ---
 
-## API
+## APIs
 
-- **Archive API**: `GET https://api.nytimes.com/svc/archive/v1/{year}/{month}.json?api-key=...`
+### Archive API
+- **Endpoint**: `GET https://api.nytimes.com/svc/archive/v1/{year}/{month}.json?api-key=...`
 - One request per month; year range per spec: 1851–2019.
 - Responses can be large (~20MB) and are rate-limited (per minute / per day).
-- API key (and optional secret) live in **`.env`**; never committed (`.env` is in `.gitignore`).
+
+### Most Popular API
+- **Endpoint**: `GET https://api.nytimes.com/svc/mostpopular/v2/viewed/{period}.json?api-key=...`
+- Period options: 1, 7, or 30 (days)
+- Returns top 20 most viewed articles for the specified period
+- Designed for daily ingestion to track trending content
+
+**Common**: API key lives in **`.env`**; never committed (`.env` is in `.gitignore`).
 
 ---
 
@@ -36,21 +45,40 @@ Reasons:
 
 ## Scripts and Data Flow
 
+### Archive API (Historical Data)
+
 | Script | Role | Input | Output |
 |--------|------|--------|--------|
-| **`ingest_archive.py`** | Fetch from API, save raw | API | `archive_raw/YYYY/MM.json` |
-| **`transform_archive.py`** | Extract slim fields from raw | `archive_raw/` | `archive_slim/YYYY/MM.ndjson` |
+| **`archive/ingest.py`** | Fetch from API, save raw | API | `archive_raw/YYYY/MM.json` |
+| **`archive/transform.py`** | Extract slim fields from raw | `archive_raw/` | `archive_slim/YYYY/MM.ndjson` |
 
 - **`request.py`** – Early one-off script to explore the API and inspect article structure; not part of the main pipeline.
 - **`fetch_archive_slim.py`** – Superseded by ingest + transform; can be removed.
 
-**Run order:**  
-1. `python ingest_archive.py`  
-2. `python transform_archive.py`
+**Run order (from project root):**  
+1. `python -m archive.ingest`  
+2. `python -m archive.transform`
+
+### Most Popular API (Daily Trending Data)
+
+| Script | Role | Input | Output |
+|--------|------|--------|--------|
+| **`most_popular/ingest.py`** | Fetch most viewed (30 days), save raw | API | `most_popular_raw/YYYY-MM-DD/viewed_30.json` |
+| **`most_popular/transform.py`** | Extract slim fields from raw | `most_popular_raw/` | `most_popular_slim/YYYY-MM-DD/viewed_30.ndjson` |
+| **`most_popular/scheduler.py`** | Python-based daily scheduler | - | Runs ingestion + transform daily |
+| **`run_daily_ingestion.sh`** | Shell script for cron automation | - | Runs ingestion + transform |
+
+**Run order (manual, from project root):**  
+1. `python -m most_popular.ingest`  
+2. `python -m most_popular.transform`
+
+**Automation (choose one):**
+- **Cron**: `0 6 * * * /path/to/run_daily_ingestion.sh >> /var/log/nyt_ingestion.log 2>&1`
+- **Python scheduler**: `python -m most_popular.scheduler` (runs in foreground, executes daily at 06:00)
 
 ---
 
-## Ingestion (`ingest_archive.py`)
+## Ingestion (Archive – `archive/ingest.py`)
 
 - **Config**: `START_YEAR`, `END_YEAR` (e.g. 1920–2020 for 100 years), `SLEEP_SECONDS` (12+ between requests).
 - **Idempotent**: Skips months that already have a file in `archive_raw/` (safe to resume).
@@ -60,7 +88,7 @@ Reasons:
 
 ---
 
-## Transformation (`transform_archive.py`)
+## Transformation (Archive – `archive/transform.py`)
 
 - **Input**: All `archive_raw/*/*.json` (discovered via `RAW_DIR.glob("*/*.json")`), sorted.
 - **Output**: One NDJSON file per month in `archive_slim/YYYY/MM.ndjson` (one JSON object per line; good for BigQuery).
@@ -88,11 +116,17 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 ---
 
-## Models (`article_models.py`)
+## Models
+
+### Archive Models (`archive/models.py`)
 
 - **Pydantic** models define the slim schema and nested structures: **`SlimArticle`**, **`Keyword`**, **`BylinePerson`**.
 - Used for validation when transforming (each slim dict is validated before writing) and for parsing NDJSON (e.g. `SlimArticle.model_validate_json(line)`).
 - `_id` is exposed as `article_id` in Python (alias `"_id"` in JSON) to avoid Pydantic treating it as a private field.
+
+### Most Popular Models (`most_popular/models.py`)
+
+- **`SlimMostPopularArticle`** – analysis-ready slim schema; validated when transforming (same pattern as Archive: extract from raw dict → validate slim → write). Raw API response is read via dict access.
 
 ---
 
@@ -109,14 +143,23 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 ```
 .
-├── .env                    # API key (not committed)
+├── .env                        # API key (not committed)
 ├── .gitignore
 ├── requirements.txt
-├── article_models.py       # Pydantic models: SlimArticle, Keyword, BylinePerson
-├── request.py              # Exploratory script
-├── ingest_archive.py       # Pipeline: fetch → raw
-├── transform_archive.py    # Pipeline: raw → slim (validates with SlimArticle)
-├── fetch_archive_slim.py   # Legacy combined script
-├── archive_raw/            # Raw API responses (YYYY/MM.json)
-└── archive_slim/            # Slim NDJSON (YYYY/MM.ndjson)
+├── run_daily_ingestion.sh      # Cron: runs most_popular ingest + transform
+│
+├── archive/                    # Archive API (historical)
+│   ├── models.py               # SlimArticle, Keyword, BylinePerson
+│   ├── ingest.py               # Fetch → archive_raw/YYYY/MM.json
+│   └── transform.py            # archive_raw/ → archive_slim/YYYY/MM.ndjson
+├── archive_raw/                # Raw API responses (YYYY/MM.json)
+├── archive_slim/               # Slim NDJSON (YYYY/MM.ndjson)
+│
+├── most_popular/               # Most Popular API (daily trending)
+│   ├── models.py               # SlimMostPopularArticle
+│   ├── ingest.py               # Fetch → most_popular_raw/YYYY-MM-DD/viewed_30.json
+│   ├── transform.py            # most_popular_raw/ → most_popular_slim/
+│   └── scheduler.py            # Daily scheduler (ingest + transform)
+├── most_popular_raw/           # Raw API responses (YYYY-MM-DD/viewed_30.json)
+└── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
 ```
