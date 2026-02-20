@@ -72,23 +72,23 @@ def fetch_archive(year: int, month: int) -> dict | None:
     return response.json()
 
 
-def ingest_month(year: int, month: int, skip_existing: bool = True) -> bool:
+def ingest_month(year: int, month: int, skip_existing: bool = True) -> str:
     """
     Fetch one month from the Archive API and save raw JSON to RAW_DIR/year/month.json.
-    Returns True on success, False otherwise.
+    Returns "skipped" when already exists, "fetched" on success, "error" on failure.
     If skip_existing is True, skips when the output file already exists locally or in GCS.
     """
     out_path = RAW_DIR / str(year) / f"{month:02d}.json"
     if skip_existing and out_path.exists():
         print(f"  Skipping {year}/{month:02d} (already exists: {out_path})")
-        return True
+        return "skipped"
     if skip_existing and exists_in_gcs(year, month):
         print(f"  Skipping {year}/{month:02d} (already in GCS)")
-        return True
+        return "skipped"
 
     data = fetch_archive(year, month)
     if data is None:
-        return False
+        return "error"
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with open(out_path, "w") as f:
@@ -98,7 +98,7 @@ def ingest_month(year: int, month: int, skip_existing: bool = True) -> bool:
 
     docs_count = len(data.get("response", {}).get("docs", []))
     print(f"  Saved {docs_count} articles.")
-    return True
+    return "fetched"
 
 
 def main():
@@ -106,13 +106,20 @@ def main():
     months_to_fetch = [
         (y, m) for y in range(START_YEAR, END_YEAR) for m in range(1, 13)
     ]
+    max_requests = int(os.getenv("ARCHIVE_MAX_REQUESTS", "0"))
+    requests_this_run = 0
 
     for i, (year, month) in enumerate(months_to_fetch):
+        if max_requests > 0 and requests_this_run >= max_requests:
+            print(f"Reached limit of {max_requests} requests this run. Re-run to resume.")
+            break
         if i > 0:
             print(f"Sleeping {SLEEP_SECONDS} seconds before next request...")
             time.sleep(SLEEP_SECONDS)
 
-        ingest_month(year, month)
+        result = ingest_month(year, month)
+        if result == "fetched":
+            requests_this_run += 1
 
 
 if __name__ == "__main__":
