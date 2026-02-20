@@ -1,6 +1,6 @@
 # Archive ingestion: Archive API → transform → upload to GCS
-# Manual trigger only. For full 100-year run, consider reducing years in archive/ingest.py
-# or running in chunks (job timeout is 6 hours on GitHub-hosted runners).
+# Manual trigger only. Resumes from GCS on re-run: skips months already in the bucket.
+# For full 100-year run, set END_YEAR in archive/ingest.py; job timeout is 6 hours.
 name: Archive ingest (Archive API → GCS)
 
 on:
@@ -8,6 +8,7 @@ on:
 
 env:
   GCS_PREFIX: nyt-ingest
+  GCS_BUCKET: ${{ vars.GCS_BUCKET }}
 
 jobs:
   ingest-and-upload:
@@ -29,12 +30,6 @@ jobs:
       - name: Create .env with API key
         run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
 
-      - name: Ingest archive (raw JSON per month)
-        run: python -m archive.ingest
-
-      - name: Transform to slim NDJSON
-        run: python -m archive.transform
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -42,6 +37,15 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
+
+      - name: Ingest archive (raw JSON per month, skips months already in GCS)
+        run: python -m archive.ingest
+        env:
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+          GCS_PREFIX: ${{ env.GCS_PREFIX }}
+
+      - name: Transform to slim NDJSON
+        run: python -m archive.transform
 
       - name: Upload to GCS
         run: |
