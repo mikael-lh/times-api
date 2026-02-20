@@ -51,7 +51,7 @@ def extract_slim_article(doc: dict) -> dict:
         "snippet": doc.get("snippet"),
         "keywords": doc.get("keywords") or [],
         "byline_person": byline.get("person") or [],
-        "multimedia_count_by_type": multimedia_counts_by_type(multimedia),
+        "multimedia_count_by_type": multimedia_counts_by_type(multimedia) or None,
     }
 
 
