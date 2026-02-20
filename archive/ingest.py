@@ -21,13 +21,13 @@ from dotenv import load_dotenv
 load_dotenv()
 API_KEY = os.getenv("NYTIMES_API_KEY")
 BASE_URL = "https://api.nytimes.com/svc/archive/v1"
-SLEEP_SECONDS = 15  # 12 seconds is the minimum, but we'll use 15 to be safe
+SLEEP_SECONDS = 13  # 12 seconds is the minimum per rate limits
 RAW_DIR = Path("archive_raw")
 GCS_BUCKET = os.getenv("GCS_BUCKET")
 GCS_PREFIX = os.getenv("GCS_PREFIX", "nyt-ingest")
 # Last 100 years (Archive API supports up to 2019 per spec)
 START_YEAR = 1920
-END_YEAR = 1925  # exclusive, so 1920..2019
+END_YEAR = 2020  # exclusive, so 1920..2019 (100 years)
 
 
 def exists_in_gcs(year: int, month: int) -> bool:

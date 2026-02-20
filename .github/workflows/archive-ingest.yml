@@ -1,13 +1,13 @@
 # Archive ingestion: Archive API → transform → upload to GCS
 # Manual trigger only. Resumes from GCS on re-run: skips months already in the bucket.
-# For full 100-year run, set END_YEAR in archive/ingest.py; job timeout is 6 hours.
+# Full 100 years (1920–2019). Job timeout 6h; re-run to resume from GCS. Set vars: GCS_BUCKET, GCS_PREFIX.
 name: Archive ingest (Archive API → GCS)
 
 on:
   workflow_dispatch:
 
 env:
-  GCS_PREFIX: nyt-ingest
+  GCS_PREFIX: ${{ vars.GCS_PREFIX }}
   GCS_BUCKET: ${{ vars.GCS_BUCKET }}
 
 jobs:
@@ -50,6 +50,8 @@ jobs:
       - name: Upload to GCS
         run: |
           BUCKET="${{ vars.GCS_BUCKET }}"
+          PREFIX="${{ vars.GCS_PREFIX }}"
           if [ -z "$BUCKET" ]; then echo "GCS_BUCKET variable is not set"; exit 1; fi
-          gsutil -m cp -r archive_raw "gs://${BUCKET}/${GCS_PREFIX}/"
-          gsutil -m cp -r archive_slim "gs://${BUCKET}/${GCS_PREFIX}/"
+          if [ -z "$PREFIX" ]; then echo "GCS_PREFIX variable is not set"; exit 1; fi
+          gsutil -m cp -r archive_raw "gs://${BUCKET}/${PREFIX}/"
+          gsutil -m cp -r archive_slim "gs://${BUCKET}/${PREFIX}/"
