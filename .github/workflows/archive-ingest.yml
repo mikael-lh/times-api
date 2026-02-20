@@ -1,13 +1,14 @@
 # Archive ingestion: Archive API → transform → upload to GCS
-# Manual trigger only. For full 100-year run, consider reducing years in archive/ingest.py
-# or running in chunks (job timeout is 6 hours on GitHub-hosted runners).
+# Manual trigger only. Resumes from GCS on re-run: skips months already in the bucket.
+# Full 100 years (1920–2019). Job timeout 6h; re-run to resume from GCS. Set vars: GCS_BUCKET, GCS_PREFIX.
 name: Archive ingest (Archive API → GCS)
 
 on:
   workflow_dispatch:
 
 env:
-  GCS_PREFIX: nyt-ingest
+  GCS_PREFIX: ${{ vars.GCS_PREFIX }}
+  GCS_BUCKET: ${{ vars.GCS_BUCKET }}
 
 jobs:
   ingest-and-upload:
@@ -29,12 +30,6 @@ jobs:
       - name: Create .env with API key
         run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
 
-      - name: Ingest archive (raw JSON per month)
-        run: python -m archive.ingest
-
-      - name: Transform to slim NDJSON
-        run: python -m archive.transform
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -43,9 +38,20 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
 
+      - name: Ingest archive (raw JSON per month, skips months already in GCS)
+        run: python -m archive.ingest
+        env:
+          GCS_BUCKET: ${{ vars.GCS_BUCKET }}
+          GCS_PREFIX: ${{ env.GCS_PREFIX }}
+
+      - name: Transform to slim NDJSON
+        run: python -m archive.transform
+
       - name: Upload to GCS
         run: |
           BUCKET="${{ vars.GCS_BUCKET }}"
+          PREFIX="${{ vars.GCS_PREFIX }}"
           if [ -z "$BUCKET" ]; then echo "GCS_BUCKET variable is not set"; exit 1; fi
-          gsutil -m cp -r archive_raw "gs://${BUCKET}/${GCS_PREFIX}/"
-          gsutil -m cp -r archive_slim "gs://${BUCKET}/${GCS_PREFIX}/"
+          if [ -z "$PREFIX" ]; then echo "GCS_PREFIX variable is not set"; exit 1; fi
+          gsutil -m cp -r archive_raw "gs://${BUCKET}/${PREFIX}/"
+          gsutil -m cp -r archive_slim "gs://${BUCKET}/${PREFIX}/"
