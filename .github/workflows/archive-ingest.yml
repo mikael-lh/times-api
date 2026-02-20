@@ -43,6 +43,7 @@ jobs:
         env:
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
           GCS_PREFIX: ${{ env.GCS_PREFIX }}
+          ARCHIVE_MAX_REQUESTS: "500"
 
       - name: Transform to slim NDJSON
         run: python -m archive.transform
