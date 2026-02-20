@@ -118,7 +118,7 @@ def main():
             time.sleep(SLEEP_SECONDS)
 
         result = ingest_month(year, month)
-        if result == "fetched":
+        if result in ("fetched", "error"):
             requests_this_run += 1
 
 
