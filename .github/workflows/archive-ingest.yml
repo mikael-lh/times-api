@@ -45,7 +45,7 @@ jobs:
 
       - name: Upload to GCS
         run: |
-          BUCKET="${{ secrets.GCS_BUCKET }}"
-          if [ -z "$BUCKET" ]; then echo "GCS_BUCKET secret is not set"; exit 1; fi
+          BUCKET="${{ vars.GCS_BUCKET }}"
+          if [ -z "$BUCKET" ]; then echo "GCS_BUCKET variable is not set"; exit 1; fi
           gsutil -m cp -r archive_raw "gs://${BUCKET}/${GCS_PREFIX}/"
           gsutil -m cp -r archive_slim "gs://${BUCKET}/${GCS_PREFIX}/"
