@@ -53,4 +53,4 @@ class SlimArticle(BaseModel):
     snippet: str | None = None
     keywords: list[Keyword] = Field(default_factory=list)
     byline_person: list[BylinePerson] = Field(default_factory=list)
-    multimedia_count_by_type: dict[str, int] = Field(default_factory=dict)
+    multimedia_count_by_type: dict[str, int] | None = None  # None instead of {} for BigQuery compatibility
