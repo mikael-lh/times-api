@@ -14,10 +14,11 @@ import json
 import os
 from datetime import datetime
 from pathlib import Path
+from typing import Any, cast
 
 import requests
-from requests.exceptions import HTTPError
 from dotenv import load_dotenv
+from requests.exceptions import HTTPError
 
 load_dotenv()
 API_KEY = os.getenv("NYTIMES_API_KEY")
@@ -67,7 +68,7 @@ def fetch_most_viewed(period: int = PERIOD) -> dict | None:
         print(f"Error: HTTP {response.status_code}: {e}")
         return None
 
-    data = response.json()
+    data = cast(dict[str, Any], response.json())
     num_results = data.get("num_results", 0)
     print(f"Fetched {num_results} most viewed articles (last {period} days).")
     return data
