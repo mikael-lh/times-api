@@ -34,5 +34,6 @@ class SlimMostPopularArticle(BaseModel):
     org_facet: list[str] = Field(default_factory=list)
     per_facet: list[str] = Field(default_factory=list)
     geo_facet: list[str] = Field(default_factory=list)
-    media_count_by_type: dict[str, int] = Field(default_factory=dict)
+    # None instead of {} for BigQuery compatibility (same as archive)
+    media_count_by_type: dict[str, int] | None = None
     adx_keywords: str | None = None

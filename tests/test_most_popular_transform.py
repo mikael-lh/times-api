@@ -21,7 +21,7 @@ def test_extract_slim_most_popular_minimal():
     assert out["uri"] is None
     assert out["title"] is None
     assert out["des_facet"] == []
-    assert out["media_count_by_type"] == {}
+    assert out["media_count_by_type"] is None
 
 
 def test_extract_slim_most_popular_full():

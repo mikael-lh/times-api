@@ -50,7 +50,7 @@ def extract_slim_most_popular(doc: dict) -> dict:
         "org_facet": doc.get("org_facet") or [],
         "per_facet": doc.get("per_facet") or [],
         "geo_facet": doc.get("geo_facet") or [],
-        "media_count_by_type": media_counts_by_type(media),
+        "media_count_by_type": media_counts_by_type(media) or None,
         "adx_keywords": doc.get("adx_keywords"),
     }
 
