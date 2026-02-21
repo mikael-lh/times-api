@@ -4,7 +4,7 @@ archive_raw/
 archive_slim/
 most_popular_raw/
 most_popular_slim/
-test_*.py
+/test_*.py
 archive-api-spec.yaml
 __pycache__/
 .cursor/rules/git-and-shell.mdc
