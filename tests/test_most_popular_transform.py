@@ -1,6 +1,4 @@
-"""Unit tests for most_popular transform: extract_slim_most_popular, media_counts_by_type, SlimMostPopularArticle validation."""
-
-import pytest
+"""Tests for most_popular transform: extract_slim_most_popular, media_counts_by_type."""
 
 from most_popular.models import SlimMostPopularArticle
 from most_popular.transform import extract_slim_most_popular, media_counts_by_type

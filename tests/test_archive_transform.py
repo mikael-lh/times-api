@@ -1,6 +1,4 @@
-"""Unit tests for archive transform: extract_slim_article, multimedia_counts_by_type, SlimArticle validation."""
-
-import pytest
+"""Tests for archive transform: extract_slim_article, multimedia_counts_by_type, SlimArticle."""
 
 from archive.models import SlimArticle
 from archive.transform import extract_slim_article, multimedia_counts_by_type

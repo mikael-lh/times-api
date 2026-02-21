@@ -13,10 +13,11 @@ import os
 import subprocess
 import time
 from pathlib import Path
+from typing import Any, cast
 
 import requests
-from requests.exceptions import HTTPError
 from dotenv import load_dotenv
+from requests.exceptions import HTTPError
 
 load_dotenv()
 API_KEY = os.getenv("NYTIMES_API_KEY")
@@ -69,7 +70,7 @@ def fetch_archive(year: int, month: int) -> dict | None:
         return None
 
     print(f" Fetched {year}/{month:02d}.")
-    return response.json()
+    return cast(dict[str, Any], response.json())
 
 
 def ingest_month(year: int, month: int, skip_existing: bool = True) -> str:
@@ -103,9 +104,7 @@ def ingest_month(year: int, month: int, skip_existing: bool = True) -> str:
 
 def main():
     # All (year, month) pairs from START_YEAR through END_YEAR-1, months 1-12
-    months_to_fetch = [
-        (y, m) for y in range(START_YEAR, END_YEAR) for m in range(1, 13)
-    ]
+    months_to_fetch = [(y, m) for y in range(START_YEAR, END_YEAR) for m in range(1, 13)]
     max_requests = int(os.getenv("ARCHIVE_MAX_REQUESTS", "0"))
     requests_this_run = 0
 
