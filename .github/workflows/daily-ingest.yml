@@ -17,23 +17,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          version: "latest"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync
 
       - name: Create .env with API key
         run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
 
       - name: Ingest most popular (30-day viewed)
-        run: python -m most_popular.ingest
+        run: uv run python -m most_popular.ingest
 
       - name: Transform to slim NDJSON
-        run: python -m most_popular.transform
+        run: uv run python -m most_popular.transform
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
