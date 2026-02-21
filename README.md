@@ -68,6 +68,8 @@ Reasons:
 | **`most_popular/scheduler.py`** | Python-based daily scheduler | - | Runs ingestion + transform daily |
 | **`run_daily_ingestion.sh`** | Shell script for cron automation | - | Runs ingestion + transform |
 
+**Note:** `scheduler.py` and `run_daily_ingestion.sh` are optional/local automation; they are not in the repo. Use GitHub Actions (below) or run ingest/transform manually.
+
 **Run order (manual, from project root):**  
 1. `python -m most_popular.ingest`  
 2. `python -m most_popular.transform`
