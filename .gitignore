@@ -1,4 +1,5 @@
 .env
+.venv/
 archive_raw/
 archive_slim/
 most_popular_raw/
