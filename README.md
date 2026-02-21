@@ -131,12 +131,21 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 ---
 
+## Development setup
+
+- Install [uv](https://docs.astral.sh/uv/) (e.g. `brew install uv`).
+- From the project root, run **`uv sync`** to create a virtualenv (`.venv`) and install dependencies from `uv.lock`.
+- If you don’t have Python 3.12: **`uv python install 3.12`**, then `uv sync`.
+- Run scripts with **`uv run python -m archive.ingest`** (or `most_popular.ingest` / `archive.transform` / `most_popular.transform`) so they use the project environment.
+
+---
+
 ## Conventions and Tech
 
 - **Secrets**: `.env` with `NYTIMES_API_KEY` (and optional secret); loaded via `python-dotenv`.
 - **Paths**: `pathlib.Path` for `archive_raw/`, `archive_slim/`.
-- **Dependencies**: `requests`, `python-dotenv`, `pydantic` (see `requirements.txt`).
-- **.gitignore**: `.env`, `archive_raw/`, `archive_slim/`.
+- **Dependencies**: `requests`, `python-dotenv`, `pydantic` (see `pyproject.toml` and `uv.lock`).
+- **.gitignore**: `.env`, `.venv/`, `archive_raw/`, `archive_slim/`.
 
 ---
 
@@ -146,8 +155,8 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 .
 ├── .env                        # API key (not committed)
 ├── .gitignore
-├── requirements.txt
-├── run_daily_ingestion.sh      # Cron: runs most_popular ingest + transform
+├── pyproject.toml              # Project metadata, dependencies, tool config
+├── uv.lock                     # Locked dependency versions (reproducible installs)
 │
 ├── archive/                    # Archive API (historical)
 │   ├── models.py               # SlimArticle, Keyword, BylinePerson
