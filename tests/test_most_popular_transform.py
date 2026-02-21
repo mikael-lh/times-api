@@ -48,11 +48,13 @@ def test_extract_slim_most_popular_validates_to_slim_model():
         "url": "https://example.com/999",
         "title": "Validated",
         "section": "World",
-        "media": [],
+        "media": [{"type": "image"}, {"type": "image"}, {"type": "video"}],
+        "des_facet": [],
     }
     out = extract_slim_most_popular(doc)
     article = SlimMostPopularArticle.model_validate(out)
     assert article.id == 999
     assert article.title == "Validated"
     assert article.section == "World"
-    assert article.media_count_by_type == {}
+    assert article.media_count_by_type == {"image": 2, "video": 1}
+    assert article.des_facet == []
