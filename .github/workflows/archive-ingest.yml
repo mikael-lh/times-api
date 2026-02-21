@@ -18,14 +18,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: '3.12'
-          cache: 'pip'
+          version: "latest"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: uv sync
 
       - name: Create .env with API key
         run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
@@ -39,14 +38,14 @@ jobs:
         uses: google-github-actions/setup-gcloud@v3
 
       - name: Ingest archive (raw JSON per month, skips months already in GCS)
-        run: python -m archive.ingest
+        run: uv run python -m archive.ingest
         env:
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
           GCS_PREFIX: ${{ env.GCS_PREFIX }}
           ARCHIVE_MAX_REQUESTS: "500"
 
       - name: Transform to slim NDJSON
-        run: python -m archive.transform
+        run: uv run python -m archive.transform
 
       - name: Upload to GCS
         run: |
