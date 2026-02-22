@@ -1,0 +1,150 @@
+[
+  {
+    "name": "article_id",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Unique article identifier from NYT (_id)"
+  },
+  {
+    "name": "uri",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article URI"
+  },
+  {
+    "name": "pub_date",
+    "type": "DATE",
+    "mode": "NULLABLE",
+    "description": "Publication date (YYYY-MM-DD)"
+  },
+  {
+    "name": "section_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Section name"
+  },
+  {
+    "name": "news_desk",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "News desk"
+  },
+  {
+    "name": "type_of_material",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Type of material"
+  },
+  {
+    "name": "document_type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Document type"
+  },
+  {
+    "name": "word_count",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Word count"
+  },
+  {
+    "name": "web_url",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Web URL"
+  },
+  {
+    "name": "headline_main",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Main headline"
+  },
+  {
+    "name": "byline_original",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Original byline text"
+  },
+  {
+    "name": "abstract",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article abstract"
+  },
+  {
+    "name": "snippet",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article snippet"
+  },
+  {
+    "name": "keywords",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "description": "Article keywords",
+    "fields": [
+      {
+        "name": "name",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Keyword name"
+      },
+      {
+        "name": "value",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Keyword value"
+      },
+      {
+        "name": "rank",
+        "type": "INTEGER",
+        "mode": "NULLABLE",
+        "description": "Keyword rank"
+      },
+      {
+        "name": "major",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Major keyword indicator"
+      }
+    ]
+  },
+  {
+    "name": "byline_person",
+    "type": "RECORD",
+    "mode": "REPEATED",
+    "description": "Byline persons",
+    "fields": [
+      {
+        "name": "firstname",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "First name"
+      },
+      {
+        "name": "lastname",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Last name"
+      },
+      {
+        "name": "middlename",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Middle name"
+      },
+      {
+        "name": "qualifier",
+        "type": "STRING",
+        "mode": "NULLABLE",
+        "description": "Qualifier"
+      }
+    ]
+  },
+  {
+    "name": "multimedia_count_by_type",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Multimedia count by type (JSON object)"
+  }
+]
