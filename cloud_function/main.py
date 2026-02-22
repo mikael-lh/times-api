@@ -7,11 +7,9 @@ and dispatches to archive or most_popular loader.
 
 import logging
 import re
-from typing import Any
 
 import functions_framework
 from cloudevents.http import CloudEvent
-
 from config import ARCHIVE_SLIM_PREFIX, GCS_PREFIX, MOST_POPULAR_SLIM_PREFIX
 from load_archive import load_archive
 from load_most_popular import load_most_popular
@@ -57,17 +55,13 @@ def gcs_to_bigquery(cloud_event: CloudEvent) -> tuple[str, int]:
 
         elif object_path.startswith(MOST_POPULAR_SLIM_PREFIX):
             # Extract snapshot_date from path (e.g. most_popular_slim/2026-02-19/viewed_30.ndjson)
-            match = re.search(
-                r"most_popular_slim/(\d{4}-\d{2}-\d{2})/", object_path
-            )
+            match = re.search(r"most_popular_slim/(\d{4}-\d{2}-\d{2})/", object_path)
             if not match:
                 logger.error(f"Could not extract snapshot_date from path: {name}")
                 return "Invalid most_popular path format", 400
 
             snapshot_date = match.group(1)
-            logger.info(
-                f"Processing most_popular file: {name} (snapshot_date={snapshot_date})"
-            )
+            logger.info(f"Processing most_popular file: {name} (snapshot_date={snapshot_date})")
             load_most_popular(bucket, name, snapshot_date)
             return "Most popular loaded successfully", 200
 

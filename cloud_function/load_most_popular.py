@@ -2,11 +2,10 @@
 Load most_popular slim files to BigQuery staging, MERGE to final table, and update manifest.
 """
 
+import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
-from google.cloud import bigquery
 
 from config import (
     GCP_PROJECT,
@@ -14,6 +13,7 @@ from config import (
     MOST_POPULAR_FINAL_TABLE,
     MOST_POPULAR_STAGING_TABLE,
 )
+from google.cloud import bigquery
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
 
     Args:
         bucket: GCS bucket name
-        object_name: Full object path (e.g. "nyt-ingest/most_popular_slim/2026-02-19/viewed_30.ndjson")
+        object_name: Full object path (e.g. prefix/most_popular_slim/2026-02-19/viewed_30.ndjson)
         snapshot_date: Snapshot date (YYYY-MM-DD) extracted from path
     """
     client = bigquery.Client(project=GCP_PROJECT)
@@ -34,7 +34,10 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     manifest_path = snapshot_date
 
     logger.info(
-        f"Loading most_popular from {gcs_uri} to {MOST_POPULAR_STAGING_TABLE} (snapshot_date={snapshot_date})"
+        "Loading most_popular from %s to %s (snapshot_date=%s)",
+        gcs_uri,
+        MOST_POPULAR_STAGING_TABLE,
+        snapshot_date,
     )
 
     # Check if already loaded
@@ -54,13 +57,9 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     # Get schema without snapshot_date for loading
     schema_path = Path(__file__).parent.parent / "schema" / "most_popular_articles.json"
     with open(schema_path) as f:
-        import json
-
         full_schema_json = json.load(f)
         # Remove snapshot_date from schema for temp load
-        temp_schema_json = [
-            field for field in full_schema_json if field["name"] != "snapshot_date"
-        ]
+        temp_schema_json = [field for field in full_schema_json if field["name"] != "snapshot_date"]
         temp_schema = client.schema_from_json(json.dumps(temp_schema_json))
 
     # Create temp table
@@ -111,7 +110,7 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     logger.info("MERGE to most_popular_articles completed")
 
     # Insert manifest entry
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     manifest_query = f"""
         INSERT INTO `{GCP_PROJECT}.{LOAD_MANIFEST_TABLE}` (source, path, loaded_at)
         VALUES ('most_popular_slim', '{manifest_path}', TIMESTAMP('{now}'))

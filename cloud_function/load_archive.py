@@ -3,10 +3,8 @@ Load archive slim files to BigQuery staging, MERGE to final table, and update ma
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-
-from google.cloud import bigquery
 
 from config import (
     ARCHIVE_FINAL_TABLE,
@@ -14,6 +12,7 @@ from config import (
     GCP_PROJECT,
     LOAD_MANIFEST_TABLE,
 )
+from google.cloud import bigquery
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +61,7 @@ def load_archive(bucket: str, object_name: str) -> None:
         write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
     )
 
-    load_job = client.load_table_from_uri(
-        gcs_uri, ARCHIVE_STAGING_TABLE, job_config=job_config
-    )
+    load_job = client.load_table_from_uri(gcs_uri, ARCHIVE_STAGING_TABLE, job_config=job_config)
     load_job.result()
     logger.info(f"Loaded {load_job.output_rows} rows to staging")
 
@@ -81,7 +78,7 @@ def load_archive(bucket: str, object_name: str) -> None:
     logger.info("MERGE to archive_articles completed")
 
     # Insert manifest entry
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     manifest_query = f"""
         INSERT INTO `{GCP_PROJECT}.{LOAD_MANIFEST_TABLE}` (source, path, loaded_at)
         VALUES ('archive_slim', '{manifest_path}', TIMESTAMP('{now}'))
