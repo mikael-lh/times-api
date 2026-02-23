@@ -42,7 +42,7 @@ if [[ ${#MISSING_VARS[@]} -gt 0 ]]; then
   echo "Usage example:"
   echo "  GCP_PROJECT=my-project GCS_BUCKET=my-bucket GCS_PREFIX=nyt-ingest \\"
   echo "  BQ_STAGING_DATASET=staging BQ_METADATA_DATASET=metadata BQ_PROD_DATASET=prod \\"
-  echo "  FUNCTION_NAME=nyt-bq-loader REGION=us-central1 \\"
+  echo "  FUNCTION_NAME=nyt-bq-loader REGION=europe-west1 \\"
   echo "  ./infra/deploy.sh"
   exit 1
 fi
