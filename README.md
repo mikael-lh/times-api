@@ -140,6 +140,19 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 - If you don’t have Python 3.12: **`uv python install 3.12`**, then `uv sync`.
 - Run scripts with **`uv run python -m archive.ingest`** (or `most_popular.ingest` / `archive.transform` / `most_popular.transform`) so they use the project environment.
 
+### Pre-commit Hooks
+
+Install pre-commit hooks to run quality checks before each commit:
+
+```bash
+uv run pre-commit install
+```
+
+This sets up automatic checks (ruff, mypy, shellcheck, pytest) that run on `git commit`. If any check fails, the commit is aborted so you can fix issues before they reach CI.
+
+**Manual run:** `uv run pre-commit run --all-files`  
+**Skip checks:** `git commit --no-verify` (use sparingly)
+
 ---
 
 ## Quality Checks

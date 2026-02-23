@@ -1,0 +1,39 @@
+# Pre-commit hooks for quality checks
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Skip for a commit: git commit --no-verify
+
+repos:
+  # Ruff (linting and formatting)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # ShellCheck (shell script linting)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^infra/.*\.sh$
+
+  # Local hooks (mypy + pytest via uv)
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        args: [archive, most_popular, tests]
+        language: system
+        types: [python]
+        pass_filenames: false
+      
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        args: [tests/, -v]
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
