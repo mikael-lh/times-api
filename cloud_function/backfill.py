@@ -21,7 +21,8 @@ import sys
 
 from google.cloud import storage
 
-# Ensure cloud_function is on path when run from repo root
+# Defer imports so config (and its required env vars) are only loaded when the
+# script is run directly, not when this module is imported (e.g. by tests).
 if __name__ == "__main__":
     from config import (
         ARCHIVE_SLIM_PREFIX,
