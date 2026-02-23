@@ -242,7 +242,7 @@ The function is deployed automatically via GitHub Actions when you push changes 
 ```bash
 GCP_PROJECT=your-project GCS_BUCKET=your-bucket GCS_PREFIX=nyt-ingest \
 BQ_STAGING_DATASET=staging BQ_METADATA_DATASET=metadata BQ_PROD_DATASET=prod \
-FUNCTION_NAME=nyt-bq-loader REGION=us-central1 \
+FUNCTION_NAME=nyt-bq-loader REGION=europe-west1 \
 ./infra/deploy.sh
 ```
 
@@ -254,7 +254,7 @@ FUNCTION_NAME=nyt-bq-loader REGION=us-central1 \
 - `BQ_METADATA_DATASET`: Metadata dataset name (e.g. `metadata`)
 - `BQ_PROD_DATASET`: Production dataset name (e.g. `prod`)
 - `FUNCTION_NAME`: Cloud Function name (e.g. `nyt-bq-loader`)
-- `REGION`: Cloud Function region (e.g. `us-central1`)
+- `REGION`: Cloud Function region; must match the GCS bucket region for the Eventarc trigger (e.g. `europe-west1`)
 
 All variables are required; the scripts will fail with a clear error if any are missing.
 
