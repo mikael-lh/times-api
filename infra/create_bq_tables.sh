@@ -50,18 +50,18 @@ bq --project_id="$GCP_PROJECT" mk --dataset \
   --location=US \
   "$BQ_PROD_DATASET" 2>/dev/null || echo "  (Dataset already exists)"
 
-# Staging: archive_staging
-echo "Creating table $BQ_STAGING_DATASET.archive_staging..."
+# Staging: archive_articles
+echo "Creating table $BQ_STAGING_DATASET.archive_articles..."
 bq --project_id="$GCP_PROJECT" mk --table \
   --description="Staging table for archive articles (truncated after each load)" \
-  "$BQ_STAGING_DATASET.archive_staging" \
+  "$BQ_STAGING_DATASET.archive_articles" \
   "$SCHEMA_DIR/archive_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
-# Staging: most_popular_staging
-echo "Creating table $BQ_STAGING_DATASET.most_popular_staging..."
+# Staging: most_popular_articles
+echo "Creating table $BQ_STAGING_DATASET.most_popular_articles..."
 bq --project_id="$GCP_PROJECT" mk --table \
   --description="Staging table for most popular articles (truncated after each load)" \
-  "$BQ_STAGING_DATASET.most_popular_staging" \
+  "$BQ_STAGING_DATASET.most_popular_articles" \
   "$SCHEMA_DIR/most_popular_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
 # Metadata: load_manifest
@@ -92,6 +92,6 @@ bq --project_id="$GCP_PROJECT" mk --table \
 echo ""
 echo "✅ BigQuery setup complete!"
 echo "Datasets and tables in $GCP_PROJECT:"
-echo "  $BQ_STAGING_DATASET: archive_staging, most_popular_staging"
+echo "  $BQ_STAGING_DATASET: archive_articles, most_popular_articles"
 echo "  $BQ_METADATA_DATASET: load_manifest"
 echo "  $BQ_PROD_DATASET: archive_articles (partitioned by pub_date), most_popular_articles (partitioned by snapshot_date)"

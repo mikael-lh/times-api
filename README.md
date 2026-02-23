@@ -221,7 +221,7 @@ A **Cloud Function** automatically loads slim NDJSON files from GCS into **BigQu
 - **Trigger**: Eventarc monitors the GCS bucket for `object.finalize` events.
 - **Function**: Receives the event, filters for `archive_slim/` or `most_popular_slim/` paths, loads the file to a staging table, MERGEs into the final table (deduplicating by key), and records the load in a manifest table.
 - **Three datasets** (staging, metadata, prod):
-  - **staging**: `archive_staging`, `most_popular_staging` (transient; truncated after each load)
+  - **staging**: `archive_articles`, `most_popular_articles` (transient; truncated after each load)
   - **metadata**: `load_manifest` (tracks loaded files for idempotency)
   - **prod**: `archive_articles` (partitioned by `pub_date`), `most_popular_articles` (partitioned by `snapshot_date`)
 

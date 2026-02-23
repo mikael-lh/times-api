@@ -16,10 +16,10 @@ BQ_STAGING_DATASET = os.environ["BQ_STAGING_DATASET"]
 BQ_METADATA_DATASET = os.environ["BQ_METADATA_DATASET"]
 BQ_PROD_DATASET = os.environ["BQ_PROD_DATASET"]
 
-# Table names (staging tables in staging, final tables in prod, manifest in metadata)
-ARCHIVE_STAGING_TABLE = f"{BQ_STAGING_DATASET}.archive_staging"
+# Table names (same names in staging and prod, differentiated by dataset)
+ARCHIVE_STAGING_TABLE = f"{BQ_STAGING_DATASET}.archive_articles"
 ARCHIVE_FINAL_TABLE = f"{BQ_PROD_DATASET}.archive_articles"
-MOST_POPULAR_STAGING_TABLE = f"{BQ_STAGING_DATASET}.most_popular_staging"
+MOST_POPULAR_STAGING_TABLE = f"{BQ_STAGING_DATASET}.most_popular_articles"
 MOST_POPULAR_FINAL_TABLE = f"{BQ_PROD_DATASET}.most_popular_articles"
 LOAD_MANIFEST_TABLE = f"{BQ_METADATA_DATASET}.load_manifest"
 
