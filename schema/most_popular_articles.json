@@ -1,0 +1,122 @@
+[
+  {
+    "name": "snapshot_date",
+    "type": "DATE",
+    "mode": "NULLABLE",
+    "description": "Date when this snapshot was taken (YYYY-MM-DD)"
+  },
+  {
+    "name": "id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Article ID"
+  },
+  {
+    "name": "uri",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article URI"
+  },
+  {
+    "name": "url",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article URL"
+  },
+  {
+    "name": "asset_id",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Asset ID"
+  },
+  {
+    "name": "source",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Source"
+  },
+  {
+    "name": "published_date",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Published date"
+  },
+  {
+    "name": "updated",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Updated date"
+  },
+  {
+    "name": "section",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Section"
+  },
+  {
+    "name": "subsection",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Subsection"
+  },
+  {
+    "name": "byline",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Byline"
+  },
+  {
+    "name": "type",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article type"
+  },
+  {
+    "name": "title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article title"
+  },
+  {
+    "name": "abstract",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Article abstract"
+  },
+  {
+    "name": "des_facet",
+    "type": "STRING",
+    "mode": "REPEATED",
+    "description": "Description facets"
+  },
+  {
+    "name": "org_facet",
+    "type": "STRING",
+    "mode": "REPEATED",
+    "description": "Organization facets"
+  },
+  {
+    "name": "per_facet",
+    "type": "STRING",
+    "mode": "REPEATED",
+    "description": "Person facets"
+  },
+  {
+    "name": "geo_facet",
+    "type": "STRING",
+    "mode": "REPEATED",
+    "description": "Geographic facets"
+  },
+  {
+    "name": "media_count_by_type",
+    "type": "JSON",
+    "mode": "NULLABLE",
+    "description": "Media count by type (JSON object)"
+  },
+  {
+    "name": "adx_keywords",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ADX keywords"
+  }
+]
