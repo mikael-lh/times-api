@@ -2,6 +2,7 @@
 Load archive slim files to BigQuery staging, MERGE to final table, and update manifest.
 """
 
+import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
@@ -9,6 +10,7 @@ from pathlib import Path
 from config import (
     ARCHIVE_FINAL_TABLE,
     ARCHIVE_STAGING_TABLE,
+    BQ_STAGING_DATASET,
     GCP_PROJECT,
     LOAD_MANIFEST_TABLE,
 )
@@ -42,19 +44,70 @@ def load_archive(bucket: str, object_name: str) -> None:
         logger.info(f"Path {manifest_path} already loaded, skipping")
         return
 
-    # Load to staging
-    schema_path = Path(__file__).parent.parent / "schema" / "archive_articles.json"
-    schema = client.schema_from_json(str(schema_path))
+    # Load to a temp table first, then INSERT with pub_date conversion
+    temp_table = f"{ARCHIVE_STAGING_TABLE}_temp"
 
+    # Get schema with pub_date STRING for temp load
+    schema_path = Path(__file__).parent.parent / "schema" / "archive_articles.json"
+    with open(schema_path) as f:
+        full_schema_json = json.load(f)
+    # Change pub_date to STRING for temp load; build schema from API repr list
+    temp_schema_json = full_schema_json.copy()
+    for field in temp_schema_json:
+        if field["name"] == "pub_date":
+            field["type"] = "STRING"
+            field["description"] = (
+                "Publication date (ISO or YYYY-MM-DD, converted to DATE on INSERT)"
+            )
+            break
+    temp_schema = [bigquery.SchemaField.from_api_repr(f) for f in temp_schema_json]
+
+    # Create temp table
+    temp_table_ref = client.dataset(BQ_STAGING_DATASET).table(temp_table.split(".")[-1])
+    temp_table_obj = bigquery.Table(temp_table_ref, schema=temp_schema)
+    client.create_table(temp_table_obj, exists_ok=True)
+
+    # Load to temp
     job_config = bigquery.LoadJobConfig(
         source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
-        schema=schema,
-        write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
+        schema=temp_schema,
+        write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
 
-    load_job = client.load_table_from_uri(gcs_uri, ARCHIVE_STAGING_TABLE, job_config=job_config)
+    load_job = client.load_table_from_uri(
+        gcs_uri, f"{GCP_PROJECT}.{temp_table}", job_config=job_config
+    )
     load_job.result()
-    logger.info(f"Loaded {load_job.output_rows} rows to staging")
+    logger.info(f"Loaded {load_job.output_rows} rows to temp table")
+
+    # Insert into staging with pub_date conversion (first 10 chars = YYYY-MM-DD)
+    insert_query = f"""
+        INSERT INTO `{GCP_PROJECT}.{ARCHIVE_STAGING_TABLE}`
+        SELECT
+            article_id,
+            uri,
+            SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(pub_date, 1, 10)) AS pub_date,
+            section_name,
+            news_desk,
+            type_of_material,
+            document_type,
+            word_count,
+            web_url,
+            headline_main,
+            byline_original,
+            abstract,
+            snippet,
+            keywords,
+            byline_person,
+            multimedia_count_by_type
+        FROM `{GCP_PROJECT}.{temp_table}`
+    """
+    insert_job = client.query(insert_query)
+    insert_job.result()
+    logger.info("Inserted rows to staging with pub_date converted to DATE")
+
+    # Drop temp table
+    client.delete_table(f"{GCP_PROJECT}.{temp_table}", not_found_ok=True)
 
     # MERGE to final table (dedup by article_id)
     merge_query = f"""
