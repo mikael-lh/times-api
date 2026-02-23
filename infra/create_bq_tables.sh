@@ -50,12 +50,12 @@ bq --project_id="$GCP_PROJECT" mk --dataset \
   --location=US \
   "$BQ_PROD_DATASET" 2>/dev/null || echo "  (Dataset already exists)"
 
-# Staging: archive_articles (pub_date STRING to accept ISO timestamps from GCS; converted to DATE on MERGE)
+# Staging: archive_articles
 echo "Creating table $BQ_STAGING_DATASET.archive_articles..."
 bq --project_id="$GCP_PROJECT" mk --table \
   --description="Staging table for archive articles (truncated after each load)" \
   "$BQ_STAGING_DATASET.archive_articles" \
-  "$SCHEMA_DIR/archive_articles_staging.json" 2>/dev/null || echo "  (Table already exists)"
+  "$SCHEMA_DIR/archive_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
 # Staging: most_popular_articles
 echo "Creating table $BQ_STAGING_DATASET.most_popular_articles..."
