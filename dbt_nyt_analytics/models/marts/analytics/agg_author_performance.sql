@@ -43,31 +43,35 @@ author_stats as (
         
     from author_articles
     group by 1, 2, 3
+),
+
+final as (
+    select
+        author_full_name,
+        firstname,
+        lastname,
+        
+        total_articles,
+        first_article_date,
+        last_article_date,
+        career_span_days,
+        
+        years_active,
+        first_year,
+        last_year,
+        
+        round(avg_word_count, 0) as avg_word_count,
+        total_words_written,
+        longest_article_words,
+        
+        sections_written_for,
+        round(avg_keywords_per_article, 1) as avg_keywords_per_article,
+        
+        -- Productivity metric
+        round(total_articles / nullif(years_active, 0), 1) as articles_per_year
+    
+    from author_stats
+    order by total_articles desc
 )
 
-select
-    author_full_name,
-    firstname,
-    lastname,
-    
-    total_articles,
-    first_article_date,
-    last_article_date,
-    career_span_days,
-    
-    years_active,
-    first_year,
-    last_year,
-    
-    round(avg_word_count, 0) as avg_word_count,
-    total_words_written,
-    longest_article_words,
-    
-    sections_written_for,
-    round(avg_keywords_per_article, 1) as avg_keywords_per_article,
-    
-    -- Productivity metric
-    round(total_articles / nullif(years_active, 0), 1) as articles_per_year
-
-from author_stats
-order by total_articles desc
+select * from final

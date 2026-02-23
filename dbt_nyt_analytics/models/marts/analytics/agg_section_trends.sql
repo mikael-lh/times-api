@@ -44,33 +44,37 @@ with_percentages as (
         
     from section_yearly sy
     left join yearly_totals yt on sy.pub_year = yt.pub_year
+),
+
+final as (
+    select
+        section_name,
+        news_desk,
+        pub_year,
+        
+        article_count,
+        year_total,
+        pct_of_year_total,
+        
+        round(avg_word_count, 0) as avg_word_count,
+        total_word_count,
+        
+        articles_with_authors,
+        articles_with_keywords,
+        
+        round(avg_authors, 2) as avg_authors,
+        round(avg_keywords, 2) as avg_keywords,
+        
+        prior_year_count,
+        article_count - coalesce(prior_year_count, 0) as yoy_change,
+        case 
+            when prior_year_count > 0 
+            then round(100.0 * (article_count - prior_year_count) / prior_year_count, 1)
+            else null 
+        end as yoy_change_pct
+    
+    from with_percentages
+    order by pub_year, article_count desc
 )
 
-select
-    section_name,
-    news_desk,
-    pub_year,
-    
-    article_count,
-    year_total,
-    pct_of_year_total,
-    
-    round(avg_word_count, 0) as avg_word_count,
-    total_word_count,
-    
-    articles_with_authors,
-    articles_with_keywords,
-    
-    round(avg_authors, 2) as avg_authors,
-    round(avg_keywords, 2) as avg_keywords,
-    
-    prior_year_count,
-    article_count - coalesce(prior_year_count, 0) as yoy_change,
-    case 
-        when prior_year_count > 0 
-        then round(100.0 * (article_count - prior_year_count) / prior_year_count, 1)
-        else null 
-    end as yoy_change_pct
-
-from with_percentages
-order by pub_year, article_count desc
+select * from final

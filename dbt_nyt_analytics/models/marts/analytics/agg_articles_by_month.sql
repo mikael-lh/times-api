@@ -36,31 +36,35 @@ monthly_stats as (
         
     from articles
     group by 1
+),
+
+final as (
+    select
+        pub_month,
+        total_articles,
+        
+        round(avg_word_count, 0) as avg_word_count,
+        total_word_count,
+        max_word_count,
+        
+        articles_with_authors,
+        articles_with_keywords,
+        articles_with_multimedia,
+        
+        round(avg_authors_per_article, 2) as avg_authors_per_article,
+        round(avg_keywords_per_article, 2) as avg_keywords_per_article,
+        
+        unique_sections,
+        unique_news_desks,
+        unique_material_types,
+        
+        -- Percentages
+        round(100.0 * articles_with_authors / nullif(total_articles, 0), 1) as pct_with_authors,
+        round(100.0 * articles_with_keywords / nullif(total_articles, 0), 1) as pct_with_keywords,
+        round(100.0 * articles_with_multimedia / nullif(total_articles, 0), 1) as pct_with_multimedia
+    
+    from monthly_stats
+    order by pub_month
 )
 
-select
-    pub_month,
-    total_articles,
-    
-    round(avg_word_count, 0) as avg_word_count,
-    total_word_count,
-    max_word_count,
-    
-    articles_with_authors,
-    articles_with_keywords,
-    articles_with_multimedia,
-    
-    round(avg_authors_per_article, 2) as avg_authors_per_article,
-    round(avg_keywords_per_article, 2) as avg_keywords_per_article,
-    
-    unique_sections,
-    unique_news_desks,
-    unique_material_types,
-    
-    -- Percentages
-    round(100.0 * articles_with_authors / nullif(total_articles, 0), 1) as pct_with_authors,
-    round(100.0 * articles_with_keywords / nullif(total_articles, 0), 1) as pct_with_keywords,
-    round(100.0 * articles_with_multimedia / nullif(total_articles, 0), 1) as pct_with_multimedia
-
-from monthly_stats
-order by pub_month
+select * from final

@@ -66,7 +66,7 @@ final as (
         coalesce(prior_year_rank, 0) - rank_in_year as rank_change
         
     from with_rankings
+    order by pub_year desc, article_count desc
 )
 
 select * from final
-order by pub_year desc, article_count desc
