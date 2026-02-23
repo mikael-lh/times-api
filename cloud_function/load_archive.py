@@ -42,8 +42,8 @@ def load_archive(bucket: str, object_name: str) -> None:
         logger.info(f"Path {manifest_path} already loaded, skipping")
         return
 
-    # Load to staging
-    schema_path = Path(__file__).parent.parent / "schema" / "archive_articles.json"
+    # Load to staging (pub_date as STRING so GCS ISO timestamps load as-is; converted to DATE on MERGE)
+    schema_path = Path(__file__).parent.parent / "schema" / "archive_articles_staging.json"
     schema = client.schema_from_json(str(schema_path))
 
     job_config = bigquery.LoadJobConfig(
@@ -56,13 +56,33 @@ def load_archive(bucket: str, object_name: str) -> None:
     load_job.result()
     logger.info(f"Loaded {load_job.output_rows} rows to staging")
 
-    # MERGE to final table (dedup by article_id)
+    # MERGE to final table (dedup by article_id); convert pub_date STRING -> DATE (first 10 chars = YYYY-MM-DD)
     merge_query = f"""
         MERGE `{GCP_PROJECT}.{ARCHIVE_FINAL_TABLE}` AS target
-        USING `{GCP_PROJECT}.{ARCHIVE_STAGING_TABLE}` AS source
+        USING (
+            SELECT
+                article_id,
+                uri,
+                SAFE.PARSE_DATE('%Y-%m-%d', SUBSTR(pub_date, 1, 10)) AS pub_date,
+                section_name,
+                news_desk,
+                type_of_material,
+                document_type,
+                word_count,
+                web_url,
+                headline_main,
+                byline_original,
+                abstract,
+                snippet,
+                keywords,
+                byline_person,
+                multimedia_count_by_type
+            FROM `{GCP_PROJECT}.{ARCHIVE_STAGING_TABLE}`
+        ) AS source
         ON target.article_id = source.article_id
         WHEN NOT MATCHED THEN
-            INSERT ROW
+            INSERT (article_id, uri, pub_date, section_name, news_desk, type_of_material, document_type, word_count, web_url, headline_main, byline_original, abstract, snippet, keywords, byline_person, multimedia_count_by_type)
+            VALUES (source.article_id, source.uri, source.pub_date, source.section_name, source.news_desk, source.type_of_material, source.document_type, source.word_count, source.web_url, source.headline_main, source.byline_original, source.abstract, source.snippet, source.keywords, source.byline_person, source.multimedia_count_by_type)
     """
     merge_job = client.query(merge_query)
     merge_job.result()
