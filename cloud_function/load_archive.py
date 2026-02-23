@@ -56,7 +56,9 @@ def load_archive(bucket: str, object_name: str) -> None:
     for field in temp_schema_json:
         if field["name"] == "pub_date":
             field["type"] = "STRING"
-            field["description"] = "Publication date (ISO or YYYY-MM-DD, converted to DATE on INSERT)"
+            field["description"] = (
+                "Publication date (ISO or YYYY-MM-DD, converted to DATE on INSERT)"
+            )
             break
     temp_schema = [bigquery.SchemaField.from_api_repr(f) for f in temp_schema_json]
 
@@ -72,7 +74,9 @@ def load_archive(bucket: str, object_name: str) -> None:
         write_disposition=bigquery.WriteDisposition.WRITE_TRUNCATE,
     )
 
-    load_job = client.load_table_from_uri(gcs_uri, f"{GCP_PROJECT}.{temp_table}", job_config=job_config)
+    load_job = client.load_table_from_uri(
+        gcs_uri, f"{GCP_PROJECT}.{temp_table}", job_config=job_config
+    )
     load_job.result()
     logger.info(f"Loaded {load_job.output_rows} rows to temp table")
 
