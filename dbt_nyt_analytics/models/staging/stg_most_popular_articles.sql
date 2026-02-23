@@ -13,10 +13,7 @@
 with source as (
     select * from {{ source('nyt_raw', 'most_popular_articles') }}
     {% if is_incremental() %}
-    where snapshot_date >= date_sub(
-        (select max(snapshot_date) from {{ this }}),
-        interval {{ var('incremental_lookback_days') }} day
-    )
+    where {{ get_incremental_filter('snapshot_date') }}
     {% endif %}
 ),
 

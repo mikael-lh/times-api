@@ -14,10 +14,7 @@
 with source as (
     select * from {{ source('nyt_raw', 'archive_articles') }}
     {% if is_incremental() %}
-    where pub_date >= date_sub(
-        (select max(pub_date) from {{ this }}),
-        interval {{ var('incremental_lookback_days') }} day
-    )
+    where {{ get_incremental_filter('pub_date') }}
     {% endif %}
 ),
 
