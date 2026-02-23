@@ -1,0 +1,19 @@
+# dbt artifacts
+target/
+dbt_packages/
+logs/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+
+# Environment
+.env
+*.env
+
+# Never commit real profiles
+profiles.yml

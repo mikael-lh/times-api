@@ -1,0 +1,26 @@
+# Copy this file to ~/.dbt/profiles.yml and update with your credentials
+# DO NOT commit profiles.yml with real credentials
+
+nyt_bigquery:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth  # Use 'oauth' for local dev, 'service-account' for CI
+      project: times-api-ingest
+      dataset: dbt_dev  # Your personal dev dataset
+      location: US
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive
+
+    prod:
+      type: bigquery
+      method: service-account
+      project: times-api-ingest
+      dataset: analytics
+      location: US
+      threads: 4
+      timeout_seconds: 300
+      priority: interactive
+      keyfile: /path/to/service-account-key.json  # Update this path

@@ -1,0 +1,91 @@
+version: 2
+
+sources:
+  - name: nyt_raw
+    description: "Raw NYT article data loaded from GCS to BigQuery"
+    database: times-api-ingest
+    schema: prod
+    tables:
+      - name: archive_articles
+        description: "Historical NYT articles from the Archive API (1851-present)"
+        meta:
+          partition_by: pub_date
+        columns:
+          - name: article_id
+            description: "Unique article identifier from NYT (_id)"
+          - name: uri
+            description: "Article URI"
+          - name: pub_date
+            description: "Publication date (DATE type)"
+          - name: section_name
+            description: "Section name (e.g., Arts, Business)"
+          - name: news_desk
+            description: "News desk responsible for the article"
+          - name: type_of_material
+            description: "Type of material (e.g., News, Opinion)"
+          - name: document_type
+            description: "Document type"
+          - name: word_count
+            description: "Article word count"
+          - name: web_url
+            description: "URL to the article on nytimes.com"
+          - name: headline_main
+            description: "Main headline"
+          - name: byline_original
+            description: "Original byline text"
+          - name: abstract
+            description: "Article abstract"
+          - name: snippet
+            description: "Article snippet"
+          - name: keywords
+            description: "Array of keyword objects (name, value, rank, major)"
+          - name: byline_person
+            description: "Array of author objects (firstname, lastname, middlename, qualifier)"
+          - name: multimedia_count_by_type
+            description: "JSON object with multimedia counts by type"
+
+      - name: most_popular_articles
+        description: "Daily snapshots of most popular (most viewed) articles"
+        meta:
+          partition_by: snapshot_date
+        columns:
+          - name: snapshot_date
+            description: "Date when this popularity snapshot was taken"
+          - name: id
+            description: "Article ID"
+          - name: uri
+            description: "Article URI"
+          - name: url
+            description: "Article URL"
+          - name: asset_id
+            description: "Asset ID"
+          - name: source
+            description: "Source (e.g., New York Times)"
+          - name: published_date
+            description: "Published date (STRING - needs parsing)"
+          - name: updated
+            description: "Updated date (STRING - needs parsing)"
+          - name: section
+            description: "Section name"
+          - name: subsection
+            description: "Subsection name"
+          - name: byline
+            description: "Byline text"
+          - name: type
+            description: "Article type"
+          - name: title
+            description: "Article title"
+          - name: abstract
+            description: "Article abstract"
+          - name: des_facet
+            description: "Description facets (array)"
+          - name: org_facet
+            description: "Organization facets (array)"
+          - name: per_facet
+            description: "Person facets (array)"
+          - name: geo_facet
+            description: "Geographic facets (array)"
+          - name: media_count_by_type
+            description: "Media count by type (JSON)"
+          - name: adx_keywords
+            description: "ADX keywords string"

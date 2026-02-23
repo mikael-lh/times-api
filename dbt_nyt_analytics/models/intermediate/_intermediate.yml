@@ -1,0 +1,26 @@
+version: 2
+
+models:
+  - name: int_keywords_flattened
+    description: "One row per article-keyword combination. Unnests the keywords array."
+    columns:
+      - name: article_id
+        description: "Article identifier"
+      - name: keyword_name
+        description: "Keyword category (e.g., subject, persons, organizations)"
+      - name: keyword_value
+        description: "The keyword value"
+      - name: keyword_rank
+        description: "Rank of keyword relevance"
+
+  - name: int_authors_flattened
+    description: "One row per article-author combination. Unnests the byline_person array."
+    columns:
+      - name: article_id
+        description: "Article identifier"
+      - name: author_full_name
+        description: "Constructed full name of the author"
+      - name: firstname
+        description: "Author first name"
+      - name: lastname
+        description: "Author last name"

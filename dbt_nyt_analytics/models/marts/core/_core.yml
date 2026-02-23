@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: fct_articles
+    description: "Core fact table for archive articles. One row per article."
+    columns:
+      - name: article_id
+        description: "Primary key - unique article identifier"
+        tests:
+          - unique
+          - not_null
+      - name: pub_date
+        description: "Publication date"
+        tests:
+          - not_null
+      - name: section_name
+        description: "Article section"
+      - name: news_desk
+        description: "News desk"
+      - name: word_count
+        description: "Article word count"
+      - name: author_count
+        description: "Number of authors"
+      - name: keyword_count
+        description: "Number of keywords"
+
+  - name: fct_article_popularity
+    description: "Fact table tracking article popularity over time from daily snapshots"
+    columns:
+      - name: snapshot_date
+        description: "Date of the popularity snapshot"
+        tests:
+          - not_null
+      - name: article_id
+        description: "Article ID"
+        tests:
+          - not_null
+      - name: days_since_published
+        description: "Days between publication and snapshot"
+
+  - name: dim_authors
+    description: "Dimension table of unique authors"
+    columns:
+      - name: author_key
+        description: "Surrogate key for author"
+        tests:
+          - unique
+          - not_null
+      - name: author_full_name
+        description: "Full name of the author"
+
+  - name: dim_keywords
+    description: "Dimension table of unique keywords"
+    columns:
+      - name: keyword_key
+        description: "Surrogate key for keyword"
+        tests:
+          - unique
+          - not_null
+      - name: keyword_name
+        description: "Keyword category"
+      - name: keyword_value
+        description: "Keyword value"
+
+  - name: dim_sections
+    description: "Dimension table of unique sections and news desks"
+    columns:
+      - name: section_key
+        description: "Surrogate key for section"
+        tests:
+          - unique
+          - not_null
+      - name: section_name
+        description: "Section name"
+      - name: news_desk
+        description: "News desk"
