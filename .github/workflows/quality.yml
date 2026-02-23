@@ -35,3 +35,6 @@ jobs:
 
       - name: Pytest
         run: uv run pytest tests/ -v
+
+      - name: ShellCheck
+        run: shellcheck infra/*.sh

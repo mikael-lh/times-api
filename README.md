@@ -142,6 +142,26 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 ---
 
+## Quality Checks
+
+The repo uses automated quality checks (lint, format, type-check, test) that run on every PR and push to main.
+
+### Python
+
+- **Ruff** (lint + format): `uv run ruff check .` and `uv run ruff format --check .`
+- **Mypy** (type checking): `uv run mypy archive most_popular tests`
+- **Pytest** (tests): `uv run pytest tests/ -v`
+
+### Shell Scripts
+
+- **ShellCheck** (shell script linter): Checks `infra/*.sh` for syntax errors, quoting issues, and best practices
+- Install locally: `brew install shellcheck` (macOS) or `apt-get install shellcheck` (Ubuntu)
+- Run: `shellcheck infra/*.sh`
+
+All checks run automatically in CI via `.github/workflows/quality.yml`.
+
+---
+
 ## Conventions and Tech
 
 - **Secrets**: `.env` with `NYTIMES_API_KEY` (and optional secret); loaded via `python-dotenv`.
