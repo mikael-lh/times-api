@@ -3,18 +3,47 @@ set -euo pipefail
 
 # Deploy NYT BigQuery loader Cloud Function (Gen2) with Eventarc trigger
 
-# Configuration from environment
+# Configuration from environment (no defaults - fail fast if not set)
 GCP_PROJECT="${GCP_PROJECT:-}"
-GCS_BUCKET="${GCS_BUCKET:-nyt-ingest}"
-GCS_PREFIX="${GCS_PREFIX:-nyt-ingest}"
-BQ_DATASET="${BQ_DATASET:-nyt}"
-FUNCTION_NAME="${FUNCTION_NAME:-nyt-bq-loader}"
-REGION="${REGION:-us-central1}"
+GCS_BUCKET="${GCS_BUCKET:-}"
+GCS_PREFIX="${GCS_PREFIX:-}"
+BQ_STAGING_DATASET="${BQ_STAGING_DATASET:-}"
+BQ_METADATA_DATASET="${BQ_METADATA_DATASET:-}"
+BQ_PROD_DATASET="${BQ_PROD_DATASET:-}"
+FUNCTION_NAME="${FUNCTION_NAME:-}"
+REGION="${REGION:-}"
 SERVICE_ACCOUNT="${SERVICE_ACCOUNT:-}"
 
-if [[ -z "$GCP_PROJECT" ]]; then
-  echo "Error: GCP_PROJECT environment variable must be set"
-  echo "Usage: GCP_PROJECT=your-project GCS_BUCKET=bucket-name ./infra/deploy.sh"
+# Validate required variables
+REQUIRED_VARS=(
+  "GCP_PROJECT"
+  "GCS_BUCKET"
+  "GCS_PREFIX"
+  "BQ_STAGING_DATASET"
+  "BQ_METADATA_DATASET"
+  "BQ_PROD_DATASET"
+  "FUNCTION_NAME"
+  "REGION"
+)
+
+MISSING_VARS=()
+for var in "${REQUIRED_VARS[@]}"; do
+  if [[ -z "${!var}" ]]; then
+    MISSING_VARS+=("$var")
+  fi
+done
+
+if [[ ${#MISSING_VARS[@]} -gt 0 ]]; then
+  echo "Error: Required environment variables not set:"
+  for var in "${MISSING_VARS[@]}"; do
+    echo "  - $var"
+  done
+  echo ""
+  echo "Usage example:"
+  echo "  GCP_PROJECT=my-project GCS_BUCKET=my-bucket GCS_PREFIX=nyt-ingest \\"
+  echo "  BQ_STAGING_DATASET=staging BQ_METADATA_DATASET=metadata BQ_PROD_DATASET=prod \\"
+  echo "  FUNCTION_NAME=nyt-bq-loader REGION=us-central1 \\"
+  echo "  ./infra/deploy.sh"
   exit 1
 fi
 
@@ -23,7 +52,7 @@ echo "  Project: $GCP_PROJECT"
 echo "  Region: $REGION"
 echo "  Bucket: $GCS_BUCKET"
 echo "  Prefix: $GCS_PREFIX"
-echo "  Dataset: $BQ_DATASET"
+echo "  Datasets: $BQ_STAGING_DATASET, $BQ_METADATA_DATASET, $BQ_PROD_DATASET"
 echo ""
 
 # Build gcloud command
@@ -36,7 +65,7 @@ DEPLOY_CMD=(
   --entry-point=gcs_to_bigquery
   --trigger-event-filters="type=google.cloud.storage.object.v1.finalized"
   --trigger-event-filters="bucket=$GCS_BUCKET"
-  --set-env-vars="GCP_PROJECT=$GCP_PROJECT,GCS_BUCKET=$GCS_BUCKET,GCS_PREFIX=$GCS_PREFIX,BQ_DATASET=$BQ_DATASET"
+  --set-env-vars="GCP_PROJECT=$GCP_PROJECT,GCS_BUCKET=$GCS_BUCKET,GCS_PREFIX=$GCS_PREFIX,BQ_STAGING_DATASET=$BQ_STAGING_DATASET,BQ_METADATA_DATASET=$BQ_METADATA_DATASET,BQ_PROD_DATASET=$BQ_PROD_DATASET"
   --project="$GCP_PROJECT"
   --max-instances=10
   --timeout=540s

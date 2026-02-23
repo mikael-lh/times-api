@@ -14,10 +14,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,9 +31,11 @@ jobs:
           GCP_PROJECT: ${{ vars.GCP_PROJECT }}
           GCS_BUCKET: ${{ vars.GCS_BUCKET }}
           GCS_PREFIX: ${{ vars.GCS_PREFIX }}
-          BQ_DATASET: ${{ vars.BQ_DATASET || 'nyt' }}
-          REGION: ${{ vars.REGION || 'us-central1' }}
-          FUNCTION_NAME: ${{ vars.FUNCTION_NAME || 'nyt-bq-loader' }}
+          BQ_STAGING_DATASET: ${{ vars.BQ_STAGING_DATASET }}
+          BQ_METADATA_DATASET: ${{ vars.BQ_METADATA_DATASET }}
+          BQ_PROD_DATASET: ${{ vars.BQ_PROD_DATASET }}
+          REGION: ${{ vars.REGION }}
+          FUNCTION_NAME: ${{ vars.FUNCTION_NAME }}
         run: |
           chmod +x infra/deploy.sh
           ./infra/deploy.sh

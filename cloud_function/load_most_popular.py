@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from config import (
+    BQ_STAGING_DATASET,
     GCP_PROJECT,
     LOAD_MANIFEST_TABLE,
     MOST_POPULAR_FINAL_TABLE,
@@ -29,9 +30,7 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     """
     client = bigquery.Client(project=GCP_PROJECT)
     gcs_uri = f"gs://{bucket}/{object_name}"
-
-    # Use snapshot_date as manifest path
-    manifest_path = snapshot_date
+    manifest_path = object_name
 
     logger.info(
         "Loading most_popular from %s to %s (snapshot_date=%s)",
@@ -63,9 +62,7 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
         temp_schema = client.schema_from_json(json.dumps(temp_schema_json))
 
     # Create temp table
-    temp_table_ref = client.dataset(MOST_POPULAR_STAGING_TABLE.split(".")[0]).table(
-        temp_table.split(".")[-1]
-    )
+    temp_table_ref = client.dataset(BQ_STAGING_DATASET).table(temp_table.split(".")[-1])
     temp_table_obj = bigquery.Table(temp_table_ref, schema=temp_schema)
     client.create_table(temp_table_obj, exists_ok=True)
 

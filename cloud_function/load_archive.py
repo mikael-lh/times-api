@@ -27,15 +27,7 @@ def load_archive(bucket: str, object_name: str) -> None:
     """
     client = bigquery.Client(project=GCP_PROJECT)
     gcs_uri = f"gs://{bucket}/{object_name}"
-
-    # Extract path for manifest (e.g. "2020/05" from "nyt-ingest/archive_slim/2020/05.ndjson")
-    path_parts = Path(object_name).parts
-    # Find "archive_slim" and take the next parts (year/month)
-    try:
-        idx = path_parts.index("archive_slim")
-        manifest_path = "/".join(path_parts[idx + 1 :]).replace(".ndjson", "")
-    except (ValueError, IndexError):
-        manifest_path = object_name
+    manifest_path = object_name
 
     logger.info(f"Loading archive from {gcs_uri} to {ARCHIVE_STAGING_TABLE}")
 

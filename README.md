@@ -220,35 +220,43 @@ A **Cloud Function** automatically loads slim NDJSON files from GCS into **BigQu
 
 - **Trigger**: Eventarc monitors the GCS bucket for `object.finalize` events.
 - **Function**: Receives the event, filters for `archive_slim/` or `most_popular_slim/` paths, loads the file to a staging table, MERGEs into the final table (deduplicating by key), and records the load in a manifest table.
-- **Tables**:
-  - `nyt.archive_staging` / `nyt.archive_articles` (partitioned by `pub_date`)
-  - `nyt.most_popular_staging` / `nyt.most_popular_articles` (partitioned by `snapshot_date`)
-  - `nyt.load_manifest` (tracks loaded files for idempotency)
+- **Three datasets** (staging, metadata, prod):
+  - **staging**: `archive_staging`, `most_popular_staging` (transient; truncated after each load)
+  - **metadata**: `load_manifest` (tracks loaded files for idempotency)
+  - **prod**: `archive_articles` (partitioned by `pub_date`), `most_popular_articles` (partitioned by `snapshot_date`)
 
 ### Setup
 
 **One-time BigQuery setup** (run before deploying the function):
 
 ```bash
-GCP_PROJECT=your-project BQ_DATASET=nyt ./infra/create_bq_tables.sh
+GCP_PROJECT=your-project ./infra/create_bq_tables.sh
 ```
 
-This creates the dataset and all required tables (staging, final, manifest) using the schema definitions in `schema/`.
+This creates three datasets (`staging`, `metadata`, `prod`) and all required tables using the schema definitions in `schema/`. Dataset names are hardcoded in the script.
 
 **Deploy the Cloud Function**:
 
 The function is deployed automatically via GitHub Actions when you push changes to `cloud_function/`, `infra/deploy.sh`, or `schema/`. You can also deploy manually:
 
 ```bash
-GCP_PROJECT=your-project GCS_BUCKET=your-bucket ./infra/deploy.sh
+GCP_PROJECT=your-project GCS_BUCKET=your-bucket GCS_PREFIX=nyt-ingest \
+BQ_STAGING_DATASET=staging BQ_METADATA_DATASET=metadata BQ_PROD_DATASET=prod \
+FUNCTION_NAME=nyt-bq-loader REGION=us-central1 \
+./infra/deploy.sh
 ```
 
-**Required environment variables** (set in GitHub Actions or locally):
+**Required environment variables** (must be set in GitHub Actions variables and when deploying locally):
 - `GCP_PROJECT`: Your GCP project ID
 - `GCS_BUCKET`: GCS bucket name (e.g. `my-nyt-data`)
-- `GCS_PREFIX`: Prefix for objects (default: `nyt-ingest`)
-- `BQ_DATASET`: BigQuery dataset name (default: `nyt`)
-- `REGION`: Cloud Function region (default: `us-central1`)
+- `GCS_PREFIX`: Prefix for objects (e.g. `nyt-ingest`)
+- `BQ_STAGING_DATASET`: Staging dataset name (e.g. `staging`)
+- `BQ_METADATA_DATASET`: Metadata dataset name (e.g. `metadata`)
+- `BQ_PROD_DATASET`: Production dataset name (e.g. `prod`)
+- `FUNCTION_NAME`: Cloud Function name (e.g. `nyt-bq-loader`)
+- `REGION`: Cloud Function region (e.g. `us-central1`)
+
+All variables are required; the scripts will fail with a clear error if any are missing.
 
 ### How It Works
 
@@ -257,11 +265,11 @@ GCP_PROJECT=your-project GCS_BUCKET=your-bucket ./infra/deploy.sh
 3. The function:
    - Checks if the path matches `archive_slim/` or `most_popular_slim/`
    - Checks the manifest to avoid re-loading (optional idempotency)
-   - Loads the file to the staging table using `bq load`
-   - MERGEs from staging to final table (dedup by `article_id` for archive, `(snapshot_date, id)` for most popular)
-   - Records the load in `load_manifest`
+   - Loads the file to the staging dataset table using `bq load`
+   - MERGEs from staging to prod (dedup by `article_id` for archive, `(snapshot_date, id)` for most popular)
+   - Records the load in the metadata dataset (`load_manifest`)
    - Truncates the staging table
-4. Data is immediately available in BigQuery for querying and dbt transformations.
+4. Data is immediately available in the prod dataset for querying and dbt transformations.
 
 ### File Layout (BigQuery Pipeline)
 
@@ -289,7 +297,7 @@ GCP_PROJECT=your-project GCS_BUCKET=your-bucket ./infra/deploy.sh
 ### Permissions
 
 The Cloud Function's service account needs:
-- **BigQuery Data Editor** (or equivalent) on the dataset
+- **BigQuery Data Editor** (or equivalent) on the three datasets (staging, metadata, prod)
 - **Storage Object Viewer** on the GCS bucket
 
 These are typically granted automatically during deployment, but verify if you encounter permission errors.

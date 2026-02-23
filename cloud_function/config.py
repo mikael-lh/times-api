@@ -1,25 +1,27 @@
 """
 Configuration for the NYT BigQuery loader Cloud Function.
 
-Reads from environment variables; defaults match the workflow setup.
+Reads from environment variables (no defaults - fails if not set).
 """
 
 import os
 
 # GCS configuration
-GCS_BUCKET = os.getenv("GCS_BUCKET", "nyt-ingest")
-GCS_PREFIX = os.getenv("GCS_PREFIX", "nyt-ingest")
+GCS_BUCKET = os.environ["GCS_BUCKET"]
+GCS_PREFIX = os.environ["GCS_PREFIX"]
 
-# BigQuery configuration
-GCP_PROJECT = os.getenv("GCP_PROJECT", "")
-BQ_DATASET = os.getenv("BQ_DATASET", "nyt")
+# BigQuery configuration (three datasets: staging, metadata, prod)
+GCP_PROJECT = os.environ["GCP_PROJECT"]
+BQ_STAGING_DATASET = os.environ["BQ_STAGING_DATASET"]
+BQ_METADATA_DATASET = os.environ["BQ_METADATA_DATASET"]
+BQ_PROD_DATASET = os.environ["BQ_PROD_DATASET"]
 
-# Table names
-ARCHIVE_STAGING_TABLE = f"{BQ_DATASET}.archive_staging"
-ARCHIVE_FINAL_TABLE = f"{BQ_DATASET}.archive_articles"
-MOST_POPULAR_STAGING_TABLE = f"{BQ_DATASET}.most_popular_staging"
-MOST_POPULAR_FINAL_TABLE = f"{BQ_DATASET}.most_popular_articles"
-LOAD_MANIFEST_TABLE = f"{BQ_DATASET}.load_manifest"
+# Table names (staging tables in staging, final tables in prod, manifest in metadata)
+ARCHIVE_STAGING_TABLE = f"{BQ_STAGING_DATASET}.archive_staging"
+ARCHIVE_FINAL_TABLE = f"{BQ_PROD_DATASET}.archive_articles"
+MOST_POPULAR_STAGING_TABLE = f"{BQ_STAGING_DATASET}.most_popular_staging"
+MOST_POPULAR_FINAL_TABLE = f"{BQ_PROD_DATASET}.most_popular_articles"
+LOAD_MANIFEST_TABLE = f"{BQ_METADATA_DATASET}.load_manifest"
 
 # Path prefixes for filtering
 ARCHIVE_SLIM_PREFIX = "archive_slim/"
