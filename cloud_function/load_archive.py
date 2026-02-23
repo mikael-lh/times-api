@@ -44,8 +44,7 @@ def load_archive(bucket: str, object_name: str) -> None:
 
     # Load to staging
     schema_path = Path(__file__).parent.parent / "schema" / "archive_articles.json"
-    with open(schema_path) as f:
-        schema = client.schema_from_json(f.read())
+    schema = client.schema_from_json(str(schema_path))
 
     job_config = bigquery.LoadJobConfig(
         source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,

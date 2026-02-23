@@ -57,9 +57,9 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     schema_path = Path(__file__).parent.parent / "schema" / "most_popular_articles.json"
     with open(schema_path) as f:
         full_schema_json = json.load(f)
-        # Remove snapshot_date from schema for temp load
-        temp_schema_json = [field for field in full_schema_json if field["name"] != "snapshot_date"]
-        temp_schema = client.schema_from_json(json.dumps(temp_schema_json))
+    # Remove snapshot_date from schema for temp load; build schema from API repr list
+    temp_schema_json = [field for field in full_schema_json if field["name"] != "snapshot_date"]
+    temp_schema = [bigquery.SchemaField.from_api_repr(f) for f in temp_schema_json]
 
     # Create temp table
     temp_table_ref = client.dataset(BQ_STAGING_DATASET).table(temp_table.split(".")[-1])
