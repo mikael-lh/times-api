@@ -55,6 +55,14 @@ echo "  Prefix: $GCS_PREFIX"
 echo "  Datasets: $BQ_STAGING_DATASET, $BQ_METADATA_DATASET, $BQ_PROD_DATASET"
 echo ""
 
+# Copy schema files to cloud_function/schema/ for deployment
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && git rev-parse --show-toplevel)"
+echo "Copying schema files to cloud_function/schema/..."
+mkdir -p "$REPO_ROOT/cloud_function/schema"
+cp "$REPO_ROOT/schema"/*.json "$REPO_ROOT/cloud_function/schema/"
+echo "✓ Schema files copied"
+echo ""
+
 # Build gcloud command
 DEPLOY_CMD=(
   gcloud functions deploy "$FUNCTION_NAME"

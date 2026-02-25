@@ -274,7 +274,7 @@ This creates three datasets (`staging`, `metadata`, `prod`) and all required tab
 
 **Deploy the Cloud Function**:
 
-The function is deployed automatically via GitHub Actions when you push changes to `cloud_function/`, `infra/deploy.sh`, or `schema/`. You can also deploy manually:
+The function is deployed automatically via GitHub Actions when you push changes to `cloud_function/`, `infra/deploy.sh`, or `schema/`. The deployment script automatically copies schema files from `schema/` to `cloud_function/schema/` before deploying. You can also deploy manually:
 
 ```bash
 GCP_PROJECT=your-project GCS_BUCKET=your-bucket GCS_PREFIX=nyt-ingest \
@@ -312,11 +312,12 @@ All variables are required; the scripts will fail with a clear error if any are 
 
 ```
 .
-├── schema/                        # BigQuery schema definitions (JSON)
+├── schema/                        # BigQuery schema definitions (JSON, single source of truth)
 │   ├── archive_articles.json      # Archive table schema
 │   └── most_popular_articles.json # Most Popular table schema
 │
 ├── cloud_function/                # Cloud Function source
+│   ├── schema/                    # (Auto-generated during deployment, in .gitignore)
 │   ├── main.py                    # Entrypoint (receives Cloud Events)
 │   ├── config.py                  # Configuration (env vars)
 │   ├── load_archive.py            # Archive loader (staging → MERGE → manifest)
@@ -325,7 +326,7 @@ All variables are required; the scripts will fail with a clear error if any are 
 │
 ├── infra/                         # Infrastructure scripts
 │   ├── create_bq_tables.sh        # One-time BigQuery setup
-│   └── deploy.sh                  # Deploy Cloud Function + Eventarc trigger
+│   └── deploy.sh                  # Deploy Cloud Function (copies schema/ → cloud_function/schema/)
 │
 └── .github/workflows/
     └── deploy-function.yml        # Auto-deploy function on push
