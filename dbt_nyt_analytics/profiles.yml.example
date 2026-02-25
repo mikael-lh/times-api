@@ -1,14 +1,20 @@
 # Copy this file to ~/.dbt/profiles.yml and update with your credentials
 # DO NOT commit profiles.yml with real credentials
+#
+# Setup instructions:
+# 1. Run: cp profiles.yml.example ~/.dbt/profiles.yml
+# 2. Run: ./setup_gcp_service_account.sh (creates service account and key)
+# 3. Update keyfile path below if different from default
+# 4. Test: dbt debug
 
 nyt_bigquery:
   target: dev
   outputs:
     dev:
       type: bigquery
-      method: oauth  # Use 'oauth' for local dev, 'service-account' for CI
+      method: oauth  # Browser-based login for local development
       project: times-api-ingest
-      dataset: dbt_dev  # Your personal dev dataset
+      dataset: analytics  # Fallback dataset (usually overridden by +schema configs)
       location: US
       threads: 4
       timeout_seconds: 300
@@ -18,9 +24,9 @@ nyt_bigquery:
       type: bigquery
       method: service-account
       project: times-api-ingest
-      dataset: analytics
+      dataset: analytics  # Fallback dataset (usually overridden by +schema configs)
       location: US
       threads: 4
       timeout_seconds: 300
       priority: interactive
-      keyfile: /path/to/service-account-key.json  # Update this path
+      keyfile: ~/.dbt/dbt-runner-key.json  # Created by setup_gcp_service_account.sh
