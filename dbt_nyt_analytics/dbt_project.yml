@@ -1,0 +1,35 @@
+name: 'nyt_analytics'
+version: '1.0.0'
+config-version: 2
+
+profile: 'nyt_bigquery'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  # Default lookback for incremental models (can be overridden at runtime)
+  incremental_lookback_days: 3
+
+models:
+  nyt_analytics:
+    staging:
+      +materialized: view
+      +schema: dbt_staging
+    intermediate:
+      +materialized: ephemeral
+    marts:
+      core:
+        +materialized: table
+        +schema: dbt_core
+      analytics:
+        +materialized: table
+        +schema: dbt_analytics

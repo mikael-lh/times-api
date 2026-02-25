@@ -1,0 +1,54 @@
+version: 2
+
+models:
+  - name: agg_articles_by_month
+    description: "Monthly aggregation of article metrics for content trend analysis"
+    columns:
+      - name: pub_month
+        description: "Publication month (first day of month)"
+        tests:
+          - unique
+          - not_null
+      - name: total_articles
+        description: "Total articles published"
+      - name: avg_word_count
+        description: "Average word count"
+      - name: articles_with_authors
+        description: "Articles with at least one author"
+      - name: articles_with_keywords
+        description: "Articles with at least one keyword"
+
+  - name: agg_author_performance
+    description: "Author-level metrics aggregated across all their articles"
+    columns:
+      - name: author_full_name
+        description: "Full name of the author"
+        tests:
+          - unique
+          - not_null
+      - name: total_articles
+        description: "Total articles by this author"
+      - name: first_article_date
+        description: "Date of first article"
+      - name: last_article_date
+        description: "Date of most recent article"
+
+  - name: agg_section_trends
+    description: "Section and news desk trends by year"
+    columns:
+      - name: section_name
+        description: "Section name"
+      - name: pub_year
+        description: "Publication year"
+      - name: article_count
+        description: "Number of articles"
+
+  - name: agg_keyword_trends
+    description: "Keyword trends by year for topic analysis"
+    columns:
+      - name: keyword_value
+        description: "The keyword"
+      - name: pub_year
+        description: "Publication year"
+      - name: article_count
+        description: "Number of articles with this keyword"

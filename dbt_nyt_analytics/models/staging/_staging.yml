@@ -1,0 +1,45 @@
+version: 2
+
+models:
+  - name: stg_archive_articles
+    description: "Staged archive articles with cleaned column names and types"
+    columns:
+      - name: article_id
+        description: "Primary key - unique article identifier"
+        tests:
+          - unique
+          - not_null
+      - name: pub_date
+        description: "Publication date"
+        tests:
+          - not_null
+      - name: section_name
+        description: "Section name"
+      - name: news_desk
+        description: "News desk"
+      - name: headline_main
+        description: "Main headline"
+      - name: word_count
+        description: "Article word count"
+      - name: keywords
+        description: "Array of keyword records"
+      - name: byline_person
+        description: "Array of author records"
+
+  - name: stg_most_popular_articles
+    description: "Staged most popular articles with cleaned types"
+    columns:
+      - name: snapshot_date
+        description: "Date of the popularity snapshot"
+        tests:
+          - not_null
+      - name: article_id
+        description: "Article ID"
+        tests:
+          - not_null
+      - name: published_at
+        description: "Parsed publication timestamp"
+      - name: section
+        description: "Section name"
+      - name: title
+        description: "Article title"

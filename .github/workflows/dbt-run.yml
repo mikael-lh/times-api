@@ -1,0 +1,95 @@
+name: dbt Daily Run
+
+on:
+  schedule:
+    # Run at 8:00 UTC daily (2 hours after ingestion at 6:00 UTC)
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    inputs:
+      full_refresh:
+        description: 'Run with --full-refresh flag'
+        required: false
+        default: 'false'
+        type: boolean
+      select:
+        description: 'dbt select argument (e.g., +fct_articles)'
+        required: false
+        default: ''
+        type: string
+
+env:
+  DBT_PROJECT_DIR: dbt_nyt_analytics
+
+jobs:
+  dbt_run:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+      
+      - name: Install dependencies (including dbt)
+        run: uv sync --group dbt
+      
+      - name: Configure dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          nyt_bigquery:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: times-api-ingest
+                dataset: analytics
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          EOF
+      
+      - name: Install dbt packages
+        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        run: uv run dbt deps
+      
+      - name: Run dbt seed
+        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        run: uv run dbt seed
+      
+      - name: Run dbt models
+        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
+            FLAGS="$FLAGS --full-refresh"
+          fi
+          if [ -n "${{ github.event.inputs.select }}" ]; then
+            FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
+          fi
+          uv run dbt run $FLAGS
+      
+      - name: Run dbt tests
+        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        run: uv run dbt test
+      
+      - name: Generate dbt docs
+        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        run: uv run dbt docs generate
+      
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dbt-artifacts
+          path: |
+            ${{ env.DBT_PROJECT_DIR }}/target/manifest.json
+            ${{ env.DBT_PROJECT_DIR }}/target/run_results.json
+            ${{ env.DBT_PROJECT_DIR }}/target/catalog.json
+          retention-days: 7
