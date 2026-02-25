@@ -8,3 +8,4 @@ most_popular_slim/
 archive-api-spec.yaml
 __pycache__/
 .cursor/rules/git-and-shell.mdc
+cloud_function/schema/

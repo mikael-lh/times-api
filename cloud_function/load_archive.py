@@ -48,7 +48,7 @@ def load_archive(bucket: str, object_name: str) -> None:
     temp_table = f"{ARCHIVE_STAGING_TABLE}_temp"
 
     # Get schema with pub_date STRING for temp load
-    schema_path = Path(__file__).parent.parent / "schema" / "archive_articles.json"
+    schema_path = Path(__file__).parent / "schema" / "archive_articles.json"
     with open(schema_path) as f:
         full_schema_json = json.load(f)
     # Change pub_date to STRING for temp load; build schema from API repr list

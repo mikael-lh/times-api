@@ -54,7 +54,7 @@ def load_most_popular(bucket: str, object_name: str, snapshot_date: str) -> None
     temp_table = f"{MOST_POPULAR_STAGING_TABLE}_temp"
 
     # Get schema without snapshot_date for loading
-    schema_path = Path(__file__).parent.parent / "schema" / "most_popular_articles.json"
+    schema_path = Path(__file__).parent / "schema" / "most_popular_articles.json"
     with open(schema_path) as f:
         full_schema_json = json.load(f)
     # Remove snapshot_date from schema for temp load; build schema from API repr list
