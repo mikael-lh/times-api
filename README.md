@@ -231,15 +231,19 @@ Add these in **Settings → Secrets and variables → Actions**:
 | Secret | Description |
 |--------|-------------|
 | `NYTIMES_API_KEY` | Your NYT API key (same as in `.env` locally). |
-| `GCP_SA_KEY` | **Full JSON** of a GCP service account key that can write to your bucket. Create a key for a service account with **Storage Object Creator** (or **Storage Admin**) on the target bucket, then paste the entire JSON as the secret value. |
+| `GCP_SA_KEY` | **Full JSON** of the `dbt-runner` service account key for dbt transformations. This account needs `bigquery.jobUser` and `bigquery.dataEditor` roles. |
+| `GCP_SA_KEY_INGEST` | **Full JSON** of a GCP service account key for data ingestion. This account needs **Storage Object Creator** (or **Storage Admin**) role on the GCS bucket. |
+| `GCP_SA_KEY_DEPLOY` | **Full JSON** of a GCP service account key for deploying Cloud Functions. This account needs Cloud Functions deployment permissions. |
 | `GCS_BUCKET` | Name of the GCS bucket (e.g. `my-nyt-data`). No `gs://` prefix. |
 
 ### One-time GCP setup
 
 1. Create a GCS bucket (e.g. `gsutil mb gs://my-nyt-data`).
-2. Create a service account (or use an existing one) with permission to create/overwrite objects in that bucket (e.g. role **Storage Object Admin** or **Storage Object Creator** on the bucket).
-3. Create a JSON key for that service account: **IAM & Admin → Service accounts → Keys → Add key → JSON**. Copy the entire JSON.
-4. In GitHub: **Settings → Secrets and variables → Actions** → **New repository secret** for `GCP_SA_KEY` (paste the JSON) and `GCS_BUCKET` (bucket name). Add `NYTIMES_API_KEY` as above.
+2. Create service accounts:
+   - **For data ingestion** (`github-actions-gcs-upload`): Create a service account with **Storage Object Admin** or **Storage Object Creator** role on the bucket. Generate a JSON key and add it as `GCP_SA_KEY_INGEST` in GitHub Secrets.
+   - **For dbt** (`dbt-runner`): Create a service account with `bigquery.jobUser` and `bigquery.dataEditor` roles. Generate a JSON key and add it as `GCP_SA_KEY` in GitHub Secrets.
+   - **For Cloud Function deployment** (can reuse ingestion SA or create separate): Ensure it has Cloud Functions deployment permissions. Add its JSON key as `GCP_SA_KEY_DEPLOY` in GitHub Secrets.
+3. In GitHub: **Settings → Secrets and variables → Actions** → **New repository secret** for each service account key and `GCS_BUCKET` (bucket name). Add `NYTIMES_API_KEY` as above.
 
 After that, daily runs will ingest most popular data and upload to GCS; use **Actions → Archive ingest** when you want to run (or resume) the archive pipeline.
 
