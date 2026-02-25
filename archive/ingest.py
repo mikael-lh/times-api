@@ -107,7 +107,7 @@ def main():
         if max_requests > 0 and requests_this_run >= max_requests:
             print(f"Reached limit of {max_requests} requests this run. Re-run to resume.")
             break
-        # Sleep only after an actual API call (rate limit), not when we only skipped (already in GCS)
+        # Sleep only after an actual API call (rate limit), not when we skipped (already in GCS)
         if previous_made_request:
             print(f"Sleeping {SLEEP_SECONDS} seconds before next request...")
             time.sleep(SLEEP_SECONDS)
