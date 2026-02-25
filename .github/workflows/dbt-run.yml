@@ -17,9 +17,6 @@ on:
         default: ''
         type: string
 
-env:
-  DBT_PROJECT_DIR: dbt_nyt_analytics
-
 jobs:
   dbt_run:
     runs-on: ubuntu-latest
@@ -61,15 +58,15 @@ jobs:
           EOF
       
       - name: Install dbt packages
-        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        working-directory: dbt_nyt_analytics
         run: uv run dbt deps
       
       - name: Run dbt seed
-        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        working-directory: dbt_nyt_analytics
         run: uv run dbt seed
       
       - name: Run dbt models
-        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        working-directory: dbt_nyt_analytics
         run: |
           FLAGS=""
           if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
@@ -81,11 +78,11 @@ jobs:
           uv run dbt run $FLAGS
       
       - name: Run dbt tests
-        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        working-directory: dbt_nyt_analytics
         run: uv run dbt test
       
       - name: Generate dbt docs
-        working-directory: ${{ env.DBT_PROJECT_DIR }}
+        working-directory: dbt_nyt_analytics
         run: uv run dbt docs generate
       
       - name: Upload dbt artifacts
@@ -94,7 +91,7 @@ jobs:
         with:
           name: dbt-artifacts
           path: |
-            ${{ env.DBT_PROJECT_DIR }}/target/manifest.json
-            ${{ env.DBT_PROJECT_DIR }}/target/run_results.json
-            ${{ env.DBT_PROJECT_DIR }}/target/catalog.json
+            dbt_nyt_analytics/target/manifest.json
+            dbt_nyt_analytics/target/run_results.json
+            dbt_nyt_analytics/target/catalog.json
           retention-days: 7
