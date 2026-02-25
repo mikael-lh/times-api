@@ -71,12 +71,13 @@ bq --project_id="$GCP_PROJECT" mk --table \
   "$BQ_METADATA_DATASET.load_manifest" \
   source:STRING,path:STRING,loaded_at:TIMESTAMP 2>/dev/null || echo "  (Table already exists)"
 
-# Prod: archive_articles (partitioned by pub_date)
-echo "Creating table $BQ_PROD_DATASET.archive_articles (partitioned by pub_date)..."
+# Prod: archive_articles (partitioned by pub_date - MONTHLY to support 100+ years)
+echo "Creating table $BQ_PROD_DATASET.archive_articles (partitioned by pub_date - MONTHLY)..."
 bq --project_id="$GCP_PROJECT" mk --table \
   --description="Final archive articles table" \
   --time_partitioning_field=pub_date \
-  --time_partitioning_type=DAY \
+  --time_partitioning_type=MONTH \
+  --clustering_fields=pub_date,section_name,news_desk \
   "$BQ_PROD_DATASET.archive_articles" \
   "$SCHEMA_DIR/archive_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
@@ -94,4 +95,4 @@ echo "✅ BigQuery setup complete!"
 echo "Datasets and tables in $GCP_PROJECT:"
 echo "  $BQ_STAGING_DATASET: archive_articles, most_popular_articles"
 echo "  $BQ_METADATA_DATASET: load_manifest"
-echo "  $BQ_PROD_DATASET: archive_articles (partitioned by pub_date), most_popular_articles (partitioned by snapshot_date)"
+echo "  $BQ_PROD_DATASET: archive_articles (partitioned MONTHLY by pub_date, clustered), most_popular_articles (partitioned by snapshot_date)"
