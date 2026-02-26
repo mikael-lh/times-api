@@ -10,7 +10,7 @@
     )
 }}
 
-with source as (
+with source_data as (
     select * from {{ source('nyt_raw', 'most_popular_articles') }}
     {% if is_incremental() %}
     where {{ get_incremental_filter('snapshot_date') }}
@@ -51,7 +51,7 @@ cleaned as (
         media_count_by_type,
         adx_keywords
         
-    from source
+    from source_data
     where id is not null
 )
 
