@@ -27,21 +27,26 @@ with_rankings as (
             order by article_count desc
         ) as rank_in_year,
         
-        -- Prior year metrics
+        -- Prior year article count
         lag(article_count) over (
             partition by keyword_name, keyword_value 
             order by pub_year
-        ) as prior_year_count,
+        ) as prior_year_count
         
-        lag(row_number() over (
-            partition by pub_year 
-            order by article_count desc
-        )) over (
+    from yearly_keyword_stats
+),
+
+with_prior_rank as (
+    select
+        *,
+        
+        -- Get prior year rank by using lag on the already computed rank_in_year
+        lag(rank_in_year) over (
             partition by keyword_name, keyword_value 
             order by pub_year
         ) as prior_year_rank
         
-    from yearly_keyword_stats
+    from with_rankings
 ),
 
 final as (
@@ -65,7 +70,7 @@ final as (
         prior_year_rank,
         coalesce(prior_year_rank, 0) - rank_in_year as rank_change
         
-    from with_rankings
+    from with_prior_rank
     order by pub_year desc, article_count desc
 )
 
