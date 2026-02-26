@@ -12,7 +12,7 @@ with authors as (
 
 with_key as (
     select
-        {{ dbt_utils.generate_surrogate_key(['firstname', 'middlename', 'lastname']) }} as author_key,
+        {{ dbt_utils.generate_surrogate_key(['author_full_name']) }} as author_key,
         firstname,
         middlename,
         lastname,
