@@ -59,7 +59,6 @@ cleaned as (
         case when array_length(byline_person) > 0 then true else false end as has_authors,
         case 
             when multimedia_count_by_type is not null 
-                and multimedia_count_by_type != 'null' 
             then true 
             else false 
         end as has_multimedia
