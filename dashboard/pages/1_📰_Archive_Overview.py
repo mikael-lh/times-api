@@ -3,14 +3,22 @@ Archive Overview Dashboard Page
 Comprehensive view of archive data with filterable time series, breakdowns, and top lists
 """
 
-import pandas as pd
-import streamlit as st
-from utils.bigquery_utils import (
+import sys
+from pathlib import Path
+
+# Add dashboard dir to path so "utils" resolves when run from project root or dashboard/
+_dashboard_dir = Path(__file__).resolve().parent.parent
+if str(_dashboard_dir) not in sys.path:
+    sys.path.insert(0, str(_dashboard_dir))
+
+import pandas as pd  # noqa: E402
+import streamlit as st  # noqa: E402
+from utils.bigquery_utils import (  # noqa: E402
     get_bigquery_client,
     get_table_path,
     run_query,
 )
-from utils.chart_utils import create_bar_chart, create_line_chart
+from utils.chart_utils import create_bar_chart, create_line_chart  # noqa: E402
 
 st.set_page_config(page_title="Archive Overview", page_icon="📰", layout="wide")
 
@@ -160,22 +168,22 @@ with st.sidebar:
 
 # Build WHERE clause based on filters
 def build_where_clause():
-    conditions = ["pub_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 100 YEAR)"]
+    conditions = ["a.pub_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 100 YEAR)"]
 
     if date_from and date_to:
-        conditions.append(f"pub_date BETWEEN '{date_from}' AND '{date_to}'")
+        conditions.append(f"a.pub_date BETWEEN '{date_from}' AND '{date_to}'")
 
     if selected_sections:
         sections_str = "', '".join(selected_sections)
-        conditions.append(f"section_name IN ('{sections_str}')")
+        conditions.append(f"a.section_name IN ('{sections_str}')")
 
     if selected_news_desks:
         desks_str = "', '".join(selected_news_desks)
-        conditions.append(f"news_desk IN ('{desks_str}')")
+        conditions.append(f"a.news_desk IN ('{desks_str}')")
 
     if selected_materials:
         materials_str = "', '".join(selected_materials)
-        conditions.append(f"type_of_material IN ('{materials_str}')")
+        conditions.append(f"a.type_of_material IN ('{materials_str}')")
 
     return " AND ".join(conditions)
 

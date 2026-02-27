@@ -339,3 +339,185 @@ The Cloud Function's service account needs:
 - **Storage Object Viewer** on the GCS bucket
 
 These are typically granted automatically during deployment, but verify if you encounter permission errors.
+
+---
+
+## dbt Transformations
+
+Once data is loaded into BigQuery, **dbt** transforms raw tables into analytics-ready models with proper data modeling, aggregations, and quality checks.
+
+### Architecture
+
+The dbt project (`dbt_nyt_analytics/`) follows a layered approach:
+
+1. **Staging Layer** - Clean and standardize source data (views)
+2. **Intermediate Layer** - Flatten nested structures like keywords and authors (ephemeral CTEs)
+3. **Core Marts** - Fact and dimension tables for flexible analysis (tables)
+4. **Analytics Marts** - Pre-aggregated metrics for dashboard performance (tables)
+
+### Key Models
+
+**Staging:**
+- `stg_archive_articles` - Cleaned archive articles (incremental, partitioned by `pub_date`)
+- `stg_most_popular_articles` - Cleaned most popular snapshots (incremental)
+
+**Core Marts:**
+- `fct_articles` - Main fact table with article metrics, author/keyword counts
+- `fct_article_popularity` - Popularity tracking over time
+- `dim_authors`, `dim_keywords`, `dim_sections` - Dimension tables
+
+**Analytics Marts:**
+- `agg_articles_by_month` - Monthly content trends (volume, word count, metadata richness)
+- `agg_author_performance` - Author productivity and collaboration metrics
+- `agg_section_trends` - Section trends by year
+- `agg_keyword_trends` - Keyword/topic trends with year-over-year changes
+
+### Quick Start
+
+```bash
+# Install dbt
+uv sync --group dbt
+
+# Set up service account and datasets
+cd dbt_nyt_analytics
+./setup_gcp_service_account.sh
+
+# Configure profile
+cp profiles.yml.example ~/.dbt/profiles.yml
+
+# Run transformations
+dbt run                    # Dev environment
+dbt run --target prod      # Production
+dbt test                   # Run data quality tests
+```
+
+### Dev vs Prod Separation
+
+A custom `generate_schema_name` macro automatically separates environments:
+
+| Target | Command | Datasets |
+|--------|---------|----------|
+| **Dev** | `dbt run` | `dev_dbt_staging`, `dev_dbt_core`, `dev_dbt_analytics` |
+| **Prod** | `dbt run --target prod` | `dbt_staging`, `dbt_core`, `dbt_analytics` |
+
+This prevents development work from overwriting production tables.
+
+### Incremental Models
+
+Large tables use incremental materialization for efficiency:
+- Only process new data based on `pub_date` or `snapshot_date`
+- Append-only incremental strategy with `get_incremental_filter()` macro
+- Use `dbt run --full-refresh` to rebuild from scratch
+
+### CI/CD
+
+dbt runs automatically via GitHub Actions:
+- **Schedule**: Daily at 8:00 UTC (after data ingestion at 6:00 UTC)
+- **Manual**: Triggerable with optional `--full-refresh` and `--select` flags
+- **Target**: Always runs with `--target prod` in CI
+
+See `dbt_nyt_analytics/README.md` for detailed documentation.
+
+---
+
+## Dashboard
+
+A **Streamlit dashboard** provides interactive analysis of the NYT archive data with comprehensive filtering capabilities.
+
+### Features
+
+- **Time Series**: Articles published and average word count by month
+- **Breakdowns**: By section, news desk, and type of material  
+- **Top Lists**: Top 10 keywords and authors by article count
+- **Comprehensive Filtering**: Date range, sections, news desks, material types, authors, keywords
+- All filters are interconnected and apply to all visualizations
+- Automatic filtering of articles outside 100-year window and zero word counts
+
+### Quick Start
+
+```bash
+# From project root, install dashboard dependencies
+uv sync --group dashboard
+
+# Configure credentials (one-time setup)
+cd dashboard
+cp .env.example .env
+# Edit .env with your GCP project ID and credentials path
+
+# Run the dashboard
+cd ..  # back to project root
+uv run streamlit run dashboard/pages/1_📰_Archive_Overview.py
+```
+
+### Configuration
+
+The dashboard requires a service account with BigQuery read access. Edit `dashboard/.env`:
+
+- `GCP_PROJECT_ID`: Your GCP project ID (default: `times-api-ingest`)
+- `GCP_CREDENTIALS_PATH`: Path to service account JSON key (e.g. `~/.dbt/dbt-runner-key.json`)
+- `DBT_CORE_DATASET`: Core dataset name (default: `dbt_core`)
+- `DBT_ANALYTICS_DATASET`: Analytics dataset name (default: `dbt_analytics`)  
+- `DBT_STAGING_DATASET`: Staging dataset name (default: `dbt_staging`)
+
+You can reuse the `dbt-runner` service account key for the dashboard, or create a separate read-only service account.
+
+### Data Sources
+
+The dashboard queries dbt models in BigQuery:
+- `dbt_core.fct_articles` - Main article fact table
+- `dbt_analytics.agg_author_performance` - Author metrics
+- `dbt_analytics.agg_keyword_trends` - Keyword trends
+- `dbt_staging.stg_archive_articles` - Staging table for filtering
+
+See `dashboard/README.md` for more details.
+
+---
+
+## File Layout (Complete)
+
+```
+.
+├── .env                        # API key (not committed)
+├── .gitignore
+├── pyproject.toml              # Project metadata, dependencies, tool config
+├── uv.lock                     # Locked dependency versions
+│
+├── archive/                    # Archive API (historical)
+│   ├── models.py               # SlimArticle, Keyword, BylinePerson
+│   ├── ingest.py               # Fetch → archive_raw/YYYY/MM.json
+│   └── transform.py            # archive_raw/ → archive_slim/YYYY/MM.ndjson
+├── archive_raw/                # Raw API responses (YYYY/MM.json)
+├── archive_slim/               # Slim NDJSON (YYYY/MM.ndjson)
+│
+├── most_popular/               # Most Popular API (daily trending)
+│   ├── models.py               # SlimMostPopularArticle
+│   ├── ingest.py               # Fetch → most_popular_raw/YYYY-MM-DD/viewed_30.json
+│   ├── transform.py            # most_popular_raw/ → most_popular_slim/
+│   └── scheduler.py            # Daily scheduler (ingest + transform)
+├── most_popular_raw/           # Raw API responses (YYYY-MM-DD/viewed_30.json)
+├── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
+│
+├── dbt_nyt_analytics/          # dbt project for BigQuery transformations
+│   ├── models/
+│   │   ├── staging/            # Staging models (views)
+│   │   ├── intermediate/       # Intermediate models (ephemeral)
+│   │   └── marts/              # Analytics-ready models (tables)
+│   │       ├── core/           # Core fact and dimension tables
+│   │       └── analytics/      # Aggregated analytics tables
+│   ├── macros/                 # dbt macros
+│   └── tests/                  # dbt tests
+│
+├── dashboard/                  # Streamlit dashboard
+│   ├── pages/                  # Dashboard pages
+│   │   └── 1_📰_Archive_Overview.py
+│   ├── utils/                  # Utility modules
+│   │   ├── bigquery_utils.py
+│   │   └── chart_utils.py
+│   └── .env                    # Dashboard config (not committed)
+│
+├── schema/                     # BigQuery schema definitions
+├── cloud_function/             # Cloud Function for GCS → BigQuery
+├── infra/                      # Infrastructure scripts
+└── .github/workflows/          # CI/CD workflows
+```
+
