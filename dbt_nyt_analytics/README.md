@@ -168,7 +168,8 @@ To enable GitHub Actions:
 ### Incremental Models
 Large tables use incremental materialization for efficiency:
 - Only process new data based on `pub_date` or `snapshot_date`
-- Controlled by `incremental_lookback_days` variable (default: 3 days)
+- Incremental runs are append-only: each run only processes rows
+  with a date greater than the current max date already in the model
 - Use `--full-refresh` to rebuild from scratch
 
 ### Custom Macros

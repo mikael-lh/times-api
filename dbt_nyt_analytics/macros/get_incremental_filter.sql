@@ -4,7 +4,13 @@
         
         Args:
             date_column: The date column to filter on
-            lookback_days: Number of days to look back (defaults to var('incremental_lookback_days'))
+            lookback_days: (unused) retained for backwards compatibility
+        
+        Behavior:
+            - On the first run (non-incremental), the model loads all history.
+            - On incremental runs, only rows with {{ date_column }} strictly
+              greater than the current max {{ date_column }} in {{ this }} are processed
+              (append-only incremental loading).
         
         Usage:
             {% if is_incremental() %}
@@ -12,10 +18,8 @@
             {% endif %}
     #}
     
-    {% set days = lookback_days or var('incremental_lookback_days', 3) %}
-    
-    {{ date_column }} >= date_sub(
-        (select max({{ date_column }}) from {{ this }}),
-        interval {{ days }} day
+    {{ date_column }} > (
+        select max({{ date_column }})
+        from {{ this }}
     )
 {% endmacro %}
