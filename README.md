@@ -342,6 +342,84 @@ These are typically granted automatically during deployment, but verify if you e
 
 ---
 
+## dbt Transformations
+
+Once data is loaded into BigQuery, **dbt** transforms raw tables into analytics-ready models with proper data modeling, aggregations, and quality checks.
+
+### Architecture
+
+The dbt project (`dbt_nyt_analytics/`) follows a layered approach:
+
+1. **Staging Layer** - Clean and standardize source data (views)
+2. **Intermediate Layer** - Flatten nested structures like keywords and authors (ephemeral CTEs)
+3. **Core Marts** - Fact and dimension tables for flexible analysis (tables)
+4. **Analytics Marts** - Pre-aggregated metrics for dashboard performance (tables)
+
+### Key Models
+
+**Staging:**
+- `stg_archive_articles` - Cleaned archive articles (incremental, partitioned by `pub_date`)
+- `stg_most_popular_articles` - Cleaned most popular snapshots (incremental)
+
+**Core Marts:**
+- `fct_articles` - Main fact table with article metrics, author/keyword counts
+- `fct_article_popularity` - Popularity tracking over time
+- `dim_authors`, `dim_keywords`, `dim_sections` - Dimension tables
+
+**Analytics Marts:**
+- `agg_articles_by_month` - Monthly content trends (volume, word count, metadata richness)
+- `agg_author_performance` - Author productivity and collaboration metrics
+- `agg_section_trends` - Section trends by year
+- `agg_keyword_trends` - Keyword/topic trends with year-over-year changes
+
+### Quick Start
+
+```bash
+# Install dbt
+uv sync --group dbt
+
+# Set up service account and datasets
+cd dbt_nyt_analytics
+./setup_gcp_service_account.sh
+
+# Configure profile
+cp profiles.yml.example ~/.dbt/profiles.yml
+
+# Run transformations
+dbt run                    # Dev environment
+dbt run --target prod      # Production
+dbt test                   # Run data quality tests
+```
+
+### Dev vs Prod Separation
+
+A custom `generate_schema_name` macro automatically separates environments:
+
+| Target | Command | Datasets |
+|--------|---------|----------|
+| **Dev** | `dbt run` | `dev_dbt_staging`, `dev_dbt_core`, `dev_dbt_analytics` |
+| **Prod** | `dbt run --target prod` | `dbt_staging`, `dbt_core`, `dbt_analytics` |
+
+This prevents development work from overwriting production tables.
+
+### Incremental Models
+
+Large tables use incremental materialization for efficiency:
+- Only process new data based on `pub_date` or `snapshot_date`
+- Append-only incremental strategy with `get_incremental_filter()` macro
+- Use `dbt run --full-refresh` to rebuild from scratch
+
+### CI/CD
+
+dbt runs automatically via GitHub Actions:
+- **Schedule**: Daily at 8:00 UTC (after data ingestion at 6:00 UTC)
+- **Manual**: Triggerable with optional `--full-refresh` and `--select` flags
+- **Target**: Always runs with `--target prod` in CI
+
+See `dbt_nyt_analytics/README.md` for detailed documentation.
+
+---
+
 ## Dashboard
 
 A **Streamlit dashboard** provides interactive analysis of the NYT archive data with comprehensive filtering capabilities.
