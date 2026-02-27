@@ -526,7 +526,7 @@ st.markdown("---")
 st.caption(
     """
 **Note:**
-- Only articles within the last 100 years are included (some stray earlier articles are filtered out)
+- Only articles within the last 100 years are included (stray earlier articles filtered out)
 - Average word counts exclude articles with 0 word count
 - All filters are interconnected and apply to all visualizations
 """
