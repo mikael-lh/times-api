@@ -14,18 +14,21 @@ A Streamlit dashboard for comprehensive analysis of NYT archive data with intera
 
 1. Install dependencies:
    ```bash
-   pip install -r requirements.txt
+   # From the project root
+   uv sync --group dashboard
    ```
 
 2. Configure credentials:
    ```bash
+   cd dashboard
    cp .env.example .env
    # Edit .env with your GCP project ID and credentials path
    ```
 
 3. Run the dashboard:
    ```bash
-   streamlit run pages/1_📰_Archive_Overview.py
+   # From the project root
+   uv run streamlit run dashboard/pages/1_📰_Archive_Overview.py
    ```
 
 ### Configuration
