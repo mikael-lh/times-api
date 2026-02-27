@@ -36,7 +36,7 @@ with st.sidebar:
     SELECT
         MIN(pub_date) as min_date,
         MAX(pub_date) as max_date
-    FROM {get_table_path('core', 'fct_articles')}
+    FROM {get_table_path("core", "fct_articles")}
     WHERE pub_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 100 YEAR)
     """
     date_range_df = run_query(client, date_range_query)
@@ -57,7 +57,7 @@ with st.sidebar:
         # Get filter options
         sections_query = f"""
         SELECT DISTINCT section_name
-        FROM {get_table_path('core', 'fct_articles')}
+        FROM {get_table_path("core", "fct_articles")}
         WHERE section_name != 'Unknown'
         ORDER BY section_name
         """
@@ -66,7 +66,7 @@ with st.sidebar:
 
         news_desk_query = f"""
         SELECT DISTINCT news_desk
-        FROM {get_table_path('core', 'fct_articles')}
+        FROM {get_table_path("core", "fct_articles")}
         WHERE news_desk != 'Unknown'
         ORDER BY news_desk
         """
@@ -75,7 +75,7 @@ with st.sidebar:
 
         type_material_query = f"""
         SELECT DISTINCT type_of_material
-        FROM {get_table_path('core', 'fct_articles')}
+        FROM {get_table_path("core", "fct_articles")}
         WHERE type_of_material != 'Unknown'
         ORDER BY type_of_material
         """
@@ -108,7 +108,7 @@ with st.sidebar:
         # Authors filter - load top authors for better UX
         authors_query = f"""
         SELECT author_full_name, total_articles
-        FROM {get_table_path('analytics', 'agg_author_performance')}
+        FROM {get_table_path("analytics", "agg_author_performance")}
         WHERE author_full_name IS NOT NULL AND author_full_name != ''
         ORDER BY total_articles DESC
         LIMIT 500
@@ -124,7 +124,7 @@ with st.sidebar:
         # Keywords filter - load top keywords
         keywords_query = f"""
         SELECT keyword_value, SUM(article_count) as total
-        FROM {get_table_path('analytics', 'agg_keyword_trends')}
+        FROM {get_table_path("analytics", "agg_keyword_trends")}
         WHERE keyword_value IS NOT NULL
         GROUP BY keyword_value
         ORDER BY total DESC
@@ -186,7 +186,7 @@ def build_author_filter():
         return f"""
         AND a.article_id IN (
             SELECT DISTINCT article_id
-            FROM {get_table_path('staging', 'stg_archive_articles')},
+            FROM {get_table_path("staging", "stg_archive_articles")},
             UNNEST(byline_person) as author
             WHERE TRIM(CONCAT(
                 COALESCE(author.firstname, ''),
@@ -206,7 +206,7 @@ def build_keyword_filter():
         return f"""
         AND a.article_id IN (
             SELECT DISTINCT article_id
-            FROM {get_table_path('staging', 'stg_archive_articles')},
+            FROM {get_table_path("staging", "stg_archive_articles")},
             UNNEST(keywords) as keyword
             WHERE keyword.value IN ('{keywords_str}')
         )
@@ -229,7 +229,7 @@ with st.spinner("Loading monthly article counts..."):
     SELECT
         DATE_TRUNC(pub_date, MONTH) as pub_month,
         COUNT(DISTINCT article_id) as article_count
-    FROM {get_table_path('core', 'fct_articles')} a
+    FROM {get_table_path("core", "fct_articles")} a
     WHERE {where_clause}
         {author_filter}
         {keyword_filter}
@@ -258,7 +258,7 @@ with st.spinner("Loading average word count by month..."):
     SELECT
         DATE_TRUNC(pub_date, MONTH) as pub_month,
         ROUND(AVG(CASE WHEN word_count > 0 THEN word_count END), 0) as avg_word_count
-    FROM {get_table_path('core', 'fct_articles')} a
+    FROM {get_table_path("core", "fct_articles")} a
     WHERE {where_clause}
         {author_filter}
         {keyword_filter}
@@ -294,7 +294,7 @@ with col1:
             section_name,
             COUNT(DISTINCT article_id) as article_count,
             ROUND(AVG(CASE WHEN word_count > 0 THEN word_count END), 0) as avg_word_count
-        FROM {get_table_path('core', 'fct_articles')} a
+        FROM {get_table_path("core", "fct_articles")} a
         WHERE {where_clause}
             {author_filter}
             {keyword_filter}
@@ -333,7 +333,7 @@ with col2:
             news_desk,
             COUNT(DISTINCT article_id) as article_count,
             ROUND(AVG(CASE WHEN word_count > 0 THEN word_count END), 0) as avg_word_count
-        FROM {get_table_path('core', 'fct_articles')} a
+        FROM {get_table_path("core", "fct_articles")} a
         WHERE {where_clause}
             {author_filter}
             {keyword_filter}
@@ -373,7 +373,7 @@ with st.spinner("Loading material type breakdown..."):
         type_of_material,
         COUNT(DISTINCT article_id) as article_count,
         ROUND(AVG(CASE WHEN word_count > 0 THEN word_count END), 0) as avg_word_count
-    FROM {get_table_path('core', 'fct_articles')} a
+    FROM {get_table_path("core", "fct_articles")} a
     WHERE {where_clause}
         {author_filter}
         {keyword_filter}
@@ -423,8 +423,8 @@ with col1:
                 keyword.value as keyword_value,
                 COUNT(DISTINCT a.article_id) as article_count,
                 ROUND(AVG(CASE WHEN a.word_count > 0 THEN a.word_count END), 0) as avg_word_count
-            FROM {get_table_path('core', 'fct_articles')} a
-            CROSS JOIN {get_table_path('staging', 'stg_archive_articles')} sa
+            FROM {get_table_path("core", "fct_articles")} a
+            CROSS JOIN {get_table_path("staging", "stg_archive_articles")} sa
             CROSS JOIN UNNEST(sa.keywords) as keyword
             WHERE a.article_id = sa.article_id
                 AND keyword.value IN ('{keywords_str}')
@@ -440,8 +440,8 @@ with col1:
                 keyword.value as keyword_value,
                 COUNT(DISTINCT a.article_id) as article_count,
                 ROUND(AVG(CASE WHEN a.word_count > 0 THEN a.word_count END), 0) as avg_word_count
-            FROM {get_table_path('core', 'fct_articles')} a
-            INNER JOIN {get_table_path('staging', 'stg_archive_articles')} sa
+            FROM {get_table_path("core", "fct_articles")} a
+            INNER JOIN {get_table_path("staging", "stg_archive_articles")} sa
                 ON a.article_id = sa.article_id
             CROSS JOIN UNNEST(sa.keywords) as keyword
             WHERE {where_clause}
@@ -475,8 +475,8 @@ with col2:
                 )) as author_full_name,
                 COUNT(DISTINCT a.article_id) as article_count,
                 ROUND(AVG(CASE WHEN a.word_count > 0 THEN a.word_count END), 0) as avg_word_count
-            FROM {get_table_path('core', 'fct_articles')} a
-            INNER JOIN {get_table_path('staging', 'stg_archive_articles')} sa
+            FROM {get_table_path("core", "fct_articles")} a
+            INNER JOIN {get_table_path("staging", "stg_archive_articles")} sa
                 ON a.article_id = sa.article_id
             CROSS JOIN UNNEST(sa.byline_person) as author
             WHERE TRIM(CONCAT(
@@ -504,8 +504,8 @@ with col2:
                 )) as author_full_name,
                 COUNT(DISTINCT a.article_id) as article_count,
                 ROUND(AVG(CASE WHEN a.word_count > 0 THEN a.word_count END), 0) as avg_word_count
-            FROM {get_table_path('core', 'fct_articles')} a
-            INNER JOIN {get_table_path('staging', 'stg_archive_articles')} sa
+            FROM {get_table_path("core", "fct_articles")} a
+            INNER JOIN {get_table_path("staging", "stg_archive_articles")} sa
                 ON a.article_id = sa.article_id
             CROSS JOIN UNNEST(sa.byline_person) as author
             WHERE {where_clause}
