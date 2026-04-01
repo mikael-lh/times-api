@@ -23,7 +23,7 @@ jobs:
           version: "latest"
 
       - name: Install dependencies
-        run: uv sync
+        run: uv sync --group dev
 
       - name: Create .env with API key
         run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
@@ -33,6 +33,11 @@ jobs:
 
       - name: Transform to slim NDJSON
         run: uv run python -m most_popular.transform
+
+      - name: Validate with Great Expectations
+        run: |
+          SLIM_FILE=$(find most_popular_slim -name "viewed_30.ndjson" -type f | sort | tail -1)
+          uv run python -m most_popular.validate_ge --file "$SLIM_FILE"
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
