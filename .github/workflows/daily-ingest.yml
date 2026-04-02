@@ -35,9 +35,7 @@ jobs:
         run: uv run python -m most_popular.transform
 
       - name: Validate with Great Expectations
-        run: |
-          SLIM_FILE=$(find most_popular_slim -name "viewed_30.ndjson" -type f | sort | tail -1)
-          uv run python -m most_popular.validate_ge --file "$SLIM_FILE"
+        run: uv run python -m most_popular.validate_ge
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
