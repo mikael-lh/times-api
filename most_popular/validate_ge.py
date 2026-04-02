@@ -14,13 +14,10 @@ import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import great_expectations as gx
 import pandas as pd
-
-if TYPE_CHECKING:
-    from great_expectations.data_context import EphemeralDataContext
+from great_expectations.data_context import EphemeralDataContext
 
 SLIM_DIR = Path("most_popular_slim")
 
@@ -34,7 +31,7 @@ class ValidationResult:
     error_message: str | None = None
 
 
-def create_expectation_suite(context: "EphemeralDataContext") -> gx.ExpectationSuite:
+def create_expectation_suite(context: EphemeralDataContext) -> gx.ExpectationSuite:
     """
     Define dataset-level expectations for most_popular slim NDJSON.
 
