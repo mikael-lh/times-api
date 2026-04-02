@@ -17,7 +17,6 @@ from pathlib import Path
 
 import great_expectations as gx
 import pandas as pd
-from great_expectations.data_context import EphemeralDataContext
 
 SLIM_DIR = Path("most_popular_slim")
 
@@ -31,7 +30,7 @@ class ValidationResult:
     error_message: str | None = None
 
 
-def create_expectation_suite(context: EphemeralDataContext) -> gx.ExpectationSuite:
+def create_expectation_suite(context: gx.data_context.EphemeralDataContext) -> gx.ExpectationSuite:
     """
     Define dataset-level expectations for most_popular slim NDJSON.
 
