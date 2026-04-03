@@ -11,7 +11,6 @@ GE handles: completeness, business rules, row counts, distributions across all r
 
 import argparse
 import sys
-from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
@@ -19,15 +18,6 @@ import great_expectations as gx
 import pandas as pd
 
 SLIM_DIR = Path("most_popular_slim")
-
-
-@dataclass
-class ValidationResult:
-    """Result of GE validation with success flag and per-expectation details."""
-
-    success: bool
-    results: list = field(default_factory=list)
-    error_message: str | None = None
 
 
 def create_expectation_suite(context: gx.data_context.EphemeralDataContext) -> gx.ExpectationSuite:
@@ -62,23 +52,23 @@ def create_expectation_suite(context: gx.data_context.EphemeralDataContext) -> g
     return suite
 
 
-def validate_slim_ndjson(ndjson_path: Path) -> ValidationResult:
+def validate_slim_ndjson(ndjson_path: Path) -> dict:
     """
     Validate a slim NDJSON file using Great Expectations.
 
     Reads the file as a pandas DataFrame, runs dataset-level expectations,
-    and returns a structured result.
+    and returns a dict with success, results, and optional error_message.
     """
     if not ndjson_path.exists():
-        return ValidationResult(success=False, error_message=f"File not found: {ndjson_path}")
+        return {"success": False, "results": [], "error_message": f"File not found: {ndjson_path}"}
 
     try:
         df = pd.read_json(ndjson_path, lines=True)
     except ValueError as e:
-        return ValidationResult(success=False, error_message=f"Failed to read NDJSON: {e}")
+        return {"success": False, "results": [], "error_message": f"Failed to read NDJSON: {e}"}
 
     if df.empty:
-        return ValidationResult(success=False, error_message=f"Empty file: {ndjson_path}")
+        return {"success": False, "results": [], "error_message": f"Empty file: {ndjson_path}"}
 
     context = gx.get_context(mode="ephemeral")
 
@@ -104,13 +94,13 @@ def validate_slim_ndjson(ndjson_path: Path) -> ValidationResult:
     str_dates = [v for v in df["published_date"] if isinstance(v, str) and v > today]
     future_date_success = len(str_dates) == 0
 
-    return ValidationResult(
-        success=bool(checkpoint_result.success) and future_date_success,
-        results=expectation_results,
-        error_message=None
+    return {
+        "success": bool(checkpoint_result.success) and future_date_success,
+        "results": expectation_results,
+        "error_message": None
         if future_date_success
         else f"Found {len(str_dates)} article(s) with future published_date",
-    )
+    }
 
 
 def main() -> None:
@@ -133,15 +123,15 @@ def main() -> None:
     print(f"Validating: {path}")
     result = validate_slim_ndjson(path)
 
-    if result.error_message:
-        print(f"\n  Error: {result.error_message}")
+    if result["error_message"]:
+        print(f"\n  Error: {result['error_message']}")
 
-    if result.success:
-        print(f"VALIDATION PASSED ({len(result.results)} expectations)")
+    if result["success"]:
+        print(f"VALIDATION PASSED ({len(result['results'])} expectations)")
     else:
         print("VALIDATION FAILED\n")
         print("Failed expectations:")
-        for exp_result in result.results:
+        for exp_result in result["results"]:
             if not exp_result.success:
                 exp_type = exp_result.expectation_config.type
                 kwargs = {
