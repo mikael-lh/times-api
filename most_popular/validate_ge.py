@@ -94,12 +94,18 @@ def validate_slim_ndjson(ndjson_path: Path) -> dict:
     str_dates = [v for v in df["published_date"] if isinstance(v, str) and v > today]
     future_date_success = len(str_dates) == 0
 
+    # Build comprehensive error message
+    errors = []
+    if not checkpoint_result.success:
+        failed_count = sum(1 for r in expectation_results if not r.success)
+        errors.append(f"{failed_count} expectation(s) failed")
+    if not future_date_success:
+        errors.append(f"Found {len(str_dates)} article(s) with future published_date")
+
     return {
         "success": bool(checkpoint_result.success) and future_date_success,
         "results": expectation_results,
-        "error_message": None
-        if future_date_success
-        else f"Found {len(str_dates)} article(s) with future published_date",
+        "error_message": "; ".join(errors) if errors else None,
     }
 
 
