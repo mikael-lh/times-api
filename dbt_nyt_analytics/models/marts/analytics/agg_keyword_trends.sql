@@ -1,5 +1,17 @@
 with keywords as (
-    select * from {{ ref('int_keywords_flattened') }}
+    select
+        b.article_id,
+        b.keyword_key,
+        b.keyword_rank,
+        b.keyword_major,
+        k.keyword_name,
+        k.keyword_value,
+        f.pub_year
+    from {{ ref('bridge_article_keywords') }} b
+    inner join {{ ref('dim_keywords') }} k
+        on b.keyword_key = k.keyword_key
+    inner join {{ ref('fct_articles') }} f
+        on b.article_id = f.article_id
 ),
 
 yearly_keyword_stats as (
@@ -12,8 +24,6 @@ yearly_keyword_stats as (
         count(*) as keyword_occurrences
         
     from keywords
-    where keyword_value is not null
-        and trim(keyword_value) != ''
     group by 1, 2, 3
 ),
 
