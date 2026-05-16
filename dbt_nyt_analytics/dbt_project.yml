@@ -21,6 +21,9 @@ vars:
 
 models:
   nyt_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
     staging:
       +materialized: view
       +schema: dbt_staging
