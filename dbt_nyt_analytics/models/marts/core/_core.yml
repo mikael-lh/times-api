@@ -79,6 +79,10 @@ models:
           - relationships:
               to: ref('dim_keywords')
               field: keyword_key
+      - name: keyword_name
+        description: "Keyword category (denormalised from dim_keywords for query convenience)"
+      - name: keyword_value
+        description: "Keyword value (denormalised from dim_keywords for query convenience)"
       - name: keyword_rank
         description: "Rank of the keyword within the article"
       - name: keyword_major

@@ -12,6 +12,8 @@ with_key as (
     select
         f.article_id,
         k.keyword_key,
+        k.keyword_name,
+        k.keyword_value,
         f.keyword_rank,
         f.keyword_major
     from flattened f

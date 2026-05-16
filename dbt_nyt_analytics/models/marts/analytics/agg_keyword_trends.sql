@@ -1,15 +1,10 @@
 with keywords as (
     select
         b.article_id,
-        b.keyword_key,
-        b.keyword_rank,
-        b.keyword_major,
-        k.keyword_name,
-        k.keyword_value,
+        b.keyword_name,
+        b.keyword_value,
         f.pub_year
     from {{ ref('bridge_article_keywords') }} b
-    inner join {{ ref('dim_keywords') }} k
-        on b.keyword_key = k.keyword_key
     inner join {{ ref('fct_articles') }} f
         on b.article_id = f.article_id
 ),
