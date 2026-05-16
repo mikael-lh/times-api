@@ -2849,7 +2849,9 @@ source = { virtual = "." }
 dependencies = [
     { name = "certifi" },
     { name = "charset-normalizer" },
+    { name = "great-expectations" },
     { name = "idna" },
+    { name = "pandas" },
     { name = "pydantic" },
     { name = "python-dotenv" },
     { name = "requests" },
@@ -2870,9 +2872,7 @@ dbt = [
     { name = "dbt-bigquery" },
 ]
 dev = [
-    { name = "great-expectations" },
     { name = "mypy" },
-    { name = "pandas" },
     { name = "pandas-stubs" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -2885,7 +2885,9 @@ dev = [
 requires-dist = [
     { name = "certifi", specifier = ">=2026.1.4" },
     { name = "charset-normalizer", specifier = ">=3.4.4" },
+    { name = "great-expectations", specifier = ">=1.0" },
     { name = "idna", specifier = ">=3.11" },
+    { name = "pandas", specifier = ">=2.0" },
     { name = "pydantic", specifier = ">=2.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "requests", specifier = ">=2.32.5" },
@@ -2904,9 +2906,7 @@ dashboard = [
 ]
 dbt = [{ name = "dbt-bigquery", specifier = ">=1.11.0" }]
 dev = [
-    { name = "great-expectations", specifier = ">=1.0" },
     { name = "mypy", specifier = ">=1.0" },
-    { name = "pandas", specifier = ">=2.0" },
     { name = "pandas-stubs", specifier = ">=2.0" },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
