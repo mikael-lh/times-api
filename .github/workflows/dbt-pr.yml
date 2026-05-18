@@ -26,7 +26,11 @@ jobs:
         with:
           version: "latest"
 
-      - name: Install dependencies
+      - name: Install dependencies (PR branch)
+        run: uv sync --group dbt
+
+      - name: Install dependencies (main branch)
+        working-directory: main-branch
         run: uv sync --group dbt
 
       - name: Configure dbt profile (CI)
@@ -51,10 +55,6 @@ jobs:
       - name: Install dbt packages (PR branch)
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
-
-      - name: Install dependencies (main branch)
-        working-directory: main-branch
-        run: uv sync --group dbt
 
       - name: Install dbt packages (main branch)
         working-directory: main-branch/dbt_nyt_analytics
