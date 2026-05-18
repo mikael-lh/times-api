@@ -19,6 +19,10 @@
     {%- elif target.name == 'prod' -%}
         {#- Production: use custom schema as-is -#}
         {{ custom_schema_name | trim }}
+
+    {%- elif target.name == 'ci' -%}
+        {#- CI: prefix with "ci_" to isolate from local dev schemas -#}
+        ci_{{ custom_schema_name | trim }}
     
     {%- else -%}
         {#- Dev/other targets: prefix with "dev_" -#}

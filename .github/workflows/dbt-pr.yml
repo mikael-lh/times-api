@@ -1,0 +1,81 @@
+name: dbt PR Check
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'dbt_nyt_analytics/**'
+
+jobs:
+  dbt_pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+
+      - name: Checkout main branch (for prod manifest)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main-branch
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies (PR branch)
+        run: uv sync --group dbt
+
+      - name: Install dependencies (main branch)
+        working-directory: main-branch
+        run: uv sync --group dbt
+
+      - name: Configure dbt profile (CI)
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          nyt_bigquery:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: service-account-json
+                project: times-api-ingest
+                dataset: ci_dbt
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          EOF
+
+      - name: Install dbt packages (PR branch)
+        working-directory: dbt_nyt_analytics
+        run: uv run dbt deps
+
+      - name: Install dbt packages (main branch)
+        working-directory: main-branch/dbt_nyt_analytics
+        run: uv run dbt deps
+
+      - name: Generate prod manifest from main
+        working-directory: main-branch/dbt_nyt_analytics
+        run: uv run dbt compile
+
+      - name: Run modified models
+        working-directory: dbt_nyt_analytics
+        run: |
+          uv run dbt run \
+            --select state:modified+ \
+            --state ../main-branch/dbt_nyt_analytics/target/ \
+            --defer
+
+      - name: Test modified models
+        working-directory: dbt_nyt_analytics
+        run: |
+          uv run dbt test \
+            --select state:modified+ \
+            --state ../main-branch/dbt_nyt_analytics/target/ \
+            --defer
