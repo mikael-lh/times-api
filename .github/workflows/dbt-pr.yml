@@ -50,6 +50,16 @@ jobs:
                 timeout_seconds: 300
                 priority: interactive
                 keyfile_json: ${{ secrets.GCP_SA_KEY }}
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: times-api-ingest
+                dataset: dbt
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
           EOF
 
       - name: Install dbt packages (PR branch)
