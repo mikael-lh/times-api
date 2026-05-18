@@ -70,7 +70,8 @@ jobs:
           uv run dbt run \
             --select state:modified+ \
             --state ../main-branch/dbt_nyt_analytics/target/ \
-            --defer
+            --defer \
+            --favor-state
 
       - name: Test modified models
         working-directory: dbt_nyt_analytics
@@ -78,4 +79,5 @@ jobs:
           uv run dbt test \
             --select state:modified+ \
             --state ../main-branch/dbt_nyt_analytics/target/ \
-            --defer
+            --defer \
+            --favor-state
