@@ -49,7 +49,7 @@ jobs:
                 type: bigquery
                 method: service-account-json
                 project: times-api-ingest
-                dataset: analytics
+                dataset: dbt
                 location: US
                 threads: 4
                 timeout_seconds: 300

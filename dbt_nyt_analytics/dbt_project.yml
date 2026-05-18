@@ -28,7 +28,8 @@ models:
       +materialized: view
       +schema: dbt_staging
     intermediate:
-      +materialized: ephemeral
+      +materialized: view
+      +schema: dbt_intermediate
     marts:
       core:
         +materialized: table
