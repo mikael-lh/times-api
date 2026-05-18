@@ -62,7 +62,7 @@ jobs:
 
       - name: Generate prod manifest from main
         working-directory: main-branch/dbt_nyt_analytics
-        run: uv run dbt compile
+        run: uv run dbt compile --target prod
 
       - name: Run modified models
         working-directory: dbt_nyt_analytics
