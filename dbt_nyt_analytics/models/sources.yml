@@ -12,37 +12,37 @@ sources:
           partition_by: pub_date
         columns:
           - name: article_id
-            description: "Unique article identifier from NYT (_id)"
+            description: "{{ doc('article_id') }}"
           - name: uri
-            description: "Article URI"
+            description: "{{ doc('uri') }}"
           - name: pub_date
-            description: "Publication date (DATE type)"
+            description: "{{ doc('pub_date') }}"
           - name: section_name
-            description: "Section name (e.g., Arts, Business)"
+            description: "{{ doc('section_name') }}"
           - name: news_desk
-            description: "News desk responsible for the article"
+            description: "{{ doc('news_desk') }}"
           - name: type_of_material
-            description: "Type of material (e.g., News, Opinion)"
+            description: "{{ doc('type_of_material') }}"
           - name: document_type
-            description: "Document type"
+            description: "{{ doc('document_type') }}"
           - name: word_count
-            description: "Article word count"
+            description: "{{ doc('word_count') }}"
           - name: web_url
-            description: "URL to the article on nytimes.com"
+            description: "{{ doc('web_url') }}"
           - name: headline_main
-            description: "Main headline"
+            description: "{{ doc('headline_main') }}"
           - name: byline_original
-            description: "Original byline text"
+            description: "{{ doc('byline_original') }}"
           - name: abstract
-            description: "Article abstract"
+            description: "{{ doc('abstract') }}"
           - name: snippet
-            description: "Article snippet"
+            description: "{{ doc('snippet') }}"
           - name: keywords
-            description: "Array of keyword objects (name, value, rank, major)"
+            description: "{{ doc('keywords') }}"
           - name: byline_person
-            description: "Array of author objects (firstname, lastname, middlename, qualifier)"
+            description: "{{ doc('byline_person') }}"
           - name: multimedia_count_by_type
-            description: "JSON object with multimedia counts by type"
+            description: "{{ doc('multimedia_count_by_type') }}"
 
       - name: most_popular_articles
         description: "Daily snapshots of most popular (most viewed) articles"
@@ -50,42 +50,42 @@ sources:
           partition_by: snapshot_date
         columns:
           - name: snapshot_date
-            description: "Date when this popularity snapshot was taken"
+            description: "{{ doc('snapshot_date') }}"
           - name: id
-            description: "Article ID"
+            description: "{{ doc('mp_id') }}"
           - name: uri
-            description: "Article URI"
+            description: "{{ doc('uri') }}"
           - name: url
-            description: "Article URL"
+            description: "{{ doc('url') }}"
           - name: asset_id
-            description: "Asset ID"
+            description: "{{ doc('asset_id') }}"
           - name: source
-            description: "Source (e.g., New York Times)"
+            description: "{{ doc('source') }}"
           - name: published_date
-            description: "Published date (STRING - needs parsing)"
+            description: "{{ doc('published_date') }}"
           - name: updated
-            description: "Updated date (STRING - needs parsing)"
+            description: "{{ doc('updated') }}"
           - name: section
-            description: "Section name"
+            description: "{{ doc('section') }}"
           - name: subsection
-            description: "Subsection name"
+            description: "{{ doc('subsection') }}"
           - name: byline
-            description: "Byline text"
+            description: "{{ doc('byline') }}"
           - name: type
-            description: "Article type"
+            description: "{{ doc('type') }}"
           - name: title
-            description: "Article title"
+            description: "{{ doc('title') }}"
           - name: abstract
-            description: "Article abstract"
+            description: "{{ doc('abstract') }}"
           - name: des_facet
-            description: "Description facets (array)"
+            description: "{{ doc('des_facet') }}"
           - name: org_facet
-            description: "Organization facets (array)"
+            description: "{{ doc('org_facet') }}"
           - name: per_facet
-            description: "Person facets (array)"
+            description: "{{ doc('per_facet') }}"
           - name: geo_facet
-            description: "Geographic facets (array)"
+            description: "{{ doc('geo_facet') }}"
           - name: media_count_by_type
-            description: "Media count by type (JSON)"
+            description: "{{ doc('media_count_by_type') }}"
           - name: adx_keywords
-            description: "ADX keywords string"
+            description: "{{ doc('adx_keywords') }}"

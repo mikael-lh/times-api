@@ -5,22 +5,22 @@ models:
     description: "One row per article-keyword combination. Unnests the keywords array."
     columns:
       - name: article_id
-        description: "Article identifier"
+        description: "{{ doc('article_id') }}"
       - name: keyword_name
-        description: "Keyword category (e.g., subject, persons, organizations)"
+        description: "{{ doc('keyword_name') }}"
       - name: keyword_value
-        description: "The keyword value"
+        description: "{{ doc('keyword_value') }}"
       - name: keyword_rank
-        description: "Rank of keyword relevance"
+        description: "{{ doc('keyword_rank') }}"
 
   - name: int_authors_flattened
     description: "One row per article-author combination. Unnests the byline_person array."
     columns:
       - name: article_id
-        description: "Article identifier"
+        description: "{{ doc('article_id') }}"
       - name: author_full_name
-        description: "Constructed full name of the author"
+        description: "{{ doc('author_full_name') }}"
       - name: firstname
-        description: "Author first name"
+        description: "{{ doc('firstname') }}"
       - name: lastname
-        description: "Author last name"
+        description: "{{ doc('lastname') }}"

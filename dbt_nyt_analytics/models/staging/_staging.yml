@@ -5,41 +5,41 @@ models:
     description: "Staged archive articles with cleaned column names and types"
     columns:
       - name: article_id
-        description: "Primary key - unique article identifier"
+        description: "{{ doc('article_id') }}"
         tests:
           - unique
           - not_null
       - name: pub_date
-        description: "Publication date"
+        description: "{{ doc('pub_date') }}"
         tests:
           - not_null
       - name: section_name
-        description: "Section name"
+        description: "{{ doc('section_name') }}"
       - name: news_desk
-        description: "News desk"
+        description: "{{ doc('news_desk') }}"
       - name: headline_main
-        description: "Main headline"
+        description: "{{ doc('headline_main') }}"
       - name: word_count
-        description: "Article word count"
+        description: "{{ doc('word_count') }}"
       - name: keywords
-        description: "Array of keyword records"
+        description: "{{ doc('keywords') }}"
       - name: byline_person
-        description: "Array of author records"
+        description: "{{ doc('byline_person') }}"
 
   - name: stg_most_popular_articles
     description: "Staged most popular articles with cleaned types"
     columns:
       - name: snapshot_date
-        description: "Date of the popularity snapshot"
+        description: "{{ doc('snapshot_date') }}"
         tests:
           - not_null
       - name: article_id
-        description: "Article ID"
+        description: "{{ doc('article_id') }}"
         tests:
           - not_null
       - name: published_at
-        description: "Parsed publication timestamp"
+        description: "{{ doc('published_at') }}"
       - name: section
-        description: "Section name"
+        description: "{{ doc('section') }}"
       - name: title
-        description: "Article title"
+        description: "{{ doc('title') }}"
