@@ -1,0 +1,65 @@
+# Weekly ingestion: Best Sellers overview → transform → upload to GCS
+# Runs at 08:00 UTC Thursday (after Wed 7pm ET list publish);
+# can also be triggered manually with an optional published_date.
+name: Weekly ingest (Best Sellers → GCS)
+
+on:
+  schedule:
+    - cron: '0 8 * * 4'
+  workflow_dispatch:
+    inputs:
+      published_date:
+        description: 'Print publication date (YYYY-MM-DD). Leave empty for latest.'
+        required: false
+        type: string
+        default: ''
+
+env:
+  GCS_PREFIX: nyt-ingest
+
+jobs:
+  ingest-and-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Create .env with API key
+        run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
+
+      - name: Ingest Best Sellers overview
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.published_date }}" ]; then
+            ARGS="--published-date ${{ github.event.inputs.published_date }}"
+          fi
+          uv run python -m books.ingest $ARGS
+
+      - name: Transform to slim NDJSON
+        run: uv run python -m books.transform
+
+      - name: Validate with Great Expectations
+        run: uv run python -m books.validate_ge
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY_INGEST }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Upload to GCS
+        run: |
+          BUCKET="${{ vars.GCS_BUCKET }}"
+          if [ -z "$BUCKET" ]; then echo "GCS_BUCKET variable is not set"; exit 1; fi
+          gsutil -m cp -r books_raw "gs://${BUCKET}/${GCS_PREFIX}/"
+          gsutil -m cp -r books_slim "gs://${BUCKET}/${GCS_PREFIX}/"

@@ -10,8 +10,14 @@ import re
 
 import functions_framework
 from cloudevents.http import CloudEvent
-from config import ARCHIVE_SLIM_PREFIX, GCS_PREFIX, MOST_POPULAR_SLIM_PREFIX
+from config import (
+    ARCHIVE_SLIM_PREFIX,
+    BOOKS_SLIM_PREFIX,
+    GCS_PREFIX,
+    MOST_POPULAR_SLIM_PREFIX,
+)
 from load_archive import load_archive
+from load_best_sellers import load_best_sellers
 from load_most_popular import load_most_popular
 
 logging.basicConfig(level=logging.INFO)
@@ -64,6 +70,11 @@ def gcs_to_bigquery(cloud_event: CloudEvent) -> tuple[str, int]:
             logger.info(f"Processing most_popular file: {name} (snapshot_date={snapshot_date})")
             load_most_popular(bucket, name, snapshot_date)
             return "Most popular loaded successfully", 200
+
+        elif object_path.startswith(BOOKS_SLIM_PREFIX):
+            logger.info(f"Processing best_sellers file: {name}")
+            load_best_sellers(bucket, name)
+            return "Best sellers loaded successfully", 200
 
         else:
             logger.info(f"Ignoring non-slim file: {name}")
