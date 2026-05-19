@@ -15,8 +15,8 @@ flattened as (
         pub_date,
         pub_year,
         section_name,
-        keyword.name as keyword_name,
-        keyword.value as keyword_value,
+        lower(trim(keyword.name))  as keyword_name,
+        lower(trim(keyword.value)) as keyword_value,
         keyword.rank as keyword_rank,
         keyword.major as keyword_major
     from source
