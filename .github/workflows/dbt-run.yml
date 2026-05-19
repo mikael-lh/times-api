@@ -20,7 +20,9 @@ on:
 jobs:
   dbt_run:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -85,6 +87,13 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt docs generate
       
+      - name: Deploy dbt docs to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: dbt_nyt_analytics/target
+          publish_branch: gh-pages
+
       - name: Upload dbt artifacts
         uses: actions/upload-artifact@v4
         if: always()
