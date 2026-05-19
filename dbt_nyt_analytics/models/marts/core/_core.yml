@@ -5,62 +5,62 @@ models:
     description: "Core fact table for archive articles. One row per article."
     columns:
       - name: article_id
-        description: "Primary key - unique article identifier"
+        description: "{{ doc('article_id') }}"
         tests:
           - unique
           - not_null
       - name: pub_date
-        description: "Publication date"
+        description: "{{ doc('pub_date') }}"
         tests:
           - not_null
       - name: section_name
-        description: "Article section"
+        description: "{{ doc('section_name') }}"
       - name: news_desk
-        description: "News desk"
+        description: "{{ doc('news_desk') }}"
       - name: word_count
-        description: "Article word count"
+        description: "{{ doc('word_count') }}"
       - name: author_count
-        description: "Number of authors"
+        description: "{{ doc('author_count') }}"
       - name: keyword_count
-        description: "Number of keywords"
+        description: "{{ doc('keyword_count') }}"
 
   - name: fct_article_popularity
     description: "Fact table tracking article popularity over time from daily snapshots"
     columns:
       - name: snapshot_date
-        description: "Date of the popularity snapshot"
+        description: "{{ doc('snapshot_date') }}"
         tests:
           - not_null
       - name: article_id
-        description: "Article ID"
+        description: "{{ doc('article_id') }}"
         tests:
           - not_null
       - name: days_since_published
-        description: "Days between publication and snapshot"
+        description: "{{ doc('days_since_published') }}"
 
   - name: dim_authors
     description: "Dimension table of unique authors"
     columns:
       - name: author_key
-        description: "Surrogate key for author"
+        description: "{{ doc('author_key') }}"
         tests:
           - unique
           - not_null
       - name: author_full_name
-        description: "Full name of the author"
+        description: "{{ doc('author_full_name') }}"
 
   - name: dim_keywords
     description: "Dimension table of unique keywords"
     columns:
       - name: keyword_key
-        description: "Surrogate key for keyword"
+        description: "{{ doc('keyword_key') }}"
         tests:
           - unique
           - not_null
       - name: keyword_name
-        description: "Keyword category"
+        description: "{{ doc('keyword_name') }}"
       - name: keyword_value
-        description: "Keyword value"
+        description: "{{ doc('keyword_value') }}"
 
   - name: bridge_article_keywords
     description: "Bridge table resolving the many-to-many relationship between articles and keywords. One row per article-keyword pair."
@@ -80,23 +80,23 @@ models:
               to: ref('dim_keywords')
               field: keyword_key
       - name: keyword_name
-        description: "Keyword category (denormalised from dim_keywords for query convenience)"
+        description: "{{ doc('keyword_name') }} Denormalised from dim_keywords for query convenience."
       - name: keyword_value
-        description: "Keyword value (denormalised from dim_keywords for query convenience)"
+        description: "{{ doc('keyword_value') }} Denormalised from dim_keywords for query convenience."
       - name: keyword_rank
-        description: "Rank of the keyword within the article"
+        description: "{{ doc('keyword_rank') }}"
       - name: keyword_major
-        description: "Whether the keyword is a major keyword for the article (Y/N)"
+        description: "{{ doc('keyword_major') }}"
 
   - name: dim_sections
     description: "Dimension table of unique sections and news desks"
     columns:
       - name: section_key
-        description: "Surrogate key for section"
+        description: "{{ doc('section_key') }}"
         tests:
           - unique
           - not_null
       - name: section_name
-        description: "Section name"
+        description: "{{ doc('section_name') }}"
       - name: news_desk
-        description: "News desk"
+        description: "{{ doc('news_desk') }}"
