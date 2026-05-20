@@ -1,4 +1,13 @@
-# NYT Analytics Dashboard - EDA & Insights Analysis
+# NYT Analytics Dashboard – EDA & insights brainstorm
+
+> **Status: brainstorm, not a spec.** This document is an early ideation
+> of dashboards and analyses the dbt models could power. It is not
+> authoritative and not all sections reflect what is currently
+> implemented (e.g. Best Sellers is not yet covered here, and
+> `bridge_article_keywords` is a better source than
+> `int_keywords_flattened` for the keyword co-occurrence example
+> below). For the actual dashboard, see
+> [`dashboard/README.md`](../dashboard/README.md).
 
 ## Executive Summary
 
