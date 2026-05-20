@@ -74,19 +74,10 @@ jobs:
         working-directory: main-branch/dbt_nyt_analytics
         run: uv run dbt compile --target prod
 
-      - name: Run modified models
+      - name: Build and test modified models
         working-directory: dbt_nyt_analytics
         run: |
-          uv run dbt run \
-            --select state:modified+ \
-            --state ../main-branch/dbt_nyt_analytics/target/ \
-            --defer \
-            --favor-state
-
-      - name: Test modified models
-        working-directory: dbt_nyt_analytics
-        run: |
-          uv run dbt test \
+          uv run dbt build \
             --select state:modified+ \
             --state ../main-branch/dbt_nyt_analytics/target/ \
             --defer \
