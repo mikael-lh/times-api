@@ -8,6 +8,7 @@ Context for agents: high-level goal, architecture, and decisions made so far.
 
 - Ingest **last 100 years** of NYT article metadata via the **NYT Archive API**.
 - Ingest **most popular articles** (most viewed, last 30 days) via the **NYT Most Popular API** with daily automation.
+- Ingest **Best Sellers lists** via the **NYT Books API** with weekly automation.
 - Store data so it can be loaded into **Google Cloud Storage (GCS)**, then **BigQuery**, then modeled with **dbt** for analytics.
 
 ---
@@ -24,6 +25,12 @@ Context for agents: high-level goal, architecture, and decisions made so far.
 - Period options: 1, 7, or 30 (days)
 - Returns top 20 most viewed articles for the specified period
 - Designed for daily ingestion to track trending content
+
+### Books API (Best Sellers)
+- **Endpoint**: `GET https://api.nytimes.com/svc/books/v3/lists/overview.json?api-key=...`
+- One call returns **all ~20 Best Sellers lists** and their books for a given print week (~250 books total); no pagination needed
+- Weekly automation; lists publish Wednesday ~7pm ET, appear in print 11 days later; data available from 2017 to present
+- Optional `published_date=YYYY-MM-DD` param to fetch a specific week; omit for the latest
 
 **Common**: API key lives in **`.env`**; never committed (`.env` is in `.gitignore`).
 
@@ -79,6 +86,21 @@ Reasons:
 - **Cron**: `0 6 * * * /path/to/run_daily_ingestion.sh >> /var/log/nyt_ingestion.log 2>&1`
 - **Python scheduler**: `python -m most_popular.scheduler` (runs in foreground, executes daily at 06:00)
 
+### Books API (Weekly Best Sellers)
+
+| Script | Role | Input | Output |
+|--------|------|--------|--------|
+| **`books/ingest.py`** | Fetch Best Sellers overview, save raw | API | `books_raw/YYYY-MM-DD/overview.json` |
+| **`books/transform.py`** | Flatten overview to one row per (list, book) | `books_raw/` | `books_slim/YYYY-MM-DD/overview.ndjson` |
+| **`books/validate_ge.py`** | Dataset-level GE validation | `books_slim/` | pass / fail |
+
+**Run order (manual, from project root):**
+1. `python -m books.ingest` (optionally: `--published-date YYYY-MM-DD`, `--overwrite`)
+2. `python -m books.transform`
+3. `python -m books.validate_ge`
+
+**Automation:** GitHub Actions weekly workflow runs at 08:00 UTC Thursday (after Wednesday 7pm ET publish). See [GitHub Actions (GCS)](#github-actions-gcs) below.
+
 ---
 
 ## Ingestion (Archive – `archive/ingest.py`)
@@ -131,6 +153,10 @@ Defensive handling: list fields use `or []` so they're always lists (safe to ite
 
 - **`SlimMostPopularArticle`** – analysis-ready slim schema; validated when transforming (same pattern as Archive: extract from raw dict → validate slim → write). Raw API response is read via dict access.
 
+### Books Models (`books/models.py`)
+
+- **`SlimBestSeller`** – one row per (published_date, list_name_encoded, rank). `published_date`, `list_name_encoded`, and `rank` are required (they form the composite key); all other fields are optional. `list_updated` uses `Literal["WEEKLY", "MONTHLY"]` to enforce the valid enum at parse time. `extra="ignore"` ensures upstream API additions are silently dropped.
+
 ---
 
 ## Development setup
@@ -162,8 +188,13 @@ The repo uses automated quality checks (lint, format, type-check, test) that run
 ### Python
 
 - **Ruff** (lint + format): `uv run ruff check .` and `uv run ruff format --check .`
-- **Mypy** (type checking): `uv run mypy archive most_popular tests`
+- **Mypy** (type checking): `uv run mypy archive most_popular books tests`
 - **Pytest** (tests): `uv run pytest tests/ -v`
+  - `tests/test_archive_transform.py` — Archive transform unit tests
+  - `tests/test_most_popular_transform.py` — Most Popular transform unit tests
+  - `tests/test_books_transform.py` — Books transform + Pydantic model tests
+  - `tests/test_ge_validation.py` — GE validation tests for Archive and Most Popular
+  - `tests/test_ge_validation_books.py` — GE validation tests for Books (Best Sellers)
 
 ### Shell Scripts
 
@@ -180,7 +211,7 @@ All checks run automatically in CI via `.github/workflows/quality.yml`.
 - **Secrets**: `.env` with `NYTIMES_API_KEY` (and optional secret); loaded via `python-dotenv`.
 - **Paths**: `pathlib.Path` for `archive_raw/`, `archive_slim/`.
 - **Dependencies**: `requests`, `python-dotenv`, `pydantic` (see `pyproject.toml` and `uv.lock`).
-- **.gitignore**: `.env`, `.venv/`, `archive_raw/`, `archive_slim/`.
+- **.gitignore**: `.env`, `.venv/`, `archive_raw/`, `archive_slim/`, `most_popular_raw/`, `most_popular_slim/`, `books_raw/`, `books_slim/`.
 
 ---
 
@@ -204,9 +235,18 @@ All checks run automatically in CI via `.github/workflows/quality.yml`.
 │   ├── models.py               # SlimMostPopularArticle
 │   ├── ingest.py               # Fetch → most_popular_raw/YYYY-MM-DD/viewed_30.json
 │   ├── transform.py            # most_popular_raw/ → most_popular_slim/
+│   ├── validate_ge.py          # GE dataset-level validation
 │   └── scheduler.py            # Daily scheduler (ingest + transform)
 ├── most_popular_raw/           # Raw API responses (YYYY-MM-DD/viewed_30.json)
-└── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
+├── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
+│
+├── books/                      # Books API (weekly Best Sellers)
+│   ├── models.py               # SlimBestSeller (one row per published_date + list + rank)
+│   ├── ingest.py               # Fetch overview → books_raw/YYYY-MM-DD/overview.json
+│   ├── transform.py            # Flatten overview → books_slim/YYYY-MM-DD/overview.ndjson
+│   └── validate_ge.py          # GE dataset-level validation
+├── books_raw/                  # Raw API responses (YYYY-MM-DD/overview.json)
+└── books_slim/                 # Slim NDJSON (YYYY-MM-DD/overview.ndjson)
 ```
 
 ---
@@ -219,8 +259,9 @@ Ingestion is automated with GitHub Actions so that **ingested files end up in GC
 
 | Workflow | Trigger | Steps | GCS path |
 |----------|---------|--------|----------|
-| **Daily ingest** (`.github/workflows/daily-ingest.yml`) | Schedule 06:00 UTC daily + manual | Most Popular ingest → transform → upload | `gs://BUCKET/nyt-ingest/most_popular_raw/`, `.../most_popular_slim/` |
+| **Daily ingest** (`.github/workflows/daily-ingest.yml`) | Schedule 06:00 UTC daily + manual | Most Popular ingest → transform → validate → upload | `gs://BUCKET/nyt-ingest/most_popular_raw/`, `.../most_popular_slim/` |
 | **Archive ingest** (`.github/workflows/archive-ingest.yml`) | Manual only | Archive ingest → transform → upload | `gs://BUCKET/nyt-ingest/archive_raw/`, `.../archive_slim/` |
+| **Weekly ingest** (`.github/workflows/books-ingest.yml`) | Schedule 08:00 UTC Thursday + manual | Best Sellers ingest → transform → validate → upload | `gs://BUCKET/nyt-ingest/books_raw/`, `.../books_slim/` |
 
 **Archive note:** A full 100-year archive run (12s+ per month) can approach the 6-hour job limit. Adjust `START_YEAR`/`END_YEAR` in `archive/ingest.py` to run in chunks, or trigger the workflow periodically to resume (ingest skips existing months).
 
@@ -256,11 +297,11 @@ A **Cloud Function** automatically loads slim NDJSON files from GCS into **BigQu
 ### Architecture
 
 - **Trigger**: Eventarc monitors the GCS bucket for `object.finalize` events.
-- **Function**: Receives the event, filters for `archive_slim/` or `most_popular_slim/` paths, loads the file to a staging table, MERGEs into the final table (deduplicating by key), and records the load in a manifest table.
+- **Function**: Receives the event, filters for `archive_slim/`, `most_popular_slim/`, or `books_slim/` paths, loads the file to a staging table, MERGEs into the final table (deduplicating by key), and records the load in a manifest table.
 - **Three datasets** (staging, metadata, prod):
-  - **staging**: `archive_articles`, `most_popular_articles` (transient; truncated after each load)
+  - **staging**: `archive_articles`, `most_popular_articles`, `best_sellers` (transient; truncated after each load)
   - **metadata**: `load_manifest` (tracks loaded files for idempotency)
-  - **prod**: `archive_articles` (partitioned by `pub_date`), `most_popular_articles` (partitioned by `snapshot_date`)
+  - **prod**: `archive_articles` (partitioned by `pub_date`), `most_popular_articles` (partitioned by `snapshot_date`), `best_sellers` (partitioned by `published_date`, clustered by `list_name_encoded`)
 
 ### Setup
 
@@ -300,10 +341,10 @@ All variables are required; the scripts will fail with a clear error if any are 
 1. GitHub Actions workflows write slim NDJSON files to GCS (e.g. `archive_slim/2020/05.ndjson`).
 2. Eventarc triggers the Cloud Function with the bucket and object name.
 3. The function:
-   - Checks if the path matches `archive_slim/` or `most_popular_slim/`
-   - Checks the manifest to avoid re-loading (optional idempotency)
-   - Loads the file to the staging dataset table using `bq load`
-   - MERGEs from staging to prod (dedup by `article_id` for archive, `(snapshot_date, id)` for most popular)
+   - Checks if the path matches `archive_slim/`, `most_popular_slim/`, or `books_slim/`
+   - Checks the manifest to avoid re-loading (idempotency)
+   - Loads the file to the staging dataset table
+   - MERGEs from staging to prod (dedup by `article_id` for archive, `(snapshot_date, id)` for most popular, `(published_date, list_name_encoded, rank)` for best sellers)
    - Records the load in the metadata dataset (`load_manifest`)
    - Truncates the staging table
 4. Data is immediately available in the prod dataset for querying and dbt transformations.
@@ -314,14 +355,16 @@ All variables are required; the scripts will fail with a clear error if any are 
 .
 ├── schema/                        # BigQuery schema definitions (JSON, single source of truth)
 │   ├── archive_articles.json      # Archive table schema
-│   └── most_popular_articles.json # Most Popular table schema
+│   ├── most_popular_articles.json # Most Popular table schema
+│   └── best_sellers.json          # Best Sellers table schema
 │
 ├── cloud_function/                # Cloud Function source
 │   ├── schema/                    # (Auto-generated during deployment, in .gitignore)
-│   ├── main.py                    # Entrypoint (receives Cloud Events)
-│   ├── config.py                  # Configuration (env vars)
+│   ├── main.py                    # Entrypoint (receives Cloud Events, routes by path prefix)
+│   ├── config.py                  # Configuration (env vars, table/prefix constants)
 │   ├── load_archive.py            # Archive loader (staging → MERGE → manifest)
-│   ├── load_most_popular.py       # Most Popular loader (with snapshot_date)
+│   ├── load_most_popular.py       # Most Popular loader (snapshot_date injected from GCS path)
+│   ├── load_best_sellers.py       # Best Sellers loader (published_date in NDJSON rows)
 │   └── requirements.txt           # Function dependencies
 │
 ├── infra/                         # Infrastructure scripts
@@ -493,9 +536,19 @@ See `dashboard/README.md` for more details.
 │   ├── models.py               # SlimMostPopularArticle
 │   ├── ingest.py               # Fetch → most_popular_raw/YYYY-MM-DD/viewed_30.json
 │   ├── transform.py            # most_popular_raw/ → most_popular_slim/
+│   ├── validate_ge.py          # GE dataset-level validation
 │   └── scheduler.py            # Daily scheduler (ingest + transform)
 ├── most_popular_raw/           # Raw API responses (YYYY-MM-DD/viewed_30.json)
 ├── most_popular_slim/          # Slim NDJSON (YYYY-MM-DD/viewed_30.ndjson)
+│
+├── books/                      # Books API (weekly Best Sellers)
+│   ├── __init__.py
+│   ├── models.py               # SlimBestSeller (one row per published_date + list + rank)
+│   ├── ingest.py               # Fetch overview → books_raw/YYYY-MM-DD/overview.json
+│   ├── transform.py            # Flatten overview → books_slim/YYYY-MM-DD/overview.ndjson
+│   └── validate_ge.py          # GE dataset-level validation
+├── books_raw/                  # Raw API responses (YYYY-MM-DD/overview.json, gitignored)
+├── books_slim/                 # Slim NDJSON (YYYY-MM-DD/overview.ndjson, gitignored)
 │
 ├── dbt_nyt_analytics/          # dbt project for BigQuery transformations
 │   ├── models/
