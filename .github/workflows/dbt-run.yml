@@ -63,11 +63,7 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
       
-      - name: Run dbt seed
-        working-directory: dbt_nyt_analytics
-        run: uv run dbt seed
-      
-      - name: Run dbt models
+      - name: dbt build
         working-directory: dbt_nyt_analytics
         run: |
           FLAGS=""
@@ -77,11 +73,7 @@ jobs:
           if [ -n "${{ github.event.inputs.select }}" ]; then
             FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
           fi
-          uv run dbt run $FLAGS
-      
-      - name: Run dbt tests
-        working-directory: dbt_nyt_analytics
-        run: uv run dbt test
+          uv run dbt build $FLAGS
       
       - name: Generate dbt docs
         working-directory: dbt_nyt_analytics
