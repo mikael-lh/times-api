@@ -1,0 +1,128 @@
+[
+  {
+    "name": "published_date",
+    "type": "DATE",
+    "mode": "NULLABLE",
+    "description": "Print publication date of the Best Sellers list (YYYY-MM-DD)"
+  },
+  {
+    "name": "list_name_encoded",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "URL-safe list identifier (e.g., hardcover-fiction)"
+  },
+  {
+    "name": "list_display_name",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Human-readable list name (e.g., Hardcover Fiction)"
+  },
+  {
+    "name": "list_updated",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "How often the list is updated (WEEKLY or MONTHLY)"
+  },
+  {
+    "name": "rank",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Rank on the list for this published_date"
+  },
+  {
+    "name": "rank_last_week",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Rank on the list in the previous publication (0 if new)"
+  },
+  {
+    "name": "weeks_on_list",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "Number of weeks the book has appeared on this list"
+  },
+  {
+    "name": "asterisk",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "1 if sales are barely distinguishable from those of the book above it"
+  },
+  {
+    "name": "dagger",
+    "type": "INTEGER",
+    "mode": "NULLABLE",
+    "description": "1 if some retailers reported receiving bulk orders"
+  },
+  {
+    "name": "primary_isbn13",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "ISBN-13 identifier for the book (primary edition)"
+  },
+  {
+    "name": "title",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Book title"
+  },
+  {
+    "name": "author",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Book author"
+  },
+  {
+    "name": "contributor",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Full contributor string (e.g., 'by Emily Henry')"
+  },
+  {
+    "name": "contributor_note",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Additional contributor information (illustrator, translator, etc.)"
+  },
+  {
+    "name": "publisher",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Publisher name"
+  },
+  {
+    "name": "description",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Short editorial description of the book"
+  },
+  {
+    "name": "book_image",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "URL to the book cover image"
+  },
+  {
+    "name": "amazon_product_url",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Affiliate Amazon product URL"
+  },
+  {
+    "name": "age_group",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Target age group (used for children's lists)"
+  },
+  {
+    "name": "book_review_link",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Link to NYT book review (if any)"
+  },
+  {
+    "name": "sunday_review_link",
+    "type": "STRING",
+    "mode": "NULLABLE",
+    "description": "Link to NYT Sunday book review (if any)"
+  }
+]

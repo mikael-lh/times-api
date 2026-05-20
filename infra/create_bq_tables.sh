@@ -64,6 +64,13 @@ bq --project_id="$GCP_PROJECT" mk --table \
   "$BQ_STAGING_DATASET.most_popular_articles" \
   "$SCHEMA_DIR/most_popular_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
+# Staging: best_sellers
+echo "Creating table $BQ_STAGING_DATASET.best_sellers..."
+bq --project_id="$GCP_PROJECT" mk --table \
+  --description="Staging table for Best Sellers list entries (truncated after each load)" \
+  "$BQ_STAGING_DATASET.best_sellers" \
+  "$SCHEMA_DIR/best_sellers.json" 2>/dev/null || echo "  (Table already exists)"
+
 # Metadata: load_manifest
 echo "Creating table $BQ_METADATA_DATASET.load_manifest..."
 bq --project_id="$GCP_PROJECT" mk --table \
@@ -90,9 +97,19 @@ bq --project_id="$GCP_PROJECT" mk --table \
   "$BQ_PROD_DATASET.most_popular_articles" \
   "$SCHEMA_DIR/most_popular_articles.json" 2>/dev/null || echo "  (Table already exists)"
 
+# Prod: best_sellers (partitioned by published_date, clustered by list)
+echo "Creating table $BQ_PROD_DATASET.best_sellers (partitioned by published_date, clustered by list_name_encoded)..."
+bq --project_id="$GCP_PROJECT" mk --table \
+  --description="Final NYT Best Sellers table (one row per published_date, list, rank)" \
+  --time_partitioning_field=published_date \
+  --time_partitioning_type=MONTH \
+  --clustering_fields=list_name_encoded,published_date \
+  "$BQ_PROD_DATASET.best_sellers" \
+  "$SCHEMA_DIR/best_sellers.json" 2>/dev/null || echo "  (Table already exists)"
+
 echo ""
 echo "✅ BigQuery setup complete!"
 echo "Datasets and tables in $GCP_PROJECT:"
-echo "  $BQ_STAGING_DATASET: archive_articles, most_popular_articles"
+echo "  $BQ_STAGING_DATASET: archive_articles, most_popular_articles, best_sellers"
 echo "  $BQ_METADATA_DATASET: load_manifest"
-echo "  $BQ_PROD_DATASET: archive_articles (partitioned MONTHLY by pub_date, clustered), most_popular_articles (partitioned by snapshot_date)"
+echo "  $BQ_PROD_DATASET: archive_articles (partitioned MONTHLY by pub_date, clustered), most_popular_articles (partitioned by snapshot_date), best_sellers (partitioned MONTHLY by published_date, clustered by list_name_encoded)"

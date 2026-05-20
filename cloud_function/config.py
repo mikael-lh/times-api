@@ -21,8 +21,11 @@ ARCHIVE_STAGING_TABLE = f"{BQ_STAGING_DATASET}.archive_articles"
 ARCHIVE_FINAL_TABLE = f"{BQ_PROD_DATASET}.archive_articles"
 MOST_POPULAR_STAGING_TABLE = f"{BQ_STAGING_DATASET}.most_popular_articles"
 MOST_POPULAR_FINAL_TABLE = f"{BQ_PROD_DATASET}.most_popular_articles"
+BEST_SELLERS_STAGING_TABLE = f"{BQ_STAGING_DATASET}.best_sellers"
+BEST_SELLERS_FINAL_TABLE = f"{BQ_PROD_DATASET}.best_sellers"
 LOAD_MANIFEST_TABLE = f"{BQ_METADATA_DATASET}.load_manifest"
 
 # Path prefixes for filtering
 ARCHIVE_SLIM_PREFIX = "archive_slim/"
 MOST_POPULAR_SLIM_PREFIX = "most_popular_slim/"
+BOOKS_SLIM_PREFIX = "books_slim/"
