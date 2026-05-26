@@ -144,6 +144,102 @@ ADX keywords string.
 {% enddocs %}
 
 {# ============================================================ #}
+{# Raw source columns — best_sellers                           #}
+{# ============================================================ #}
+
+{% docs bs_published_date %}
+Print publication date of the Best Sellers list (YYYY-MM-DD). Part of the composite primary key.
+{% enddocs %}
+
+{% docs list_name_encoded %}
+URL-safe list identifier (e.g., hardcover-fiction). Part of the composite primary key.
+{% enddocs %}
+
+{% docs list_display_name %}
+Human-readable list name (e.g., Hardcover Fiction).
+{% enddocs %}
+
+{% docs list_updated %}
+How often the list is updated (weekly or monthly, normalized to lowercase). Part of the composite primary key.
+{% enddocs %}
+
+{% docs bs_rank %}
+Rank on the list for this published_date. Part of the composite primary key.
+{% enddocs %}
+
+{% docs rank_last_week %}
+Rank on the list in the previous publication (0 if new).
+{% enddocs %}
+
+{% docs weeks_on_list %}
+Number of weeks the book has appeared on this list.
+{% enddocs %}
+
+{% docs asterisk %}
+True if sales are barely distinguishable from those of the book above it.
+{% enddocs %}
+
+{% docs dagger %}
+True if some retailers reported receiving bulk orders.
+{% enddocs %}
+
+{% docs primary_isbn13 %}
+ISBN-13 identifier for the book (primary edition).
+{% enddocs %}
+
+{% docs book_title %}
+Book title (title-cased for display).
+{% enddocs %}
+
+{% docs book_author %}
+Book author as provided by the NYT Books API.
+{% enddocs %}
+
+{% docs contributor %}
+Full contributor string (e.g., 'by Emily Henry').
+{% enddocs %}
+
+{% docs contributor_note %}
+Additional contributor information (illustrator, translator, etc.).
+{% enddocs %}
+
+{% docs book_publisher %}
+Publisher name.
+{% enddocs %}
+
+{% docs book_description %}
+Short editorial description of the book.
+{% enddocs %}
+
+{% docs book_image %}
+URL to the book cover image.
+{% enddocs %}
+
+{% docs amazon_product_url %}
+Affiliate Amazon product URL.
+{% enddocs %}
+
+{% docs age_group %}
+Target age group (used for children's lists).
+{% enddocs %}
+
+{% docs book_review_link %}
+Link to NYT book review (if any).
+{% enddocs %}
+
+{% docs sunday_review_link %}
+Link to NYT Sunday book review (if any).
+{% enddocs %}
+
+{% docs age_min %}
+Minimum target age parsed from age_group (null when not applicable).
+{% enddocs %}
+
+{% docs age_max %}
+Maximum target age parsed from age_group (null for open-ended ranges).
+{% enddocs %}
+
+{# ============================================================ #}
 {# Staging-derived columns                                      #}
 {# ============================================================ #}
 
