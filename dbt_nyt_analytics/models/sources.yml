@@ -89,3 +89,54 @@ sources:
             description: "{{ doc('media_count_by_type') }}"
           - name: adx_keywords
             description: "{{ doc('adx_keywords') }}"
+
+      - name: best_sellers
+        description: "Weekly Best Sellers list entries from the NYT Books API"
+        loaded_at_field: published_date
+        freshness:
+          error_after: {count: 7, period: day}
+        meta:
+          partition_by: published_date
+        columns:
+          - name: published_date
+            description: "{{ doc('bs_published_date') }}"
+          - name: list_name_encoded
+            description: "{{ doc('list_name_encoded') }}"
+          - name: list_display_name
+            description: "{{ doc('list_display_name') }}"
+          - name: list_updated
+            description: "{{ doc('list_updated') }}"
+          - name: rank
+            description: "{{ doc('bs_rank') }}"
+          - name: rank_last_week
+            description: "{{ doc('rank_last_week') }}"
+          - name: weeks_on_list
+            description: "{{ doc('weeks_on_list') }}"
+          - name: asterisk
+            description: "{{ doc('asterisk') }}"
+          - name: dagger
+            description: "{{ doc('dagger') }}"
+          - name: primary_isbn13
+            description: "{{ doc('primary_isbn13') }}"
+          - name: title
+            description: "{{ doc('book_title') }}"
+          - name: author
+            description: "{{ doc('book_author') }}"
+          - name: contributor
+            description: "{{ doc('contributor') }}"
+          - name: contributor_note
+            description: "{{ doc('contributor_note') }}"
+          - name: publisher
+            description: "{{ doc('book_publisher') }}"
+          - name: description
+            description: "{{ doc('book_description') }}"
+          - name: book_image
+            description: "{{ doc('book_image') }}"
+          - name: amazon_product_url
+            description: "{{ doc('amazon_product_url') }}"
+          - name: age_group
+            description: "{{ doc('age_group') }}"
+          - name: book_review_link
+            description: "{{ doc('book_review_link') }}"
+          - name: sunday_review_link
+            description: "{{ doc('sunday_review_link') }}"

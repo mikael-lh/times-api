@@ -43,3 +43,58 @@ models:
         description: "{{ doc('section') }}"
       - name: title
         description: "{{ doc('title') }}"
+
+  - name: stg_best_sellers
+    description: "Staged NYT Best Sellers list entries with cleaned types and parsed author fields"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - published_date
+              - list_name_encoded
+              - rank
+    columns:
+      - name: published_date
+        description: "{{ doc('bs_published_date') }}"
+        tests:
+          - not_null
+      - name: list_name_encoded
+        description: "{{ doc('list_name_encoded') }}"
+        tests:
+          - not_null
+      - name: rank
+        description: "{{ doc('bs_rank') }}"
+        tests:
+          - not_null
+      - name: list_display_name
+        description: "{{ doc('list_display_name') }}"
+      - name: list_updated
+        description: "{{ doc('list_updated') }}"
+      - name: rank_last_week
+        description: "{{ doc('rank_last_week') }}"
+      - name: weeks_on_list
+        description: "{{ doc('weeks_on_list') }}"
+      - name: asterisk
+        description: "{{ doc('asterisk') }}"
+      - name: dagger
+        description: "{{ doc('dagger') }}"
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+      - name: title
+        description: "{{ doc('book_title') }}"
+      - name: author
+        description: "{{ doc('book_author') }}"
+      - name: contributor
+        description: "{{ doc('contributor') }}"
+      - name: authors
+        description: "{{ doc('authors') }}"
+      - name: contributors
+        description: "{{ doc('contributors') }}"
+      - name: age_group
+        description: "{{ doc('age_group') }}"
+      - name: age_min
+        description: "{{ doc('age_min') }}"
+      - name: age_max
+        description: "{{ doc('age_max') }}"
+      - name: book_review_link
+        description: "{{ doc('book_review_link') }}"

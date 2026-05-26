@@ -18,9 +18,10 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 
 ## Models
 
-**Staging** (incremental, partitioned upstream):
+**Staging** (views; archive/popular also incremental where configured):
 - `stg_archive_articles` – cleaned archive articles
 - `stg_most_popular_articles` – cleaned daily snapshots, with `published_at` parsed to TIMESTAMP
+- `stg_best_sellers` – cleaned weekly Best Sellers entries with parsed authors and age ranges
 
 **Intermediate** (views):
 - `int_keywords_flattened` – one row per (article, keyword)
@@ -37,9 +38,6 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 - `agg_author_performance` – author productivity
 - `agg_section_trends` – section evolution by year
 - `agg_keyword_trends` – keyword YoY change
-
-> `prod.best_sellers` (Books API) is loaded into BigQuery but is **not
-> yet modelled in dbt**.
 
 ## Quickstart
 
