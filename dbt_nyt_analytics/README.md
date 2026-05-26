@@ -21,7 +21,7 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 **Staging** (views; archive/popular also incremental where configured):
 - `stg_archive_articles` – cleaned archive articles
 - `stg_most_popular_articles` – cleaned daily snapshots, with `published_at` parsed to TIMESTAMP
-- `stg_best_sellers` – cleaned weekly Best Sellers entries with parsed authors and age ranges
+- `stg_best_sellers` – cleaned weekly Best Sellers entries with parsed authors and age ranges (PK: `published_date`, `list_name_encoded`, `rank`, `list_updated`)
 
 **Intermediate** (views):
 - `int_keywords_flattened` – one row per (article, keyword)

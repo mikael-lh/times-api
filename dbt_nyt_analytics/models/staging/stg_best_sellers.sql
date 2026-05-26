@@ -8,10 +8,10 @@ cleaned as (
         published_date,
         list_name_encoded,
         rank,
+        lower(trim(list_updated)) as list_updated,
 
         -- List metadata
         trim(list_display_name) as list_display_name,
-        lower(trim(list_updated)) as list_updated,
 
         -- Rank metrics
         rank_last_week,
@@ -89,6 +89,7 @@ cleaned as (
     where published_date is not null
         and list_name_encoded is not null
         and rank is not null
+        and list_updated is not null
 )
 
 select * from cleaned

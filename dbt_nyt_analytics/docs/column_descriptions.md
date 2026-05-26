@@ -148,11 +148,11 @@ ADX keywords string.
 {# ============================================================ #}
 
 {% docs bs_published_date %}
-Print publication date of the Best Sellers list (YYYY-MM-DD).
+Print publication date of the Best Sellers list (YYYY-MM-DD). Part of the composite primary key.
 {% enddocs %}
 
 {% docs list_name_encoded %}
-URL-safe list identifier (e.g., hardcover-fiction).
+URL-safe list identifier (e.g., hardcover-fiction). Part of the composite primary key.
 {% enddocs %}
 
 {% docs list_display_name %}
@@ -160,11 +160,11 @@ Human-readable list name (e.g., Hardcover Fiction).
 {% enddocs %}
 
 {% docs list_updated %}
-How often the list is updated (weekly or monthly, normalized to lowercase).
+How often the list is updated (weekly or monthly, normalized to lowercase). Part of the composite primary key.
 {% enddocs %}
 
 {% docs bs_rank %}
-Rank on the list for this published_date.
+Rank on the list for this published_date. Part of the composite primary key.
 {% enddocs %}
 
 {% docs rank_last_week %}

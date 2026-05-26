@@ -53,6 +53,7 @@ models:
               - published_date
               - list_name_encoded
               - rank
+              - list_updated
     columns:
       - name: published_date
         description: "{{ doc('bs_published_date') }}"
@@ -70,6 +71,8 @@ models:
         description: "{{ doc('list_display_name') }}"
       - name: list_updated
         description: "{{ doc('list_updated') }}"
+        tests:
+          - not_null
       - name: rank_last_week
         description: "{{ doc('rank_last_week') }}"
       - name: weeks_on_list
