@@ -41,4 +41,7 @@ models:
 
 snapshots:
   nyt_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
     +target_schema: dbt_snapshots
