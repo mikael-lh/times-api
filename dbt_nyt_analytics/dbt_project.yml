@@ -38,3 +38,7 @@ models:
       analytics:
         +materialized: table
         +schema: dbt_analytics
+
+snapshots:
+  nyt_analytics:
+    +target_schema: dbt_snapshots

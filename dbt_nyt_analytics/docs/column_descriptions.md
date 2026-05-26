@@ -291,6 +291,14 @@ Author last name.
 Surrogate key for author (hashed from author_full_name).
 {% enddocs %}
 
+{% docs book_key %}
+Surrogate key for book (hashed from primary_isbn13).
+{% enddocs %}
+
+{% docs top_rank %}
+Best (lowest numeric) rank achieved across all Best Sellers lists for this book.
+{% enddocs %}
+
 {% docs keyword_key %}
 Surrogate key for keyword (hashed from keyword_name + keyword_value).
 {% enddocs %}

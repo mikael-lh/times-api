@@ -33,8 +33,13 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)
 - `fct_article_popularity` – one row per (snapshot_date, article)
+- `fct_best_sellers` – Best Sellers list entry facts (incremental)
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
-- `dim_authors`, `dim_keywords`, `dim_sections` – surrogate-keyed dimensions
+- `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
+- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books` – surrogate-keyed dimensions
+
+**Snapshots**:
+- `books_snapshot` – SCD Type 2 history of book metadata and top rank (`snapshots/`)
 
 **Analytics marts** (tables):
 - `agg_articles_by_month` – monthly volume + richness
