@@ -112,16 +112,3 @@ models:
         description: "{{ doc('age_max') }}"
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
-
-  - name: int_best_sellers_books_snapshot_source
-    description: "One row per book with latest metadata and best rank across all lists, feeding books_snapshot."
-    columns:
-      - name: primary_isbn13
-        description: "{{ doc('primary_isbn13') }}"
-        tests:
-          - unique
-          - not_null
-      - name: top_rank
-        description: "{{ doc('top_rank') }}"
-      - name: latest_published_date
-        description: "{{ doc('latest_published_date') }}"
