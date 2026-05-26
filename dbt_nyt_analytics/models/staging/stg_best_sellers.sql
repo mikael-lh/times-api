@@ -38,42 +38,6 @@ cleaned as (
         trim(publisher) as publisher,
         trim(description) as description,
 
-        -- Parsed author / contributor arrays
-        case
-            when author is null or trim(author) = '' then null
-            else array(
-                select initcap(trim(author_name))
-                from unnest(
-                    split(
-                        regexp_replace(trim(author), r'(?i)\s+and\s+', '|||'),
-                        '|||'
-                    )
-                ) as author_name
-                where trim(author_name) != ''
-            )
-        end as authors,
-        case
-            when contributor is null or trim(contributor) = '' then null
-            else array(
-                select initcap(trim(contributor_name))
-                from unnest(
-                    split(
-                        regexp_replace(
-                            regexp_replace(
-                                regexp_replace(trim(contributor), r'(?i)^by\s+', ''),
-                                r'(?i)\s+and\s+',
-                                '|||'
-                            ),
-                            r',\s*',
-                            '|||'
-                        ),
-                        '|||'
-                    )
-                ) as contributor_name
-                where trim(contributor_name) != ''
-            )
-        end as contributors,
-
         -- Age group parsing (children's lists)
         trim(age_group) as age_group,
         safe_cast(regexp_extract(age_group, r'(\d+)') as int64) as age_min,

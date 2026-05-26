@@ -231,14 +231,6 @@ Link to NYT book review (if any).
 Link to NYT Sunday book review (if any).
 {% enddocs %}
 
-{% docs authors %}
-Array of individual author names parsed from the author field.
-{% enddocs %}
-
-{% docs contributors %}
-Array of individual contributor names parsed from the contributor field.
-{% enddocs %}
-
 {% docs age_min %}
 Minimum target age parsed from age_group (null when not applicable).
 {% enddocs %}

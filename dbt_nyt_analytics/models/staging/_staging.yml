@@ -45,7 +45,7 @@ models:
         description: "{{ doc('title') }}"
 
   - name: stg_best_sellers
-    description: "Staged NYT Best Sellers list entries with cleaned types and parsed author fields"
+    description: "Staged NYT Best Sellers list entries with cleaned types"
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -89,10 +89,6 @@ models:
         description: "{{ doc('book_author') }}"
       - name: contributor
         description: "{{ doc('contributor') }}"
-      - name: authors
-        description: "{{ doc('authors') }}"
-      - name: contributors
-        description: "{{ doc('contributors') }}"
       - name: age_group
         description: "{{ doc('age_group') }}"
       - name: age_min
