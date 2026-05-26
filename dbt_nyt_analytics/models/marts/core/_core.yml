@@ -39,7 +39,7 @@ models:
         description: "{{ doc('days_since_published') }}"
 
   - name: dim_authors
-    description: "Dimension table of unique authors"
+    description: "Conformed dimension of unique authors from archive articles and Best Sellers books."
     columns:
       - name: author_key
         description: "{{ doc('author_key') }}"
@@ -48,6 +48,12 @@ models:
           - not_null
       - name: author_full_name
         description: "{{ doc('author_full_name') }}"
+        tests:
+          - not_null
+      - name: firstname
+        description: "{{ doc('firstname') }}"
+      - name: lastname
+        description: "{{ doc('lastname') }}"
 
   - name: dim_keywords
     description: "Dimension table of unique keywords"
@@ -100,3 +106,152 @@ models:
         description: "{{ doc('section_name') }}"
       - name: news_desk
         description: "{{ doc('news_desk') }}"
+
+  - name: dim_books
+    description: "Current-state book dimension (SCD Type 2 history in books_snapshot). One row per primary_isbn13."
+    columns:
+      - name: book_key
+        description: "{{ doc('book_key') }}"
+        tests:
+          - unique
+          - not_null
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+        tests:
+          - unique
+          - not_null
+      - name: title
+        description: "{{ doc('book_title') }}"
+      - name: publisher
+        description: "{{ doc('book_publisher') }}"
+      - name: description
+        description: "{{ doc('book_description') }}"
+      - name: top_rank
+        description: "{{ doc('top_rank') }}"
+      - name: age_group
+        description: "{{ doc('age_group') }}"
+      - name: age_min
+        description: "{{ doc('age_min') }}"
+      - name: age_max
+        description: "{{ doc('age_max') }}"
+      - name: book_image
+        description: "{{ doc('book_image') }}"
+      - name: amazon_product_url
+        description: "{{ doc('amazon_product_url') }}"
+      - name: book_review_link
+        description: "{{ doc('book_review_link') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('fct_articles')
+                field: web_url
+              config:
+                severity: warn
+                where: "book_review_link is not null"
+      - name: sunday_review_link
+        description: "{{ doc('sunday_review_link') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('fct_articles')
+                field: web_url
+              config:
+                severity: warn
+                where: "sunday_review_link is not null"
+      - name: latest_published_date
+        description: "{{ doc('latest_published_date') }}"
+
+  - name: fct_best_sellers
+    description: "Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated)."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - published_date
+              - list_name_encoded
+              - rank
+              - list_updated
+    columns:
+      - name: published_date
+        description: "{{ doc('bs_published_date') }}"
+        tests:
+          - not_null
+      - name: list_name_encoded
+        description: "{{ doc('list_name_encoded') }}"
+        tests:
+          - not_null
+      - name: rank
+        description: "{{ doc('bs_rank') }}"
+        tests:
+          - not_null
+      - name: list_updated
+        description: "{{ doc('list_updated') }}"
+        tests:
+          - not_null
+      - name: book_key
+        description: "{{ doc('book_key') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_books')
+                field: book_key
+              config:
+                where: "book_key is not null"
+      - name: author_key
+        description: "{{ doc('author_key') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_authors')
+                field: author_key
+              config:
+                where: "author_key is not null"
+      - name: list_display_name
+        description: "{{ doc('list_display_name') }}"
+      - name: rank_last_week
+        description: "{{ doc('rank_last_week') }}"
+      - name: weeks_on_list
+        description: "{{ doc('weeks_on_list') }}"
+      - name: asterisk
+        description: "{{ doc('asterisk') }}"
+      - name: dagger
+        description: "{{ doc('dagger') }}"
+
+  - name: bridge_best_seller_authors
+    description: "Bridge table resolving the many-to-many relationship between Best Sellers list entries and authors."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - published_date
+              - list_name_encoded
+              - rank
+              - list_updated
+              - author_key
+    columns:
+      - name: published_date
+        description: "{{ doc('bs_published_date') }}"
+        tests:
+          - not_null
+      - name: list_name_encoded
+        description: "{{ doc('list_name_encoded') }}"
+        tests:
+          - not_null
+      - name: rank
+        description: "{{ doc('bs_rank') }}"
+        tests:
+          - not_null
+      - name: list_updated
+        description: "{{ doc('list_updated') }}"
+        tests:
+          - not_null
+      - name: author_key
+        description: "{{ doc('author_key') }}"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_authors')
+                field: author_key
+      - name: author_full_name
+        description: "{{ doc('author_full_name') }}"

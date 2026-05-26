@@ -38,3 +38,10 @@ models:
       analytics:
         +materialized: table
         +schema: dbt_analytics
+
+snapshots:
+  nyt_analytics:
+    +persist_docs:
+      relation: true
+      columns: true
+    +target_schema: dbt_snapshots

@@ -9,12 +9,15 @@ Function) into analytics-ready models.
 |---|---|---|---|
 | `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_staging` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
 | `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
+| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | Slowly changing history for book metadata (`strategy='check'`) |
 | `marts/core/` | table | `dbt_core` / `ci_dbt_core` / `dev_dbt_core` | Facts, dimensions, bridges |
 | `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_analytics` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
 Schema separation is handled by `macros/generate_schema_name.sql`:
 `prod` uses bare schema names, `ci` prefixes with `ci_`, anything else
-(typically `dev`) prefixes with `dev_`.
+(typically `dev`) prefixes with `dev_`. Models use `+schema` in
+`dbt_project.yml`; snapshots use `+target_schema` (same macro, different
+config key).
 
 ## Models
 
@@ -33,9 +36,13 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)
 - `fct_article_popularity` – one row per (snapshot_date, article)
+- `fct_best_sellers` – Best Sellers list entry facts (incremental)
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
-- `dim_authors`, `dim_keywords`, `dim_sections` – surrogate-keyed dimensions
+- `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
+- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books` – surrogate-keyed dimensions (`dim_books` = current rows from `books_snapshot`)
 
+**Snapshots** (`snapshots/`; schema via `+target_schema: dbt_snapshots` in `dbt_project.yml`):
+- `books_snapshot` – SCD Type 2 history of book metadata and `top_rank` (best rank across all lists). Built from `int_best_sellers_books` with `top_rank` computed inline from `stg_best_sellers`.
 **Analytics marts** (tables):
 - `agg_articles_by_month` – monthly volume + richness
 - `agg_author_performance` – author productivity
@@ -92,21 +99,22 @@ uv run dbt docs generate && uv run dbt docs serve
 ## Column documentation
 
 All column descriptions live in `docs/column_descriptions.md` as dbt
-`doc()` blocks. Model and source `.yml` files reference them via
+`doc()` blocks. Model, source, and snapshot `.yml` files reference them via
 `{{ doc('column_name') }}`. With `+persist_docs: { relation: true,
-columns: true }` set in `dbt_project.yml`, those descriptions show up
-directly in the BigQuery console.
+columns: true }` set in `dbt_project.yml` for models and snapshots, those
+descriptions show up directly in the BigQuery console.
 
 ## How to add a new model
 
 1. Drop the SQL in the right layer folder (`staging/`, `intermediate/`,
-   `marts/core/`, or `marts/analytics/`). Materialization is inherited
-   from `dbt_project.yml` — no `{{ config(...) }}` block needed for
-   default cases.
+   `marts/core/`, `marts/analytics/`, or `snapshots/`). Materialization
+   and schema are inherited from `dbt_project.yml`. Put snapshot strategy
+   config (`unique_key`, `strategy`, `check_cols`) in `_snapshots.yml`, not
+   inline in the SQL file.
 2. Add the model entry in the sibling `_*.yml`
-   (`_staging.yml` / `_intermediate.yml` / `_core.yml` / `_analytics.yml`)
-   with a description and at least `unique` + `not_null` tests on the
-   primary key.
+   (`_staging.yml` / `_intermediate.yml` / `_core.yml` / `_analytics.yml`
+   / `_snapshots.yml`) with a description and at least `unique` + `not_null`
+   tests on the primary key.
 3. For each new column, add a `{% docs column_name %}` block in
    `docs/column_descriptions.md` and reference it with
    `description: "{{ doc('column_name') }}"`. Reuse existing blocks

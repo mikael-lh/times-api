@@ -271,6 +271,22 @@ Array of individual author names parsed from the book author field.
 Most recent Best Sellers list publication date on which this book appeared.
 {% enddocs %}
 
+{% docs dbt_scd_id %}
+Surrogate key for this SCD Type 2 snapshot row (managed by dbt).
+{% enddocs %}
+
+{% docs dbt_updated_at %}
+Timestamp when dbt last updated this snapshot row.
+{% enddocs %}
+
+{% docs dbt_valid_from %}
+Start of this version's validity window in the SCD Type 2 snapshot.
+{% enddocs %}
+
+{% docs dbt_valid_to %}
+End of this version's validity window in the SCD Type 2 snapshot (null for the current row).
+{% enddocs %}
+
 {% docs author_full_name %}
 Constructed full name of the author (firstname + lastname).
 {% enddocs %}
@@ -289,6 +305,14 @@ Author last name.
 
 {% docs author_key %}
 Surrogate key for author (hashed from author_full_name).
+{% enddocs %}
+
+{% docs book_key %}
+Surrogate key for book (hashed from primary_isbn13).
+{% enddocs %}
+
+{% docs top_rank %}
+Best (lowest numeric) rank achieved across all Best Sellers lists for this book.
 {% enddocs %}
 
 {% docs keyword_key %}
