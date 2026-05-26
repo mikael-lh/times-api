@@ -8,7 +8,7 @@ parsed as (
         case
             when author is null or trim(author) = '' then null
             else array(
-                select initcap(trim(author_name))
+                select distinct initcap(trim(author_name))
                 from unnest(
                     split(
                         regexp_replace(trim(author), r'(?i)\s+and\s+', '|||'),
