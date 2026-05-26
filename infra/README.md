@@ -5,6 +5,7 @@ Shell scripts that provision and deploy the BigQuery side of the pipeline.
 | Script | When to run | What it does |
 |---|---|---|
 | `create_bq_tables.sh` | Once per GCP project | Creates the `staging`, `metadata`, and `prod` datasets and all required tables from `schema/*.json`. Idempotent (`mk` skips existing). |
+| `dedup_best_sellers.sh` | One-off after bulk books load | Removes duplicate rows from `prod.best_sellers` (key: `published_date`, `list_name_encoded`, `rank`, `list_updated`). |
 | `deploy.sh` | On every Cloud Function change | Copies `schema/*.json` into `cloud_function/schema/`, then `gcloud functions deploy` with all required env vars. |
 
 Both scripts `set -euo pipefail` and exit non-zero with a clear message
