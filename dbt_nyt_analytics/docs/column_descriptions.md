@@ -263,6 +263,14 @@ The keyword value.
 Rank of keyword relevance within the article.
 {% enddocs %}
 
+{% docs authors %}
+Array of individual author names parsed from the book author field.
+{% enddocs %}
+
+{% docs latest_published_date %}
+Most recent Best Sellers list publication date on which this book appeared.
+{% enddocs %}
+
 {% docs author_full_name %}
 Constructed full name of the author (firstname + lastname).
 {% enddocs %}

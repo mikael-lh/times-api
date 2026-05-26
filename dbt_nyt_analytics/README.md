@@ -8,7 +8,7 @@ Function) into analytics-ready models.
 | Layer | Materialization | Schema (prod / ci / dev) | What it does |
 |---|---|---|---|
 | `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_staging` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
-| `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person) |
+| `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
 | `marts/core/` | table | `dbt_core` / `ci_dbt_core` / `dev_dbt_core` | Facts, dimensions, bridges |
 | `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_analytics` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
@@ -26,6 +26,9 @@ Schema separation is handled by `macros/generate_schema_name.sql`:
 **Intermediate** (views):
 - `int_keywords_flattened` – one row per (article, keyword)
 - `int_authors_flattened` – one row per (article, author)
+- `int_best_sellers_authors_parsed` – list entries with parsed `authors` array
+- `int_best_sellers_authors_flattened` – one row per (list entry, author)
+- `int_best_sellers_books` – one row per `primary_isbn13` (latest list metadata)
 
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)

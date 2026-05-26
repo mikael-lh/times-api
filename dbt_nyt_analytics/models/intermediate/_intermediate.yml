@@ -24,3 +24,91 @@ models:
         description: "{{ doc('firstname') }}"
       - name: lastname
         description: "{{ doc('lastname') }}"
+
+  - name: int_best_sellers_authors_parsed
+    description: "Best Sellers list entries with author strings parsed into an authors array."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - published_date
+              - list_name_encoded
+              - rank
+              - list_updated
+    columns:
+      - name: published_date
+        description: "{{ doc('bs_published_date') }}"
+        tests:
+          - not_null
+      - name: list_name_encoded
+        description: "{{ doc('list_name_encoded') }}"
+        tests:
+          - not_null
+      - name: rank
+        description: "{{ doc('bs_rank') }}"
+        tests:
+          - not_null
+      - name: list_updated
+        description: "{{ doc('list_updated') }}"
+        tests:
+          - not_null
+      - name: authors
+        description: "{{ doc('authors') }}"
+
+  - name: int_best_sellers_authors_flattened
+    description: "One row per Best Sellers list entry and parsed author name."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - published_date
+              - list_name_encoded
+              - rank
+              - list_updated
+              - author_full_name
+    columns:
+      - name: published_date
+        description: "{{ doc('bs_published_date') }}"
+        tests:
+          - not_null
+      - name: list_name_encoded
+        description: "{{ doc('list_name_encoded') }}"
+        tests:
+          - not_null
+      - name: rank
+        description: "{{ doc('bs_rank') }}"
+        tests:
+          - not_null
+      - name: list_updated
+        description: "{{ doc('list_updated') }}"
+        tests:
+          - not_null
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+      - name: author_full_name
+        description: "{{ doc('author_full_name') }}"
+        tests:
+          - not_null
+
+  - name: int_best_sellers_books
+    description: "One row per book (primary_isbn13) with metadata from the most recent list appearance."
+    columns:
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+        tests:
+          - unique
+          - not_null
+      - name: title
+        description: "{{ doc('book_title') }}"
+      - name: publisher
+        description: "{{ doc('book_publisher') }}"
+      - name: description
+        description: "{{ doc('book_description') }}"
+      - name: age_group
+        description: "{{ doc('age_group') }}"
+      - name: age_min
+        description: "{{ doc('age_min') }}"
+      - name: age_max
+        description: "{{ doc('age_max') }}"
+      - name: latest_published_date
+        description: "{{ doc('latest_published_date') }}"
