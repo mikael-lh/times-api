@@ -196,7 +196,16 @@ models:
                 to: ref('dim_books')
                 field: book_key
               config:
-                where: "primary_isbn13 is not null"
+                where: "book_key is not null"
+      - name: author_key
+        description: "{{ doc('author_key') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_authors')
+                field: author_key
+              config:
+                where: "author_key is not null"
       - name: list_display_name
         description: "{{ doc('list_display_name') }}"
       - name: rank_last_week
@@ -207,14 +216,6 @@ models:
         description: "{{ doc('asterisk') }}"
       - name: dagger
         description: "{{ doc('dagger') }}"
-      - name: primary_isbn13
-        description: "{{ doc('primary_isbn13') }}"
-      - name: title
-        description: "{{ doc('book_title') }}"
-      - name: book_review_link
-        description: "{{ doc('book_review_link') }}"
-      - name: sunday_review_link
-        description: "{{ doc('sunday_review_link') }}"
 
   - name: bridge_best_seller_authors
     description: "Bridge table resolving the many-to-many relationship between Best Sellers list entries and authors."

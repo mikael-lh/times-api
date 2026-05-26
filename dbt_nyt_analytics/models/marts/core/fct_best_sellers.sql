@@ -7,7 +7,7 @@
             "data_type": "date",
             "granularity": "month"
         },
-        cluster_by=['list_name_encoded', 'book_key']
+        cluster_by=['list_name_encoded', 'book_key', 'author_key']
     )
 }}
 
@@ -20,51 +20,53 @@ with staged as (
 
 with_book_key as (
     select
-        -- Primary key
         s.published_date,
         s.list_name_encoded,
         s.rank,
         s.list_updated,
-
-        -- Foreign key
         b.book_key,
-
-        -- List metadata
         s.list_display_name,
-
-        -- Rank metrics
         s.rank_last_week,
         s.weeks_on_list,
-
-        -- Sales flags
         s.asterisk,
-        s.dagger,
-
-        -- Book natural key (degenerate)
-        s.primary_isbn13,
-
-        -- Content (degenerate)
-        s.title,
-        s.author,
-        s.contributor,
-        s.contributor_note,
-        s.publisher,
-        s.description,
-
-        -- Age
-        s.age_group,
-        s.age_min,
-        s.age_max,
-
-        -- Links
-        s.book_image,
-        s.amazon_product_url,
-        s.book_review_link,
-        s.sunday_review_link
-
+        s.dagger
     from staged s
     left join {{ ref('dim_books') }} b
         on s.primary_isbn13 = b.primary_isbn13
+),
+
+primary_author as (
+    select
+        f.published_date,
+        f.list_name_encoded,
+        f.rank,
+        f.list_updated,
+        a.author_key
+    from {{ ref('int_best_sellers_authors_flattened') }} f
+    inner join {{ ref('dim_authors') }} a
+        on f.author_full_name = a.author_full_name
+    qualify row_number() over (
+        partition by f.published_date, f.list_name_encoded, f.rank, f.list_updated
+        order by f.author_full_name
+    ) = 1
+),
+
+final as (
+    select
+        b.published_date,
+        b.list_name_encoded,
+        b.rank,
+        b.list_updated,
+        b.book_key,
+        p.author_key,
+        b.list_display_name,
+        b.rank_last_week,
+        b.weeks_on_list,
+        b.asterisk,
+        b.dagger
+    from with_book_key b
+    left join primary_author p
+        using (published_date, list_name_encoded, rank, list_updated)
 )
 
-select * from with_book_key
+select * from final
