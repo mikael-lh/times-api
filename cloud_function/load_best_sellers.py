@@ -110,16 +110,16 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
 
     client.delete_table(f"{GCP_PROJECT}.{temp_table}", not_found_ok=True)
 
-    # MERGE to final table (dedup by published_date, list_name_encoded, rank).
-    # Rank is the natural per-week, per-list key; primary_isbn13 can change for
-    # alternate editions of the same ranked title, so rank is a more reliable
-    # composite key for idempotency.
+    # MERGE to final table (dedup by published_date, list_name_encoded, rank,
+    # list_updated). Rank is the natural per-week, per-list key; list_updated
+    # distinguishes weekly vs monthly variants on early overview responses.
     merge_query = f"""
         MERGE `{GCP_PROJECT}.{BEST_SELLERS_FINAL_TABLE}` AS target
         USING `{GCP_PROJECT}.{BEST_SELLERS_STAGING_TABLE}` AS source
         ON  target.published_date = source.published_date
         AND target.list_name_encoded = source.list_name_encoded
         AND target.rank = source.rank
+        AND target.list_updated = source.list_updated
         WHEN NOT MATCHED THEN
             INSERT ROW
     """

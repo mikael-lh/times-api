@@ -148,15 +148,28 @@ def test_validate_fails_with_invalid_date_format(tmp_path):
 
 def test_validate_fails_with_duplicate_composite_key(tmp_path):
     records = _make_valid_records(150)
-    # Force duplicate (published_date, list_name_encoded, rank)
+    # Force duplicate (published_date, list_name_encoded, rank, list_updated)
     records[1]["published_date"] = records[0]["published_date"]
     records[1]["list_name_encoded"] = records[0]["list_name_encoded"]
     records[1]["rank"] = records[0]["rank"]
+    records[1]["list_updated"] = records[0]["list_updated"]
     path = _write_ndjson(tmp_path, records)
     result = validate_slim_ndjson(path)
     assert result["success"] is False
     failed_types = [r.expectation_config.type for r in result["results"] if not r.success]
     assert "expect_compound_columns_to_be_unique" in failed_types
+
+
+def test_validate_passes_with_same_rank_different_list_updated(tmp_path):
+    """Weekly and monthly variants at the same rank are distinct keys."""
+    records = _make_valid_records(150)
+    records[1]["published_date"] = records[0]["published_date"]
+    records[1]["list_name_encoded"] = records[0]["list_name_encoded"]
+    records[1]["rank"] = records[0]["rank"]
+    records[1]["list_updated"] = "MONTHLY"
+    path = _write_ndjson(tmp_path, records)
+    result = validate_slim_ndjson(path)
+    assert result["success"] is True
 
 
 # ---- Edge cases ----

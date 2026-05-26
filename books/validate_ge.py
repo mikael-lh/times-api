@@ -7,7 +7,7 @@ Pydantic; referential/semantic checks live in dbt tests.
 
 GE handles:
 - non-empty file
-- (published_date, list_name_encoded, rank) uniqueness
+- (published_date, list_name_encoded, rank, list_updated) uniqueness
 - list_updated in {WEEKLY, MONTHLY}
 - ISBN-13 format
 - published_date YYYY-MM-DD format
@@ -29,7 +29,7 @@ def create_expectation_suite(context: gx.data_context.EphemeralDataContext) -> g
 
     Based on SlimBestSeller schema and the Books API response contract:
     - Row count: 100-400 (overview returns ~250 books across all lists)
-    - Uniqueness: (published_date, list_name_encoded, rank) composite is unique
+    - Uniqueness: (published_date, list_name_encoded, rank, list_updated) composite is unique
     - Required fields: published_date, list_name_encoded, rank, title
     - Whitelist: list_updated in {WEEKLY, MONTHLY}
     - Format: published_date YYYY-MM-DD, primary_isbn13 13 digits
@@ -63,7 +63,7 @@ def create_expectation_suite(context: gx.data_context.EphemeralDataContext) -> g
 
     suite.add_expectation(
         gx.expectations.ExpectCompoundColumnsToBeUnique(
-            column_list=["published_date", "list_name_encoded", "rank"]
+            column_list=["published_date", "list_name_encoded", "rank", "list_updated"]
         )
     )
 

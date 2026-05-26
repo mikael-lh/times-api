@@ -14,7 +14,7 @@ class SlimBestSeller(BaseModel):
     """
     Analysis-ready slim record for a Best Sellers list entry.
 
-    One row per (published_date, list_name_encoded, primary_isbn13).
+    One row per (published_date, list_name_encoded, rank, list_updated).
     """
 
     model_config = ConfigDict(extra="ignore")
