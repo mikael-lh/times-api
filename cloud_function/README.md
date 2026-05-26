@@ -26,7 +26,7 @@ folder name:
 |---|---|---|
 | `archive_slim/` | `load_archive` | `article_id` |
 | `most_popular_slim/YYYY-MM-DD/` | `load_most_popular` (snapshot_date from path) | `(snapshot_date, id)` |
-| `books_slim/YYYY-MM-DD/` | `load_best_sellers` | `(published_date, list_name_encoded, rank)` |
+| `books_slim/YYYY-MM-DD/` | `load_best_sellers` | `(published_date, list_name_encoded, rank, list_updated)` |
 
 Anything else is logged and ignored.
 

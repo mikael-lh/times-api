@@ -1,9 +1,9 @@
 """
-Load Best Sellers slim files to BigQuery and MERGE into prod.
+Load Best Sellers slim files to BigQuery staging, MERGE to final table, and update manifest.
 
 The slim NDJSON arrives with published_date as a STRING (YYYY-MM-DD). We load
-to a per-invocation temp table, cast published_date to DATE, dedupe on the
-composite key, and MERGE directly into prod (no shared staging append).
+to a temp table with published_date typed as STRING, then INSERT into staging
+casting to DATE, mirroring the archive loader's pattern.
 """
 
 import json
@@ -22,13 +22,10 @@ from google.cloud import bigquery
 
 logger = logging.getLogger(__name__)
 
-# Per-load temp suffix; isolated from shared staging to avoid concurrent CF races.
-_TEMP_TABLE_SUFFIX = "_load_temp"
-
 
 def load_best_sellers(bucket: str, object_name: str) -> None:
     """
-    Load one books_slim NDJSON file and MERGE deduped rows into prod.best_sellers.
+    Load one books_slim NDJSON file to staging, MERGE to final table, and update manifest.
 
     Args:
         bucket: GCS bucket name
@@ -38,7 +35,7 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
     gcs_uri = f"gs://{bucket}/{object_name}"
     manifest_path = object_name
 
-    logger.info(f"Loading best_sellers from {gcs_uri}")
+    logger.info(f"Loading best_sellers from {gcs_uri} to {BEST_SELLERS_STAGING_TABLE}")
 
     check_query = f"""
         SELECT COUNT(*) as count
@@ -50,7 +47,7 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
         logger.info(f"Path {manifest_path} already loaded, skipping")
         return
 
-    temp_table = f"{BEST_SELLERS_STAGING_TABLE}{_TEMP_TABLE_SUFFIX}"
+    temp_table = f"{BEST_SELLERS_STAGING_TABLE}_temp"
 
     schema_path = Path(__file__).parent / "schema" / "best_sellers.json"
     with open(schema_path) as f:
@@ -60,7 +57,7 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
         if field["name"] == "published_date":
             field["type"] = "STRING"
             field["description"] = (
-                "Publication date (YYYY-MM-DD STRING, converted to DATE on MERGE)"
+                "Publication date (YYYY-MM-DD STRING, converted to DATE on INSERT)"
             )
             break
     temp_schema = [bigquery.SchemaField.from_api_repr(f) for f in temp_schema_json]
@@ -81,45 +78,44 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
     load_job.result()
     logger.info(f"Loaded {load_job.output_rows} rows to temp table")
 
-    # MERGE from this load's temp table only. Dedup by
-    # (published_date, list_name_encoded, rank, list_updated): rank is the natural
-    # per-week, per-list key; list_updated distinguishes weekly vs monthly variants
-    # on early overview responses.
+    insert_query = f"""
+        INSERT INTO `{GCP_PROJECT}.{BEST_SELLERS_STAGING_TABLE}`
+        SELECT
+            SAFE.PARSE_DATE('%Y-%m-%d', published_date) AS published_date,
+            list_name_encoded,
+            list_display_name,
+            list_updated,
+            rank,
+            rank_last_week,
+            weeks_on_list,
+            asterisk,
+            dagger,
+            primary_isbn13,
+            title,
+            author,
+            contributor,
+            contributor_note,
+            publisher,
+            description,
+            book_image,
+            amazon_product_url,
+            age_group,
+            book_review_link,
+            sunday_review_link
+        FROM `{GCP_PROJECT}.{temp_table}`
+    """
+    insert_job = client.query(insert_query)
+    insert_job.result()
+    logger.info("Inserted rows to staging with published_date converted to DATE")
+
+    client.delete_table(f"{GCP_PROJECT}.{temp_table}", not_found_ok=True)
+
+    # MERGE to final table (dedup by published_date, list_name_encoded, rank,
+    # list_updated). Rank is the natural per-week, per-list key; list_updated
+    # distinguishes weekly vs monthly variants on early overview responses.
     merge_query = f"""
         MERGE `{GCP_PROJECT}.{BEST_SELLERS_FINAL_TABLE}` AS target
-        USING (
-            SELECT
-                SAFE.PARSE_DATE('%Y-%m-%d', published_date) AS published_date,
-                list_name_encoded,
-                list_display_name,
-                list_updated,
-                rank,
-                rank_last_week,
-                weeks_on_list,
-                asterisk,
-                dagger,
-                primary_isbn13,
-                title,
-                author,
-                contributor,
-                contributor_note,
-                publisher,
-                description,
-                book_image,
-                amazon_product_url,
-                age_group,
-                book_review_link,
-                sunday_review_link
-            FROM `{GCP_PROJECT}.{temp_table}`
-            QUALIFY ROW_NUMBER() OVER (
-                PARTITION BY
-                    SAFE.PARSE_DATE('%Y-%m-%d', published_date),
-                    list_name_encoded,
-                    rank,
-                    list_updated
-                ORDER BY primary_isbn13
-            ) = 1
-        ) AS source
+        USING `{GCP_PROJECT}.{BEST_SELLERS_STAGING_TABLE}` AS source
         ON  target.published_date = source.published_date
         AND target.list_name_encoded = source.list_name_encoded
         AND target.rank = source.rank
@@ -131,8 +127,6 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
     merge_job.result()
     logger.info("MERGE to best_sellers completed")
 
-    client.delete_table(f"{GCP_PROJECT}.{temp_table}", not_found_ok=True)
-
     now = datetime.now(UTC).isoformat()
     manifest_query = f"""
         INSERT INTO `{GCP_PROJECT}.{LOAD_MANIFEST_TABLE}` (source, path, loaded_at)
@@ -141,3 +135,8 @@ def load_best_sellers(bucket: str, object_name: str) -> None:
     manifest_job = client.query(manifest_query)
     manifest_job.result()
     logger.info(f"Manifest updated for path: {manifest_path}")
+
+    truncate_query = f"TRUNCATE TABLE `{GCP_PROJECT}.{BEST_SELLERS_STAGING_TABLE}`"
+    truncate_job = client.query(truncate_query)
+    truncate_job.result()
+    logger.info("Staging table truncated")
