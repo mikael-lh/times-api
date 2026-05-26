@@ -57,7 +57,7 @@ GCS, so bad data never makes it into BigQuery.
 | Source | Key expectations |
 |---|---|
 | Most Popular | 15–30 rows, `source = "New York Times"`, no future `published_date`, `id` unique |
-| Best Sellers | 100–400 rows, `list_updated ∈ {WEEKLY, MONTHLY}`, ISBN-13 regex on ≥95%, `(published_date, list_name_encoded, rank)` unique |
+| Best Sellers | 100–400 rows, `list_updated ∈ {WEEKLY, MONTHLY}`, ISBN-13 regex on ≥95%, `(published_date, list_name_encoded, rank, list_updated)` unique |
 
 The Archive pipeline does not currently run GE (the volume of historical
 data makes per-month thresholds less meaningful), but the same pattern

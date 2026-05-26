@@ -39,14 +39,14 @@ uv run python -m books.validate_ge
 ## Slim schema
 
 `SlimBestSeller` (see `models.py`) – one row per `(published_date,
-list_name_encoded, rank)`:
+list_name_encoded, rank, list_updated)`:
 
 | Field | Type | Notes |
 |---|---|---|
 | `published_date` | str | Print publication date (Sunday) — required, part of composite key |
 | `list_name_encoded` | str | e.g. `hardcover-fiction` — required, part of composite key |
 | `list_display_name` | str | Human-readable list name |
-| `list_updated` | `Literal["WEEKLY","MONTHLY"]` | Enforced via Pydantic at parse time |
+| `list_updated` | `Literal["WEEKLY","MONTHLY"]` | Enforced via Pydantic at parse time — part of composite key |
 | `rank` | int | 1-based — required, part of composite key |
 | `rank_last_week`, `weeks_on_list`, `asterisk`, `dagger` | int | Movement and footnote markers |
 | `primary_isbn13`, `title`, `author`, `contributor`, `contributor_note`, `publisher`, `description` | str | Book metadata |
@@ -64,7 +64,7 @@ response are silently dropped rather than failing validation.
 - `list_updated` in `{WEEKLY, MONTHLY}`
 - `published_date` matches `^\d{4}-\d{2}-\d{2}$`
 - `primary_isbn13` matches `^\d{13}$` (≥95% of rows)
-- `(published_date, list_name_encoded, rank)` is unique
+- `(published_date, list_name_encoded, rank, list_updated)` is unique
 
 ## Pipeline position
 
@@ -75,7 +75,7 @@ validate  →  pass / fail (CI gate before GCS upload)
 GitHub Action uploads slim NDJSON to GCS
 Cloud Function (cloud_function/load_best_sellers.py) parses published_date
   to DATE and MERGEs into prod.best_sellers (dedup by (published_date,
-  list_name_encoded, rank))
+  list_name_encoded, rank, list_updated))
 ```
 
 Note: `prod.best_sellers` is **not yet modelled in dbt**. It currently

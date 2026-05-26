@@ -100,7 +100,7 @@ bq --project_id="$GCP_PROJECT" mk --table \
 # Prod: best_sellers (partitioned by published_date, clustered by list)
 echo "Creating table $BQ_PROD_DATASET.best_sellers (partitioned by published_date, clustered by list_name_encoded)..."
 bq --project_id="$GCP_PROJECT" mk --table \
-  --description="Final NYT Best Sellers table (one row per published_date, list, rank)" \
+  --description="Final NYT Best Sellers table (one row per published_date, list, rank, list_updated)" \
   --time_partitioning_field=published_date \
   --time_partitioning_type=MONTH \
   --clustering_fields=list_name_encoded,published_date \
