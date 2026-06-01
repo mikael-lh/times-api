@@ -108,7 +108,7 @@ models:
         description: "{{ doc('news_desk') }}"
 
   - name: dim_books
-    description: "Current-state book dimension (SCD Type 2 history in books_snapshot). One row per primary_isbn13."
+    description: "Current-state book dimension (one row per primary_isbn13). Full SCD Type 2 history lives in books_snapshot and dim_books_history."
     columns:
       - name: book_key
         description: "{{ doc('book_key') }}"
@@ -161,6 +161,51 @@ models:
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
 
+  - name: dim_books_history
+    description: "Full SCD Type 2 book dimension from books_snapshot. One row per snapshot version; join via book_scd_key for point-in-time attributes."
+    columns:
+      - name: book_scd_key
+        description: "{{ doc('book_scd_key') }}"
+        tests:
+          - unique
+          - not_null
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+        tests:
+          - not_null
+      - name: title
+        description: "{{ doc('book_title') }}"
+      - name: publisher
+        description: "{{ doc('book_publisher') }}"
+      - name: description
+        description: "{{ doc('book_description') }}"
+      - name: top_rank
+        description: "{{ doc('top_rank') }}"
+      - name: age_group
+        description: "{{ doc('age_group') }}"
+      - name: age_min
+        description: "{{ doc('age_min') }}"
+      - name: age_max
+        description: "{{ doc('age_max') }}"
+      - name: book_image
+        description: "{{ doc('book_image') }}"
+      - name: amazon_product_url
+        description: "{{ doc('amazon_product_url') }}"
+      - name: book_review_link
+        description: "{{ doc('book_review_link') }}"
+      - name: sunday_review_link
+        description: "{{ doc('sunday_review_link') }}"
+      - name: latest_published_date
+        description: "{{ doc('latest_published_date') }}"
+      - name: dbt_valid_from
+        description: "{{ doc('dbt_valid_from') }}"
+        tests:
+          - not_null
+      - name: dbt_valid_to
+        description: "{{ doc('dbt_valid_to') }}"
+      - name: dbt_updated_at
+        description: "{{ doc('dbt_updated_at') }}"
+
   - name: fct_best_sellers
     description: "Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated)."
     tests:
@@ -197,6 +242,15 @@ models:
                 field: book_key
               config:
                 where: "book_key is not null"
+      - name: book_scd_key
+        description: "{{ doc('book_scd_key') }}"
+        tests:
+          - relationships:
+              arguments:
+                to: ref('dim_books_history')
+                field: book_scd_key
+              config:
+                where: "book_scd_key is not null"
       - name: author_key
         description: "{{ doc('author_key') }}"
         tests:

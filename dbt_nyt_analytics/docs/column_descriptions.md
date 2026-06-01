@@ -308,7 +308,11 @@ Surrogate key for author (hashed from author_full_name).
 {% enddocs %}
 
 {% docs book_key %}
-Surrogate key for book (hashed from primary_isbn13).
+Surrogate key for book (hashed from primary_isbn13). Points to the current row in dim_books.
+{% enddocs %}
+
+{% docs book_scd_key %}
+Surrogate key for a specific SCD Type 2 book version. Equals dbt_scd_id from books_snapshot; join to dim_books_history for point-in-time book attributes.
 {% enddocs %}
 
 {% docs top_rank %}

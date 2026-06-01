@@ -36,10 +36,10 @@ config key).
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)
 - `fct_article_popularity` – one row per (snapshot_date, article)
-- `fct_best_sellers` – Best Sellers list entry facts (incremental)
+- `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current metadata) and `book_scd_key` (point-in-time snapshot version)
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
 - `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
-- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books` – surrogate-keyed dimensions (`dim_books` = current rows from `books_snapshot`)
+- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current rows from `books_snapshot`; `dim_books_history` = all SCD versions, keyed by `book_scd_key` = `dbt_scd_id`)
 
 **Snapshots** (`snapshots/`; schema via `+target_schema: dbt_snapshots` in `dbt_project.yml`):
 - `books_snapshot` – SCD Type 2 history of book metadata and `top_rank` (best rank across all lists). Built from `int_best_sellers_books` with `top_rank` computed inline from `stg_best_sellers`.
