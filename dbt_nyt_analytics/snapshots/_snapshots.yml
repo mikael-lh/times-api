@@ -4,7 +4,7 @@ snapshots:
   - name: books_snapshot
     description: >
       SCD Type 2 history of book metadata and best rank across all Best Sellers lists.
-      Uses check strategy on metadata columns plus top_rank. Current rows feed dim_books.
+      Uses check strategy on metadata columns plus top_rank. Current rows feed dim_books; all versions feed dim_books_history.
     config:
       unique_key: primary_isbn13
       strategy: check
