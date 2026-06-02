@@ -1,6 +1,7 @@
 with source as (
     select
         published_date,
+        list_name_encoded,
         primary_isbn13,
         title,
         publisher,
@@ -22,7 +23,7 @@ ranked as (
         *,
         row_number() over (
             partition by primary_isbn13
-            order by published_date desc
+            order by published_date desc, list_name_encoded
         ) as recency_rank
     from source
 ),

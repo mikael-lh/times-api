@@ -1,6 +1,6 @@
 with current_books as (
-    select * from {{ ref('books_snapshot') }}
-    where dbt_valid_to is null
+    select * from {{ ref('dim_books_history') }}
+    where valid_to is null
 ),
 
 with_key as (
