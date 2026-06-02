@@ -9,7 +9,7 @@ Function) into analytics-ready models.
 |---|---|---|---|
 | `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_staging` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
 | `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
-| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | Reserved for dbt snapshots (none currently) |
+| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | dbt-managed audit of book metadata changes on each run |
 | `marts/core/` | table | `dbt_core` / `ci_dbt_core` / `dev_dbt_core` | Facts, dimensions, bridges |
 | `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_analytics` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
@@ -42,7 +42,8 @@ config key).
 - `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
 - `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current row per ISBN; `dim_books_history` = all top_rank SCD versions)
 
-**Snapshots** (`snapshots/`): none currently; book SCD is model-built in `int_books_top_rank_scd`.
+**Snapshots** (`snapshots/`; schema via `+target_schema: dbt_snapshots` in `dbt_project.yml`):
+- `books_snapshot` – dbt-managed SCD Type 2 audit of book metadata and all-time `top_rank` on each run. Fact joins use `dim_books_history` from `int_books_top_rank_scd` (list-week validity dates).
 **Analytics marts** (tables):
 - `agg_articles_by_month` – monthly volume + richness
 - `agg_author_performance` – author productivity
