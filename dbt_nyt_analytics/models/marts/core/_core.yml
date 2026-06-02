@@ -162,7 +162,7 @@ models:
         description: "{{ doc('latest_published_date') }}"
 
   - name: dim_books_history
-    description: "SCD Type 2 book dimension versioned on top_rank. One row per (primary_isbn13, top_rank period); join via book_scd_key for point-in-time top_rank."
+    description: "SCD Type 2 book dimension versioned on top_rank and metadata changes. One row per version; join via book_scd_key for point-in-time attributes."
     columns:
       - name: book_scd_key
         description: "{{ doc('book_scd_key') }}"

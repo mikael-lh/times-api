@@ -2,7 +2,17 @@ with weekly as (
     select
         primary_isbn13,
         published_date,
-        min(rank) as best_rank_that_week
+        min(rank) as best_rank_that_week,
+        any_value(title) as title,
+        any_value(publisher) as publisher,
+        any_value(description) as description,
+        any_value(age_group) as age_group,
+        any_value(age_min) as age_min,
+        any_value(age_max) as age_max,
+        any_value(book_image) as book_image,
+        any_value(amazon_product_url) as amazon_product_url,
+        any_value(book_review_link) as book_review_link,
+        any_value(sunday_review_link) as sunday_review_link
     from {{ ref('stg_best_sellers') }}
     where primary_isbn13 is not null
         and trim(primary_isbn13) != ''
@@ -11,8 +21,7 @@ with weekly as (
 
 running as (
     select
-        primary_isbn13,
-        published_date,
+        *,
         min(best_rank_that_week) over (
             partition by primary_isbn13
             order by published_date
@@ -21,13 +30,28 @@ running as (
     from weekly
 ),
 
-rank_changes as (
+with_lags as (
     select
         *,
         lag(top_rank) over (
             partition by primary_isbn13
             order by published_date
-        ) as prev_top_rank
+        ) as prev_top_rank,
+        lag(struct(
+            title,
+            publisher,
+            description,
+            age_group,
+            age_min,
+            age_max,
+            book_image,
+            amazon_product_url,
+            book_review_link,
+            sunday_review_link
+        )) over (
+            partition by primary_isbn13
+            order by published_date
+        ) as prev_attrs
     from running
 ),
 
@@ -37,9 +61,21 @@ flagged as (
         case
             when prev_top_rank is null then 1
             when top_rank != prev_top_rank then 1
+            when struct(
+                title,
+                publisher,
+                description,
+                age_group,
+                age_min,
+                age_max,
+                book_image,
+                amazon_product_url,
+                book_review_link,
+                sunday_review_link
+            ) != prev_attrs then 1
             else 0
         end as is_new_version
-    from rank_changes
+    from with_lags
 ),
 
 banded as (
@@ -52,34 +88,28 @@ banded as (
     from flagged
 ),
 
-versions as (
+band_starts as (
+    select *
+    from banded
+    qualify row_number() over (
+        partition by primary_isbn13, scd_band
+        order by published_date
+    ) = 1
+),
+
+isbn_dates as (
     select
         primary_isbn13,
-        scd_band,
-        any_value(top_rank) as top_rank,
-        min(published_date) as valid_from
-    from banded
-    group by 1, 2
+        max(published_date) as latest_published_date
+    from weekly
+    group by 1
 ),
 
 with_valid_to as (
     select
-        primary_isbn13,
-        top_rank,
-        valid_from,
-        lead(valid_from) over (
-            partition by primary_isbn13
-            order by valid_from
-        ) as valid_to
-    from versions
-),
-
-with_metadata as (
-    select
-        v.primary_isbn13,
-        v.top_rank,
-        v.valid_from,
-        v.valid_to,
+        b.primary_isbn13,
+        b.top_rank,
+        b.published_date as valid_from,
         b.title,
         b.publisher,
         b.description,
@@ -90,9 +120,13 @@ with_metadata as (
         b.amazon_product_url,
         b.book_review_link,
         b.sunday_review_link,
-        b.latest_published_date
-    from with_valid_to v
-    inner join {{ ref('int_best_sellers_books') }} b using (primary_isbn13)
+        d.latest_published_date,
+        lead(b.published_date) over (
+            partition by b.primary_isbn13
+            order by b.published_date
+        ) as valid_to
+    from band_starts b
+    inner join isbn_dates d using (primary_isbn13)
 )
 
 select
@@ -112,4 +146,4 @@ select
     latest_published_date,
     valid_from,
     valid_to
-from with_metadata
+from with_valid_to

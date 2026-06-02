@@ -312,7 +312,7 @@ Surrogate key for book (hashed from primary_isbn13). Points to the current row i
 {% enddocs %}
 
 {% docs book_scd_key %}
-Surrogate key for a specific SCD Type 2 book version (hashed from primary_isbn13 and valid_from). Join to dim_books_history for point-in-time top_rank.
+Surrogate key for a specific SCD Type 2 book version (hashed from primary_isbn13 and valid_from). Join to dim_books_history for point-in-time top_rank and metadata.
 {% enddocs %}
 
 {% docs top_rank %}

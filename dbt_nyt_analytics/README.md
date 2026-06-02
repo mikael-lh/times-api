@@ -32,7 +32,7 @@ config key).
 - `int_best_sellers_authors_parsed` – list entries with parsed `authors` array
 - `int_best_sellers_authors_flattened` – one row per (list entry, author)
 - `int_best_sellers_books` – one row per `primary_isbn13` (latest list metadata)
-- `int_books_top_rank_scd` – SCD Type 2 book versions keyed on cumulative `top_rank` improvements (list-week `valid_from` / `valid_to`)
+- `int_books_top_rank_scd` – SCD Type 2 book versions keyed on cumulative `top_rank` improvements and metadata changes (list-week `valid_from` / `valid_to`)
 
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)

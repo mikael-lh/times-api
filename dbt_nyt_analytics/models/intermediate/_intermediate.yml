@@ -114,7 +114,7 @@ models:
         description: "{{ doc('latest_published_date') }}"
 
   - name: int_books_top_rank_scd
-    description: "SCD Type 2 book versions driven by cumulative top_rank improvements. One row per (primary_isbn13, top_rank period) with list-week validity dates."
+    description: "SCD Type 2 book versions driven by cumulative top_rank improvements and metadata changes. One row per version with list-week valid_from / valid_to."
     columns:
       - name: book_scd_key
         description: "{{ doc('book_scd_key') }}"
