@@ -9,7 +9,7 @@ Function) into analytics-ready models.
 |---|---|---|---|
 | `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_staging` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
 | `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
-| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | Slowly changing history for book metadata (`strategy='check'`) |
+| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | Reserved for dbt snapshots (none currently) |
 | `marts/core/` | table | `dbt_core` / `ci_dbt_core` / `dev_dbt_core` | Facts, dimensions, bridges |
 | `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_analytics` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
@@ -32,17 +32,17 @@ config key).
 - `int_best_sellers_authors_parsed` – list entries with parsed `authors` array
 - `int_best_sellers_authors_flattened` – one row per (list entry, author)
 - `int_best_sellers_books` – one row per `primary_isbn13` (latest list metadata)
+- `int_books_top_rank_scd` – SCD Type 2 book versions keyed on cumulative `top_rank` improvements (list-week `valid_from` / `valid_to`)
 
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)
 - `fct_article_popularity` – one row per (snapshot_date, article)
-- `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current metadata) and `book_scd_key` (point-in-time snapshot version)
+- `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current top_rank) and `book_scd_key` (point-in-time top_rank version)
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
 - `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
-- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current rows from `books_snapshot`; `dim_books_history` = all SCD versions, keyed by `book_scd_key` = `dbt_scd_id`)
+- `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current row per ISBN; `dim_books_history` = all top_rank SCD versions)
 
-**Snapshots** (`snapshots/`; schema via `+target_schema: dbt_snapshots` in `dbt_project.yml`):
-- `books_snapshot` – SCD Type 2 history of book metadata and `top_rank` (best rank across all lists). Built from `int_best_sellers_books` with `top_rank` computed inline from `stg_best_sellers`.
+**Snapshots** (`snapshots/`): none currently; book SCD is model-built in `int_books_top_rank_scd`.
 **Analytics marts** (tables):
 - `agg_articles_by_month` – monthly volume + richness
 - `agg_author_performance` – author productivity

@@ -38,8 +38,8 @@ with_book_keys as (
         on s.primary_isbn13 = b.primary_isbn13
     left join {{ ref('dim_books_history') }} bh
         on s.primary_isbn13 = bh.primary_isbn13
-        and timestamp(s.published_date) >= bh.dbt_valid_from
-        and (bh.dbt_valid_to is null or timestamp(s.published_date) < bh.dbt_valid_to)
+        and s.published_date >= bh.valid_from
+        and (bh.valid_to is null or s.published_date < bh.valid_to)
 ),
 
 final as (

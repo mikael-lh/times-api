@@ -108,7 +108,7 @@ models:
         description: "{{ doc('news_desk') }}"
 
   - name: dim_books
-    description: "Current-state book dimension (one row per primary_isbn13). Full SCD Type 2 history lives in books_snapshot and dim_books_history."
+    description: "Current-state book dimension (one row per primary_isbn13). Sourced from the active row in dim_books_history."
     columns:
       - name: book_key
         description: "{{ doc('book_key') }}"
@@ -162,7 +162,7 @@ models:
         description: "{{ doc('latest_published_date') }}"
 
   - name: dim_books_history
-    description: "Full SCD Type 2 book dimension from books_snapshot. One row per snapshot version; join via book_scd_key for point-in-time attributes."
+    description: "SCD Type 2 book dimension versioned on top_rank. One row per (primary_isbn13, top_rank period); join via book_scd_key for point-in-time top_rank."
     columns:
       - name: book_scd_key
         description: "{{ doc('book_scd_key') }}"
@@ -180,7 +180,7 @@ models:
       - name: description
         description: "{{ doc('book_description') }}"
       - name: top_rank
-        description: "{{ doc('top_rank') }}"
+        description: "{{ doc('top_rank_scd') }}"
       - name: age_group
         description: "{{ doc('age_group') }}"
       - name: age_min
@@ -197,14 +197,12 @@ models:
         description: "{{ doc('sunday_review_link') }}"
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
-      - name: dbt_valid_from
-        description: "{{ doc('dbt_valid_from') }}"
+      - name: valid_from
+        description: "{{ doc('valid_from') }}"
         tests:
           - not_null
-      - name: dbt_valid_to
-        description: "{{ doc('dbt_valid_to') }}"
-      - name: dbt_updated_at
-        description: "{{ doc('dbt_updated_at') }}"
+      - name: valid_to
+        description: "{{ doc('valid_to') }}"
 
   - name: fct_best_sellers
     description: "Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated)."

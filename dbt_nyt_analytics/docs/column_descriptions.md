@@ -312,11 +312,23 @@ Surrogate key for book (hashed from primary_isbn13). Points to the current row i
 {% enddocs %}
 
 {% docs book_scd_key %}
-Surrogate key for a specific SCD Type 2 book version. Equals dbt_scd_id from books_snapshot; join to dim_books_history for point-in-time book attributes.
+Surrogate key for a specific SCD Type 2 book version (hashed from primary_isbn13 and valid_from). Join to dim_books_history for point-in-time top_rank.
 {% enddocs %}
 
 {% docs top_rank %}
-Best (lowest numeric) rank achieved across all Best Sellers lists for this book.
+Best (lowest numeric) rank achieved across all Best Sellers lists for this book (current version on dim_books).
+{% enddocs %}
+
+{% docs top_rank_scd %}
+Best (lowest numeric) rank achieved by this book as of this SCD version's validity window.
+{% enddocs %}
+
+{% docs valid_from %}
+First Best Sellers list week when this top_rank version became effective for the book.
+{% enddocs %}
+
+{% docs valid_to %}
+First list week of the next top_rank version (null for the current version).
 {% enddocs %}
 
 {% docs keyword_key %}
