@@ -76,15 +76,17 @@ models:
         tests:
           - not_null
           - relationships:
-              to: ref('fct_articles')
-              field: article_id
+              arguments:
+                to: ref('fct_articles')
+                field: article_id
       - name: keyword_key
         description: "Foreign key to dim_keywords"
         tests:
           - not_null
           - relationships:
-              to: ref('dim_keywords')
-              field: keyword_key
+              arguments:
+                to: ref('dim_keywords')
+                field: keyword_key
       - name: keyword_name
         description: "{{ doc('keyword_name') }} Denormalised from dim_keywords for query convenience."
       - name: keyword_value

@@ -8,8 +8,9 @@ sources:
     tables:
       - name: archive_articles
         description: "Historical NYT articles from the Archive API (1851-present)"
-        meta:
-          partition_by: pub_date
+        config:
+          meta:
+            partition_by: pub_date
         columns:
           - name: article_id
             description: "{{ doc('article_id') }}"
@@ -46,8 +47,9 @@ sources:
 
       - name: most_popular_articles
         description: "Daily snapshots of most popular (most viewed) articles"
-        meta:
-          partition_by: snapshot_date
+        config:
+          meta:
+            partition_by: snapshot_date
         columns:
           - name: snapshot_date
             description: "{{ doc('snapshot_date') }}"
@@ -92,11 +94,12 @@ sources:
 
       - name: best_sellers
         description: "Weekly Best Sellers list entries from the NYT Books API"
-        loaded_at_field: published_date
-        freshness:
-          error_after: {count: 7, period: day}
-        meta:
-          partition_by: published_date
+        config:
+          loaded_at_field: published_date
+          freshness:
+            error_after: {count: 7, period: day}
+          meta:
+            partition_by: published_date
         columns:
           - name: published_date
             description: "{{ doc('bs_published_date') }}"
