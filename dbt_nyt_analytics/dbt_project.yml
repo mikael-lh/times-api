@@ -22,6 +22,7 @@ vars:
 
 models:
   nyt_analytics:
+    +static_analysis: strict
     +persist_docs:
       relation: true
       columns: true
@@ -41,6 +42,7 @@ models:
 
 snapshots:
   nyt_analytics:
+    +static_analysis: strict
     +persist_docs:
       relation: true
       columns: true
