@@ -3,16 +3,16 @@ with weekly as (
         primary_isbn13,
         published_date,
         min(rank) as best_rank_that_week,
-        any_value(title) as title,
-        any_value(publisher) as publisher,
-        any_value(description) as description,
-        any_value(age_group) as age_group,
-        any_value(age_min) as age_min,
-        any_value(age_max) as age_max,
-        any_value(book_image) as book_image,
-        any_value(amazon_product_url) as amazon_product_url,
-        any_value(book_review_link) as book_review_link,
-        any_value(sunday_review_link) as sunday_review_link
+        array_agg(title order by list_name_encoded limit 1)[offset(0)] as title,
+        array_agg(publisher order by list_name_encoded limit 1)[offset(0)] as publisher,
+        array_agg(description order by list_name_encoded limit 1)[offset(0)] as description,
+        array_agg(age_group order by list_name_encoded limit 1)[offset(0)] as age_group,
+        array_agg(age_min order by list_name_encoded limit 1)[offset(0)] as age_min,
+        array_agg(age_max order by list_name_encoded limit 1)[offset(0)] as age_max,
+        array_agg(book_image order by list_name_encoded limit 1)[offset(0)] as book_image,
+        array_agg(amazon_product_url order by list_name_encoded limit 1)[offset(0)] as amazon_product_url,
+        array_agg(book_review_link order by list_name_encoded limit 1)[offset(0)] as book_review_link,
+        array_agg(sunday_review_link order by list_name_encoded limit 1)[offset(0)] as sunday_review_link
     from {{ ref('stg_best_sellers') }}
     where primary_isbn13 is not null
         and trim(primary_isbn13) != ''
