@@ -132,7 +132,7 @@ the latest prod manifest.
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, then `dbt build` against prod; publishes `dbt docs generate` output to the `gh-pages` branch (GitHub Pages). |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build` against prod; publishes `dbt docs generate` to GitHub Pages. |
 | [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
 
 To enable Pages-hosted docs, add `GCP_SA_KEY` (full service-account JSON

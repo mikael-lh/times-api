@@ -76,7 +76,11 @@ each model). Tests are declared in each `_*.yml`:
   `(snapshot_date, article_id)`, `keyword_key`, …).
 - **`relationships`** on every foreign key (`bridge_article_keywords`
   references `fct_articles.article_id` and `dim_keywords.keyword_key`).
-- **Source freshness** monitoring via dbt sources where applicable.
+- **Source freshness** on `nyt_raw.most_popular_articles` (daily snapshot;
+  warn 1d / error 2d) and `nyt_raw.best_sellers` (weekly list; warn 5d /
+  error 8d). `archive_articles` is static and not checked. Freshness uses
+  `timestamp(...)` on DATE columns because Fusion requires a timestamp
+  `loaded_at_field`.
 
 [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) runs only the
 state-modified slice on PRs, deferred against the prod manifest:
@@ -85,8 +89,9 @@ state-modified slice on PRs, deferred against the prod manifest:
 dbt build --select state:modified+ --defer --favor-state --state ../main-branch/dbt_nyt_analytics/target/
 ```
 
-[`dbt-run.yml`](../.github/workflows/dbt-run.yml) runs the full
-`dbt build --target prod` daily at 08:00 UTC.
+[`dbt-run.yml`](../.github/workflows/dbt-run.yml) runs
+`dbt source freshness` then full `dbt build --target prod` daily at
+08:00 UTC (after Most Popular ingest at 06:00 UTC).
 
 ## Local pre-commit
 
