@@ -4,6 +4,9 @@ config-version: 2
 
 profile: 'nyt_bigquery'
 
+dbt-cloud:
+  project-id: 70506183138821
+
 model-paths: ["models"]
 analysis-paths: ["analyses"]
 test-paths: ["tests"]
