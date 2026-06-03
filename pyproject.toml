@@ -27,7 +27,7 @@ dashboard = [
     "streamlit>=1.54.0",
 ]
 dbt = [
-    "dbt-bigquery>=1.11.0",
+    "dbt==2.0.0rc178",
 ]
 dev = [
     "mypy>=1.0",

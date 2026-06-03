@@ -61,6 +61,7 @@ cd dbt_nyt_analytics
 $EDITOR profiles.yml                  # template lives here, NOT in ~/.dbt
 cp profiles.yml ~/.dbt/profiles.yml   # or symlink
 
+uv run dbt system update              # install Fusion runtime (after first uv sync)
 uv run dbt deps                       # install packages from packages.yml
 uv run dbt debug                      # test connection (default target: dev, oauth)
 uv run dbt build                      # build + test everything (dev)
@@ -131,8 +132,8 @@ the latest prod manifest.
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | `dbt build` against prod; publishes `dbt docs generate` output to the `gh-pages` branch (GitHub Pages). |
-| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | Builds the prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch (only what changed runs in BigQuery). |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, then `dbt build` against prod; publishes `dbt docs generate` output to the `gh-pages` branch (GitHub Pages). |
+| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
 
 To enable Pages-hosted docs, add `GCP_SA_KEY` (full service-account JSON
 with `bigquery.jobUser` + `bigquery.dataEditor`) as a repo secret.

@@ -29,9 +29,16 @@ jobs:
       - name: Install dependencies (PR branch)
         run: uv sync --group dbt
 
+      - name: Install Fusion runtime (PR branch)
+        run: uv run dbt system update
+
       - name: Install dependencies (main branch)
         working-directory: main-branch
         run: uv sync --group dbt
+
+      - name: Install Fusion runtime (main branch)
+        working-directory: main-branch
+        run: uv run dbt system update
 
       - name: Configure dbt profile (CI)
         run: |
