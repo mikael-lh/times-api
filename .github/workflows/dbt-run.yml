@@ -68,6 +68,10 @@ jobs:
       - name: Install dbt packages
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
+
+      - name: Check source freshness
+        working-directory: dbt_nyt_analytics
+        run: uv run dbt source freshness
       
       - name: dbt build
         working-directory: dbt_nyt_analytics
@@ -101,4 +105,5 @@ jobs:
             dbt_nyt_analytics/target/manifest.json
             dbt_nyt_analytics/target/run_results.json
             dbt_nyt_analytics/target/catalog.json
+            dbt_nyt_analytics/target/sources.json
           retention-days: 7
