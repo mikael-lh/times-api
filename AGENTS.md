@@ -8,15 +8,42 @@ Guidance for cloud agents working in this repository.
 
 **Times API** is a Python data pipeline (not a multi-service monorepo). It ingests three NYT APIs, transforms to slim NDJSON, loads to BigQuery via GCS + Cloud Function, models with dbt, and surfaces data in a Streamlit dashboard. There is no Docker Compose or local database.
 
-### Dependency install (automatic)
+### VM update script (automatic on Cloud Agent startup)
 
-On VM startup, `uv sync --group dev --group dbt --group dashboard` runs from the repo root. Ensure `uv` is on `PATH` (`$HOME/.local/bin`).
+Cursor runs this from the repo root **before each Cloud Agent session** (after `git pull`). It is **not** committed as a shell file in the repo; it is configured in Cursor’s VM environment settings. You do not run this on your laptop unless you want the same effect manually.
 
-### One-time / manual setup (not in update script)
+```bash
+uv sync --group dev --group dbt --group dashboard
+cd dbt_nyt_analytics
+uv run dbt deps
+```
 
-- **dbt profiles**: `profiles.yml` is gitignored. For `dbt parse`, `dbt debug`, or `dbt build`, create `~/.dbt/profiles.yml` with the `nyt_bigquery` profile (see `dbt_nyt_analytics/README.md` or `.github/workflows/dbt-pr.yml` for the OAuth or service-account template).
-- **NYT API key**: repo-root `.env` with `NYTIMES_API_KEY=...` for live ingest (`uv run python -m most_popular.ingest`, etc.).
-- **GCP credentials**: required for BigQuery, GCS upload, dbt against warehouse, and the Streamlit dashboard. Use `gcloud auth application-default login` or set `GCP_CREDENTIALS_PATH` in `dashboard/.env` (copy from `dashboard/.env.example`).
+- **Line 1**: install/refresh the Python virtualenv (`.venv`) and all dependency groups.
+- **Line 2–3**: install dbt package dependencies into `dbt_nyt_analytics/dbt_packages/`.
+
+The update script does **not** create secrets, run tests, start Streamlit, or run `dbt build`. Ensure `uv` is on `PATH` (`$HOME/.local/bin`).
+
+### Secrets and credentials (local vs Cloud VM)
+
+`.env`, `profiles.yml`, and `dashboard/.env` are **gitignored**. They are **not** on the Cloud VM unless someone creates them there or Cursor injects values. Your laptop’s `.env` does **not** sync to the agent workspace.
+
+| Goal | On your machine (local dev) | On a Cloud Agent VM |
+|------|-----------------------------|---------------------|
+| NYT API key | Create repo-root `.env`: `NYTIMES_API_KEY=...` | Add `NYTIMES_API_KEY` as a **Cursor Cloud secret**, or create `/workspace/.env` in the session (lost unless the VM snapshot retains it) |
+| GCP for dbt / BQ / GCS | `gcloud auth application-default login` (interactive), or service-account JSON + `~/.dbt/profiles.yml` | Prefer **Cursor secrets** (e.g. `GCP_SA_KEY` JSON) and write `~/.dbt/profiles.yml` from the template in `.github/workflows/dbt-pr.yml`; `gcloud login` is usually **not** practical (no browser on the VM unless you use Desktop/login flows Cursor provides) |
+| Streamlit + BigQuery | `dashboard/.env` from `dashboard/.env.example` (`GCP_PROJECT_ID`, optional `GCP_CREDENTIALS_PATH`) | Same: copy example and point at credentials available on the VM, or use application-default creds if configured |
+
+**What works without any secrets:** `uv run pytest`, ruff/mypy, local transform + GE on sample files under `most_popular_raw/` (see below).
+
+**What requires secrets:** live ingest (`*-ingest` modules), GCS upload, `dbt build`, dashboard queries against BigQuery.
+
+Agents should ask you to add **Cursor Cloud secrets** when blocked; they cannot read secrets from your local repo checkout.
+
+### One-time / manual setup on the VM (not in update script)
+
+- **dbt profiles**: create `~/.dbt/profiles.yml` with the `nyt_bigquery` profile (see `dbt_nyt_analytics/README.md` or `.github/workflows/dbt-pr.yml`). Needed for `dbt parse`, `dbt debug`, and `dbt build`.
+- **NYT API key**: only if running live ingest — see table above.
+- **GCP**: only if running warehouse/dashboard/GCS paths — see table above.
 
 ### Running quality checks
 
