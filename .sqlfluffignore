@@ -1,5 +1,4 @@
 dbt_nyt_analytics/target/
 dbt_nyt_analytics/dbt_internal_packages/
 dbt_nyt_analytics/logs/
-dbt_nyt_analytics/snapshots/
 explore_dashboard_data.sql

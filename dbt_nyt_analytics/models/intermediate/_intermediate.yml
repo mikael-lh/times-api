@@ -113,6 +113,16 @@ models:
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
 
+  - name: int_books_snapshot_source
+    description: "Book attributes plus all-time best top_rank; relation source for the books_snapshot SCD."
+    columns:
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+        tests:
+          - not_null
+      - name: top_rank
+        description: "{{ doc('top_rank') }}"
+
   - name: int_books_top_rank_scd
     description: "SCD Type 2 book versions driven by cumulative top_rank improvements and metadata changes. Weekly metadata uses the alphabetically first list_name_encoded when a book appears on multiple lists."
     columns:

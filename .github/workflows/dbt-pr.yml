@@ -79,8 +79,8 @@ jobs:
 
       - name: SQLFluff (format check and lint)
         run: |
-          uv run sqlfluff fix dbt_nyt_analytics/models --check
-          uv run sqlfluff lint dbt_nyt_analytics/models
+          uv run sqlfluff fix dbt_nyt_analytics/models dbt_nyt_analytics/snapshots --check
+          uv run sqlfluff lint dbt_nyt_analytics/models dbt_nyt_analytics/snapshots
 
       - name: Enforce dbt model documentation
         run: |

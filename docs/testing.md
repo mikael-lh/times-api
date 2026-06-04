@@ -123,10 +123,13 @@ even if `--no-verify` was used locally.
 ### SQL style (SQLFluff)
 
 [SQLFluff](https://docs.sqlfluff.com/) enforces BigQuery SQL layout on
-`dbt_nyt_analytics/models/` (lint + auto-fix). Config: [`.sqlfluff`](../.sqlfluff);
-Jinja stubs in [`dbt_nyt_analytics/sqlfluff_macros/`](../dbt_nyt_analytics/sqlfluff_macros/)
-allow linting without a warehouse connection. Snapshots are excluded (see
-[`.sqlfluffignore`](../.sqlfluffignore)).
+`dbt_nyt_analytics/models/` and any `.sql` under `snapshots/` (lint + auto-fix).
+Config: [`.sqlfluff`](../.sqlfluff); Jinja stubs in
+[`dbt_nyt_analytics/sqlfluff_macros/`](../dbt_nyt_analytics/sqlfluff_macros/)
+allow linting without a warehouse connection. The `books_snapshot` SCD reads from
+[`int_books_snapshot_source`](../dbt_nyt_analytics/models/intermediate/int_books_snapshot_source.sql);
+strategy/config live in [`snapshots/_snapshots.yml`](../dbt_nyt_analytics/snapshots/_snapshots.yml)
+(YAML snapshot, dbt v1.9+).
 
 ```bash
 uv run sqlfluff fix dbt_nyt_analytics/models

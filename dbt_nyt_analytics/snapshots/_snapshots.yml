@@ -2,6 +2,22 @@ version: 2
 
 snapshots:
   - name: books_snapshot
+    relation: ref('int_books_snapshot_source')
+    config:
+      unique_key: primary_isbn13
+      strategy: check
+      check_cols:
+        - title
+        - publisher
+        - description
+        - top_rank
+        - age_group
+        - age_min
+        - age_max
+        - book_image
+        - amazon_product_url
+        - book_review_link
+        - sunday_review_link
     description: >
       dbt-managed SCD Type 2 audit of book metadata and all-time top_rank as observed on each run.
       Uses check strategy on metadata columns plus top_rank. Fact joins use dim_books_history

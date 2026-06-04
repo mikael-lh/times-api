@@ -109,10 +109,11 @@ descriptions show up directly in the BigQuery console.
 ## How to add a new model
 
 1. Drop the SQL in the right layer folder (`staging/`, `intermediate/`,
-   `marts/core/`, `marts/analytics/`, or `snapshots/`). Materialization
-   and schema are inherited from `dbt_project.yml`. Put snapshot strategy
-   config (`unique_key`, `strategy`, `check_cols`) in `_snapshots.yml`, not
-   inline in the SQL file.
+   `marts/core/`, or `marts/analytics/`). Materialization and schema are
+   inherited from `dbt_project.yml`. For snapshots, put the SELECT in an
+   intermediate model and declare the snapshot in `snapshots/_snapshots.yml`
+   with `relation: ref('...')` plus `config` (`unique_key`, `strategy`,
+   `check_cols`) — see `books_snapshot` / `int_books_snapshot_source`.
 2. Add the model entry in the sibling `_*.yml`
    (`_staging.yml` / `_intermediate.yml` / `_core.yml` / `_analytics.yml`
    / `_snapshots.yml`) with a description and at least `unique` + `not_null`
@@ -130,8 +131,9 @@ each model needs a properties YAML entry and a model-level `description`.
 Column docs in `_*.yml` remain a convention but are not enforced by the hook.
 
 **SQL style:** [SQLFluff](https://docs.sqlfluff.com/) (`sqlfluff fix` /
-`sqlfluff lint` on `models/`) enforces BigQuery layout (uppercase keywords,
-trailing commas, etc.). See [`.sqlfluff`](../.sqlfluff) and
+`sqlfluff lint` on `models/` and any `snapshots/*.sql`) enforces BigQuery
+layout. Snapshot query logic is linted via its `relation` model (e.g.
+`int_books_snapshot_source`). See [`.sqlfluff`](../.sqlfluff) and
 [`sqlfluff_macros/`](sqlfluff_macros/) for Jinja stubs used at lint time.
 
 The PR workflow will then build only what you changed
