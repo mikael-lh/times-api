@@ -124,9 +124,14 @@ descriptions show up directly in the BigQuery console.
 4. Run `uv run dbt build --select <new_model>` locally to verify schema
    + tests pass before opening a PR.
 
-The PR workflow ([`dbt-pr.yml`](../.github/workflows/dbt-pr.yml)) will
-then build only what you changed (`state:modified+`), deferred against
-the latest prod manifest.
+Pre-commit and [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) enforce
+documentation via [dbt-checkpoint](https://github.com/dbt-checkpoint/dbt-checkpoint):
+each model needs a properties YAML entry, a model `description`, and a
+`description` on every column listed in `_*.yml` (including
+`{{ doc('…') }}` refs).
+
+The PR workflow will then build only what you changed
+(`state:modified+`), deferred against the latest prod manifest.
 
 ## CI/CD
 

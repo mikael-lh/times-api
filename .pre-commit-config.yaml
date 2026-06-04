@@ -19,6 +19,30 @@ repos:
       - id: shellcheck
         files: ^infra/.*\.sh$
 
+  # Local: generate dbt manifest before documentation checks
+  - repo: local
+    hooks:
+      - id: dbt-parse-manifest
+        name: dbt parse (manifest for documentation checks)
+        entry: bash -c 'cd dbt_nyt_analytics && uv run dbt deps --quiet && uv run dbt parse'
+        language: system
+        files: ^dbt_nyt_analytics/
+        pass_filenames: false
+
+  # dbt model documentation (requires manifest from dbt parse above)
+  - repo: https://github.com/dbt-checkpoint/dbt-checkpoint
+    rev: v2.0.9
+    hooks:
+      - id: check-model-has-properties-file
+        name: dbt models have properties YAML
+        files: ^dbt_nyt_analytics/models/.*\.sql$
+      - id: check-model-has-description
+        name: dbt models have descriptions
+        files: ^dbt_nyt_analytics/models/
+      - id: check-model-columns-have-desc
+        name: dbt model columns have descriptions
+        files: ^dbt_nyt_analytics/models/
+
   # Local hooks (mypy + pytest via uv)
   - repo: local
     hooks:

@@ -73,6 +73,19 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
 
+      - name: Install dev dependencies (pre-commit)
+        run: uv sync --group dev
+
+      - name: Parse dbt project (manifest for documentation checks)
+        working-directory: dbt_nyt_analytics
+        run: uv run dbt parse
+
+      - name: Enforce dbt model documentation
+        run: |
+          for hook in check-model-has-properties-file check-model-has-description check-model-columns-have-desc; do
+            uv run pre-commit run "$hook" --all-files --show-diff-on-failure
+          done
+
       - name: Install dbt packages (main branch)
         working-directory: main-branch/dbt_nyt_analytics
         run: uv run dbt deps

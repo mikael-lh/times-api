@@ -103,4 +103,12 @@ git commit --no-verify             # skip in emergencies
 
 Configured hooks (see [`.pre-commit-config.yaml`](../.pre-commit-config.yaml)):
 ruff (lint + format), shellcheck (`infra/*.sh`), mypy (`archive
-most_popular books tests`), pytest.
+most_popular books tests`), pytest, and **dbt-checkpoint** on
+`dbt_nyt_analytics/models/` (properties file, model description, column
+descriptions in `_*.yml`). When dbt files change, a local hook runs
+`dbt parse` first to refresh `target/manifest.json`.
+
+The same dbt-checkpoint hooks run in CI via
+[`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) (`pre-commit run …
+--all-files`) after `dbt parse`, so PRs cannot merge undocumented models
+even if `--no-verify` was used locally.
