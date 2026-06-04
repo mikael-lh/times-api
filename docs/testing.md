@@ -101,11 +101,18 @@ uv run pre-commit run --all-files   # check everything
 git commit --no-verify             # skip in emergencies
 ```
 
+**What runs via `uv run`:** project tools you invoke yourself (`dbt`,
+`pytest`, `mypy`, `pre-commit`) and the local `dbt-parse-manifest` hook
+(`uv run dbt deps` / `uv run dbt parse`). **What does not:** hooks from
+external pre-commit repos (ruff, shellcheck, dbt-checkpoint) — pre-commit
+installs those in their own cached environments; dbt-checkpoint only reads
+`target/manifest.json` and does not shell out to dbt.
+
 Configured hooks (see [`.pre-commit-config.yaml`](../.pre-commit-config.yaml)):
 ruff (lint + format), shellcheck (`infra/*.sh`), mypy (`archive
 most_popular books tests`), pytest, and **dbt-checkpoint** on
-`dbt_nyt_analytics/models/` (properties file, model description, column
-descriptions in `_*.yml`). When dbt files change, a local hook runs
+`dbt_nyt_analytics/models/` (properties file and model `description` in
+`_*.yml`). When dbt files change, a local hook runs
 `dbt parse` first to refresh `target/manifest.json`.
 
 The same dbt-checkpoint hooks run in CI via

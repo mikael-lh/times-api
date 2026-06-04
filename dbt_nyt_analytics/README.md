@@ -126,9 +126,8 @@ descriptions show up directly in the BigQuery console.
 
 Pre-commit and [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) enforce
 documentation via [dbt-checkpoint](https://github.com/dbt-checkpoint/dbt-checkpoint):
-each model needs a properties YAML entry, a model `description`, and a
-`description` on every column listed in `_*.yml` (including
-`{{ doc('…') }}` refs).
+each model needs a properties YAML entry and a model-level `description`.
+Column docs in `_*.yml` remain a convention but are not enforced by the hook.
 
 The PR workflow will then build only what you changed
 (`state:modified+`), deferred against the latest prod manifest.

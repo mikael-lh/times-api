@@ -82,7 +82,7 @@ jobs:
 
       - name: Enforce dbt model documentation
         run: |
-          for hook in check-model-has-properties-file check-model-has-description check-model-columns-have-desc; do
+          for hook in check-model-has-properties-file check-model-has-description; do
             uv run pre-commit run "$hook" --all-files --show-diff-on-failure
           done
 

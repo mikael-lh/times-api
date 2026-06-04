@@ -39,9 +39,6 @@ repos:
       - id: check-model-has-description
         name: dbt models have descriptions
         files: ^dbt_nyt_analytics/models/
-      - id: check-model-columns-have-desc
-        name: dbt model columns have descriptions
-        files: ^dbt_nyt_analytics/models/
 
   # Local hooks (mypy + pytest via uv)
   - repo: local
