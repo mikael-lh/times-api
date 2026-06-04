@@ -129,6 +129,11 @@ documentation via [dbt-checkpoint](https://github.com/dbt-checkpoint/dbt-checkpo
 each model needs a properties YAML entry and a model-level `description`.
 Column docs in `_*.yml` remain a convention but are not enforced by the hook.
 
+**SQL style:** [SQLFluff](https://docs.sqlfluff.com/) (`sqlfluff fix` /
+`sqlfluff lint` on `models/`) enforces BigQuery layout (uppercase keywords,
+trailing commas, etc.). See [`.sqlfluff`](../.sqlfluff) and
+[`sqlfluff_macros/`](sqlfluff_macros/) for Jinja stubs used at lint time.
+
 The PR workflow will then build only what you changed
 (`state:modified+`), deferred against the latest prod manifest.
 
@@ -137,7 +142,7 @@ The PR workflow will then build only what you changed
 | Workflow | When | What |
 |---|---|---|
 | [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build` against prod; publishes `dbt docs generate` to GitHub Pages. |
-| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
+| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: `sqlfluff fix --check` + `sqlfluff lint`, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
 
 To enable Pages-hosted docs, add `GCP_SA_KEY` (full service-account JSON
 with `bigquery.jobUser` + `bigquery.dataEditor`) as a repo secret.

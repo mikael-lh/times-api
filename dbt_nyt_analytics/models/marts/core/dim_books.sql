@@ -1,11 +1,11 @@
-with current_books as (
-    select * from {{ ref('dim_books_history') }}
-    where valid_to is null
+WITH current_books AS (
+    SELECT * FROM {{ ref('dim_books_history') }}
+    WHERE valid_to IS NULL
 ),
 
-with_key as (
-    select
-        {{ dbt_utils.generate_surrogate_key(['primary_isbn13']) }} as book_key,
+with_key AS (
+    SELECT
+        {{ generate_surrogate_key(['primary_isbn13']) }} AS book_key,
         primary_isbn13,
         title,
         publisher,
@@ -19,7 +19,7 @@ with_key as (
         book_review_link,
         sunday_review_link,
         latest_published_date
-    from current_books
+    FROM current_books
 )
 
-select * from with_key
+SELECT * FROM with_key

@@ -1,16 +1,16 @@
-with sections as (
-    select distinct
+WITH sections AS (
+    SELECT DISTINCT
         section_name,
         news_desk
-    from {{ ref('stg_archive_articles') }}
+    FROM {{ ref('stg_archive_articles') }}
 ),
 
-with_key as (
-    select
-        {{ dbt_utils.generate_surrogate_key(['section_name', 'news_desk']) }} as section_key,
+with_key AS (
+    SELECT
+        {{ generate_surrogate_key(['section_name', 'news_desk']) }} AS section_key,
         section_name,
         news_desk
-    from sections
+    FROM sections
 )
 
-select * from with_key
+SELECT * FROM with_key

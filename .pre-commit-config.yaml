@@ -29,6 +29,21 @@ repos:
         files: ^dbt_nyt_analytics/
         pass_filenames: false
 
+  # SQL style (BigQuery dialect, jinja + sqlfluff stubs — no warehouse connection)
+  - repo: local
+    hooks:
+      - id: sqlfluff-fix
+        name: sqlfluff fix (dbt models)
+        entry: bash -c 'uv run sqlfluff fix "$@"' --
+        language: system
+        files: ^dbt_nyt_analytics/models/.*\.sql$
+
+      - id: sqlfluff-lint
+        name: sqlfluff lint (dbt models)
+        entry: bash -c 'uv run sqlfluff lint "$@"' --
+        language: system
+        files: ^dbt_nyt_analytics/models/.*\.sql$
+
   # dbt model documentation (requires manifest from dbt parse above)
   - repo: https://github.com/dbt-checkpoint/dbt-checkpoint
     rev: v2.0.9

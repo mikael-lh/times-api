@@ -1,18 +1,19 @@
-with keywords as (
-    select distinct
+WITH keywords AS (
+    SELECT DISTINCT
         keyword_name,
         keyword_value
-    from {{ ref('int_keywords_flattened') }}
-    where keyword_value is not null
-        and trim(keyword_value) != ''
+    FROM {{ ref('int_keywords_flattened') }}
+    WHERE
+        keyword_value IS NOT NULL
+        AND trim(keyword_value) != ''
 ),
 
-with_key as (
-    select
-        {{ dbt_utils.generate_surrogate_key(['keyword_name', 'keyword_value']) }} as keyword_key,
+with_key AS (
+    SELECT
+        {{ generate_surrogate_key(['keyword_name', 'keyword_value']) }} AS keyword_key,
         keyword_name,
         keyword_value
-    from keywords
+    FROM keywords
 )
 
-select * from with_key
+SELECT * FROM with_key

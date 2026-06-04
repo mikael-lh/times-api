@@ -1,26 +1,26 @@
-with source as (
-    select
+WITH source AS (
+    SELECT
         article_id,
         pub_date,
         pub_year,
         section_name,
         keywords
-    from {{ ref('stg_archive_articles') }}
-    where has_keywords = true
+    FROM {{ ref('stg_archive_articles') }}
+    WHERE has_keywords = TRUE
 ),
 
-flattened as (
-    select
+flattened AS (
+    SELECT
         article_id,
         pub_date,
         pub_year,
         section_name,
-        lower(trim(keyword.name))  as keyword_name,
-        lower(trim(keyword.value)) as keyword_value,
-        keyword.rank as keyword_rank,
-        keyword.major as keyword_major
-    from source
-    cross join unnest(keywords) as keyword
+        lower(trim(keyword.name)) AS keyword_name,
+        lower(trim(keyword.value)) AS keyword_value,
+        keyword.rank AS keyword_rank,
+        keyword.major AS keyword_major
+    FROM source
+    CROSS JOIN unnest(keywords) AS keyword
 )
 
-select * from flattened
+SELECT * FROM flattened

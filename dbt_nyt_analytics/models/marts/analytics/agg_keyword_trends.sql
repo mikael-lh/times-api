@@ -1,82 +1,81 @@
-with keywords as (
-    select
+WITH keywords AS (
+    SELECT
         b.article_id,
         b.keyword_name,
         b.keyword_value,
         f.pub_year
-    from {{ ref('bridge_article_keywords') }} b
-    inner join {{ ref('fct_articles') }} f
-        on b.article_id = f.article_id
+    FROM {{ ref('bridge_article_keywords') }} AS b
+    INNER JOIN {{ ref('fct_articles') }} AS f
+        ON b.article_id = f.article_id
 ),
 
-yearly_keyword_stats as (
-    select
+yearly_keyword_stats AS (
+    SELECT
         keyword_name,
         keyword_value,
         pub_year,
-        
-        count(distinct article_id) as article_count,
-        count(*) as keyword_occurrences
-        
-    from keywords
-    group by 1, 2, 3
+
+        count(DISTINCT article_id) AS article_count,
+        count(*) AS keyword_occurrences
+
+    FROM keywords
+    GROUP BY 1, 2, 3
 ),
 
-with_rankings as (
-    select
+with_rankings AS (
+    SELECT
         *,
-        
+
         -- Rank within year
-        row_number() over (
-            partition by pub_year 
-            order by article_count desc
-        ) as rank_in_year,
-        
+        row_number() OVER (
+            PARTITION BY pub_year
+            ORDER BY article_count DESC
+        ) AS rank_in_year,
+
         -- Prior year article count
-        lag(article_count) over (
-            partition by keyword_name, keyword_value 
-            order by pub_year
-        ) as prior_year_count
-        
-    from yearly_keyword_stats
+        lag(article_count) OVER (
+            PARTITION BY keyword_name, keyword_value
+            ORDER BY pub_year
+        ) AS prior_year_count
+
+    FROM yearly_keyword_stats
 ),
 
-with_prior_rank as (
-    select
+with_prior_rank AS (
+    SELECT
         *,
-        
+
         -- Get prior year rank by using lag on the already computed rank_in_year
-        lag(rank_in_year) over (
-            partition by keyword_name, keyword_value 
-            order by pub_year
-        ) as prior_year_rank
-        
-    from with_rankings
+        lag(rank_in_year) OVER (
+            PARTITION BY keyword_name, keyword_value
+            ORDER BY pub_year
+        ) AS prior_year_rank
+
+    FROM with_rankings
 ),
 
-final as (
-    select
+final AS (
+    SELECT
         keyword_name,
         keyword_value,
         pub_year,
-        
+
         article_count,
         keyword_occurrences,
         rank_in_year,
-        
+
         prior_year_count,
-        article_count - coalesce(prior_year_count, 0) as yoy_change,
-        case 
-            when prior_year_count > 0 
-            then round(100.0 * (article_count - prior_year_count) / prior_year_count, 1)
-            else null 
-        end as yoy_change_pct,
-        
+        article_count - coalesce(prior_year_count, 0) AS yoy_change,
+        CASE
+            WHEN prior_year_count > 0
+                THEN round(100.0 * (article_count - prior_year_count) / prior_year_count, 1)
+        END AS yoy_change_pct,
+
         prior_year_rank,
-        coalesce(prior_year_rank, 0) - rank_in_year as rank_change
-        
-    from with_prior_rank
-    order by pub_year desc, article_count desc
+        coalesce(prior_year_rank, 0) - rank_in_year AS rank_change
+
+    FROM with_prior_rank
+    ORDER BY with_prior_rank.pub_year DESC, with_prior_rank.article_count DESC
 )
 
-select * from final
+SELECT * FROM final

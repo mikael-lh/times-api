@@ -1,24 +1,24 @@
-with source as (
-    select
+WITH source AS (
+    SELECT
         article_id,
         pub_date,
         pub_year,
         section_name,
         byline_person
-    from {{ ref('stg_archive_articles') }}
-    where has_authors = true
+    FROM {{ ref('stg_archive_articles') }}
+    WHERE has_authors = TRUE
 ),
 
-flattened as (
-    select
+flattened AS (
+    SELECT
         article_id,
         pub_date,
         pub_year,
         section_name,
-        author.firstname as firstname,
-        author.middlename as middlename,
-        author.lastname as lastname,
-        author.qualifier as qualifier,
+        author.firstname,
+        author.middlename,
+        author.lastname,
+        author.qualifier,
         -- Construct full name
         trim(concat(
             coalesce(author.firstname, ''),
@@ -26,11 +26,12 @@ flattened as (
             coalesce(author.middlename, ''),
             ' ',
             coalesce(author.lastname, '')
-        )) as author_full_name
-    from source
-    cross join unnest(byline_person) as author
-    where author.lastname is not null
-        or author.firstname is not null
+        )) AS author_full_name
+    FROM source
+    CROSS JOIN unnest(byline_person) AS author
+    WHERE
+        author.lastname IS NOT NULL
+        OR author.firstname IS NOT NULL
 )
 
-select * from flattened
+SELECT * FROM flattened

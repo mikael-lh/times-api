@@ -12,38 +12,39 @@
     )
 }}
 
-with staged as (
-    select * from {{ ref('stg_best_sellers') }}
+WITH staged AS (
+    SELECT * FROM {{ ref('stg_best_sellers') }}
     {% if is_incremental() %}
-    where {{ get_incremental_filter('published_date') }}
+        WHERE {{ get_incremental_filter('published_date') }}
     {% endif %}
 ),
 
-with_book_keys as (
-    select
+with_book_keys AS (
+    SELECT
         s.published_date,
         s.list_name_encoded,
         s.rank,
         s.list_updated,
         b.book_key,
         bh.book_scd_key,
-        initcap(trim(s.author)) as author_full_name,
+        initcap(trim(s.author)) AS author_full_name,
         s.list_display_name,
         s.rank_last_week,
         s.weeks_on_list,
         s.asterisk,
         s.dagger
-    from staged s
-    left join {{ ref('dim_books') }} b
-        on s.primary_isbn13 = b.primary_isbn13
-    left join {{ ref('dim_books_history') }} bh
-        on s.primary_isbn13 = bh.primary_isbn13
-        and s.published_date >= bh.valid_from
-        and (bh.valid_to is null or s.published_date < bh.valid_to)
+    FROM staged AS s
+    LEFT JOIN {{ ref('dim_books') }} AS b
+        ON s.primary_isbn13 = b.primary_isbn13
+    LEFT JOIN {{ ref('dim_books_history') }} AS bh
+        ON
+            s.primary_isbn13 = bh.primary_isbn13
+            AND s.published_date >= bh.valid_from
+            AND (bh.valid_to IS NULL OR s.published_date < bh.valid_to)
 ),
 
-final as (
-    select
+final AS (
+    SELECT
         b.published_date,
         b.list_name_encoded,
         b.rank,
@@ -56,9 +57,9 @@ final as (
         b.weeks_on_list,
         b.asterisk,
         b.dagger
-    from with_book_keys b
-    left join {{ ref('dim_authors') }} a
-        on b.author_full_name = a.author_full_name
+    FROM with_book_keys AS b
+    LEFT JOIN {{ ref('dim_authors') }} AS a
+        ON b.author_full_name = a.author_full_name
 )
 
-select * from final
+SELECT * FROM final
