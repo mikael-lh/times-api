@@ -1,5 +1,5 @@
-with source as (
-    select
+WITH source AS (
+    SELECT
         published_date,
         list_name_encoded,
         primary_isbn13,
@@ -13,23 +13,24 @@ with source as (
         amazon_product_url,
         book_review_link,
         sunday_review_link
-    from {{ ref('stg_best_sellers') }}
-    where primary_isbn13 is not null
-        and trim(primary_isbn13) != ''
+    FROM {{ ref('stg_best_sellers') }}
+    WHERE
+        primary_isbn13 IS NOT NULL
+        AND trim(primary_isbn13) != ''
 ),
 
-ranked as (
-    select
+ranked AS (
+    SELECT
         *,
-        row_number() over (
-            partition by primary_isbn13
-            order by published_date desc, list_name_encoded
-        ) as recency_rank
-    from source
+        row_number() OVER (
+            PARTITION BY primary_isbn13
+            ORDER BY published_date DESC, list_name_encoded ASC
+        ) AS recency_rank
+    FROM source
 ),
 
-deduped as (
-    select
+deduped AS (
+    SELECT
         primary_isbn13,
         title,
         publisher,
@@ -41,9 +42,9 @@ deduped as (
         amazon_product_url,
         book_review_link,
         sunday_review_link,
-        published_date as latest_published_date
-    from ranked
-    where recency_rank = 1
+        published_date AS latest_published_date
+    FROM ranked
+    WHERE recency_rank = 1
 )
 
-select * from deduped
+SELECT * FROM deduped

@@ -10,49 +10,49 @@
     )
 }}
 
-with source_data as (
-    select * from {{ source('nyt_raw', 'most_popular_articles') }}
+WITH source_data AS (
+    SELECT * FROM {{ source('nyt_raw', 'most_popular_articles') }}
     {% if is_incremental() %}
-    where {{ get_incremental_filter('snapshot_date') }}
+        WHERE {{ get_incremental_filter('snapshot_date') }}
     {% endif %}
 ),
 
-cleaned as (
-    select
+cleaned AS (
+    SELECT
         -- Primary keys
         snapshot_date,
-        id as article_id,
+        id AS article_id,
         uri,
         asset_id,
-        
+
         -- Parse date strings to proper types
-        safe.parse_date('%Y-%m-%d', published_date) as published_date,
-        safe.parse_timestamp('%Y-%m-%d %H:%M:%S', updated) as updated_at,
-        
+        safe.parse_date('%Y-%m-%d', published_date) AS published_date,
+        safe.parse_timestamp('%Y-%m-%d %H:%M:%S', updated) AS updated_at,
+
         -- Categorization
-        coalesce(nullif(trim(source), ''), 'Unknown') as source,
-        coalesce(nullif(trim(section), ''), 'Unknown') as section,
-        coalesce(nullif(trim(subsection), ''), 'Unknown') as subsection,
-        coalesce(nullif(trim(type), ''), 'Unknown') as article_type,
-        
+        coalesce(nullif(trim(source), ''), 'Unknown') AS source,
+        coalesce(nullif(trim(section), ''), 'Unknown') AS section,
+        coalesce(nullif(trim(subsection), ''), 'Unknown') AS subsection,
+        coalesce(nullif(trim(`type`), ''), 'Unknown') AS article_type,
+
         -- Content
-        trim(title) as title,
-        trim(abstract) as abstract,
-        trim(byline) as byline,
+        trim(title) AS title,
+        trim(abstract) AS abstract,
+        trim(byline) AS byline,
         url,
-        
+
         -- Facets (arrays)
         des_facet,
         org_facet,
         per_facet,
         geo_facet,
-        
+
         -- JSON and keywords
         media_count_by_type,
         adx_keywords
-        
-    from source_data
-    where id is not null
+
+    FROM source_data
+    WHERE id IS NOT NULL
 )
 
-select * from cleaned
+SELECT * FROM cleaned

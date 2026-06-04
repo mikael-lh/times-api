@@ -77,6 +77,11 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt parse
 
+      - name: SQLFluff (format check and lint)
+        run: |
+          uv run sqlfluff fix dbt_nyt_analytics/models --check
+          uv run sqlfluff lint dbt_nyt_analytics/models
+
       - name: Enforce dbt model documentation
         run: |
           for hook in check-model-has-properties-file check-model-has-description; do

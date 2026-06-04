@@ -1,58 +1,60 @@
-with article_authors as (
-    select
+WITH article_authors AS (
+    SELECT
         author_full_name,
         firstname,
         middlename,
         lastname,
         qualifier,
-        1 as source_priority
-    from {{ ref('int_authors_flattened') }}
-    where author_full_name is not null
-        and trim(author_full_name) != ''
+        1 AS source_priority
+    FROM {{ ref('int_authors_flattened') }}
+    WHERE
+        author_full_name IS NOT NULL
+        AND trim(author_full_name) != ''
 ),
 
-book_authors as (
-    select
+book_authors AS (
+    SELECT
         author_full_name,
-        cast(null as string) as firstname,
-        cast(null as string) as middlename,
-        cast(null as string) as lastname,
-        cast(null as string) as qualifier,
-        2 as source_priority
-    from {{ ref('int_best_sellers_authors_flattened') }}
-    where author_full_name is not null
-        and trim(author_full_name) != ''
+        cast(NULL AS string) AS firstname,
+        cast(NULL AS string) AS middlename,
+        cast(NULL AS string) AS lastname,
+        cast(NULL AS string) AS qualifier,
+        2 AS source_priority
+    FROM {{ ref('int_best_sellers_authors_flattened') }}
+    WHERE
+        author_full_name IS NOT NULL
+        AND trim(author_full_name) != ''
 ),
 
-combined as (
-    select * from article_authors
-    union all
-    select * from book_authors
+combined AS (
+    SELECT * FROM article_authors
+    UNION ALL
+    SELECT * FROM book_authors
 ),
 
-deduped as (
-    select
+deduped AS (
+    SELECT
         author_full_name,
         firstname,
         middlename,
         lastname,
         qualifier
-    from combined
-    qualify row_number() over (
-        partition by author_full_name
-        order by source_priority
+    FROM combined
+    QUALIFY row_number() OVER (
+        PARTITION BY author_full_name
+        ORDER BY source_priority
     ) = 1
 ),
 
-with_key as (
-    select
-        {{ dbt_utils.generate_surrogate_key(['author_full_name']) }} as author_key,
+with_key AS (
+    SELECT
+        {{ generate_surrogate_key(['author_full_name']) }} AS author_key,
         author_full_name,
         firstname,
         middlename,
         lastname,
         qualifier
-    from deduped
+    FROM deduped
 )
 
-select * from with_key
+SELECT * FROM with_key

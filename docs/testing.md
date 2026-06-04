@@ -119,3 +119,18 @@ The same dbt-checkpoint hooks run in CI via
 [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) (`pre-commit run …
 --all-files`) after `dbt parse`, so PRs cannot merge undocumented models
 even if `--no-verify` was used locally.
+
+### SQL style (SQLFluff)
+
+[SQLFluff](https://docs.sqlfluff.com/) enforces BigQuery SQL layout on
+`dbt_nyt_analytics/models/` (lint + auto-fix). Config: [`.sqlfluff`](../.sqlfluff);
+Jinja stubs in [`dbt_nyt_analytics/sqlfluff_macros/`](../dbt_nyt_analytics/sqlfluff_macros/)
+allow linting without a warehouse connection. Snapshots are excluded (see
+[`.sqlfluffignore`](../.sqlfluffignore)).
+
+```bash
+uv run sqlfluff fix dbt_nyt_analytics/models
+uv run sqlfluff lint dbt_nyt_analytics/models
+```
+
+CI runs `sqlfluff fix --check` then `sqlfluff lint` in `dbt-pr.yml`.

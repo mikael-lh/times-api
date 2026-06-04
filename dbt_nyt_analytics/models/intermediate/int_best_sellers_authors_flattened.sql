@@ -1,27 +1,28 @@
-with source as (
-    select
+WITH source AS (
+    SELECT
         published_date,
         list_name_encoded,
         rank,
         list_updated,
         primary_isbn13,
         authors
-    from {{ ref('int_best_sellers_authors_parsed') }}
-    where authors is not null
-        and array_length(authors) > 0
+    FROM {{ ref('int_best_sellers_authors_parsed') }}
+    WHERE
+        authors IS NOT NULL
+        AND array_length(authors) > 0
 ),
 
-flattened as (
-    select
+flattened AS (
+    SELECT
         published_date,
         list_name_encoded,
         rank,
         list_updated,
         primary_isbn13,
-        author_name as author_full_name
-    from source
-    cross join unnest(authors) as author_name
-    where trim(author_name) != ''
+        author_name AS author_full_name
+    FROM source
+    CROSS JOIN unnest(authors) AS author_name
+    WHERE trim(author_name) != ''
 )
 
-select * from flattened
+SELECT * FROM flattened

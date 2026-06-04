@@ -1,42 +1,46 @@
-with weekly as (
-    select
+WITH weekly AS (
+    SELECT
         primary_isbn13,
         published_date,
-        min(rank) as best_rank_that_week,
-        array_agg(title order by list_name_encoded limit 1)[offset(0)] as title,
-        array_agg(publisher order by list_name_encoded limit 1)[offset(0)] as publisher,
-        array_agg(description order by list_name_encoded limit 1)[offset(0)] as description,
-        array_agg(age_group order by list_name_encoded limit 1)[offset(0)] as age_group,
-        array_agg(age_min order by list_name_encoded limit 1)[offset(0)] as age_min,
-        array_agg(age_max order by list_name_encoded limit 1)[offset(0)] as age_max,
-        array_agg(book_image order by list_name_encoded limit 1)[offset(0)] as book_image,
-        array_agg(amazon_product_url order by list_name_encoded limit 1)[offset(0)] as amazon_product_url,
-        array_agg(book_review_link order by list_name_encoded limit 1)[offset(0)] as book_review_link,
-        array_agg(sunday_review_link order by list_name_encoded limit 1)[offset(0)] as sunday_review_link
-    from {{ ref('stg_best_sellers') }}
-    where primary_isbn13 is not null
-        and trim(primary_isbn13) != ''
-    group by 1, 2
+        min(rank) AS best_rank_that_week,
+        array_agg(title ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS title,
+        array_agg(publisher ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS publisher,
+        array_agg(description ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS description,
+        array_agg(age_group ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS age_group,
+        array_agg(age_min ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS age_min,
+        array_agg(age_max ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS age_max,
+        array_agg(book_image ORDER BY list_name_encoded LIMIT 1)[offset(0)] AS book_image,
+        array_agg(amazon_product_url ORDER BY list_name_encoded LIMIT 1
+        )[offset(0)] AS amazon_product_url,
+        array_agg(book_review_link ORDER BY list_name_encoded LIMIT 1
+        )[offset(0)] AS book_review_link,
+        array_agg(sunday_review_link ORDER BY list_name_encoded LIMIT 1
+        )[offset(0)] AS sunday_review_link
+    FROM {{ ref('stg_best_sellers') }}
+    WHERE
+        primary_isbn13 IS NOT NULL
+        AND trim(primary_isbn13) != ''
+    GROUP BY 1, 2
 ),
 
-running as (
-    select
+running AS (
+    SELECT
         *,
-        min(best_rank_that_week) over (
-            partition by primary_isbn13
-            order by published_date
-            rows between unbounded preceding and current row
-        ) as top_rank
-    from weekly
+        min(best_rank_that_week) OVER (
+            PARTITION BY primary_isbn13
+            ORDER BY published_date
+            ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+        ) AS top_rank
+    FROM weekly
 ),
 
-with_lags as (
-    select
+with_lags AS (
+    SELECT
         *,
-        lag(top_rank) over (
-            partition by primary_isbn13
-            order by published_date
-        ) as prev_top_rank,
+        lag(top_rank) OVER (
+            PARTITION BY primary_isbn13
+            ORDER BY published_date
+        ) AS prev_top_rank,
         lag(struct(
             title,
             publisher,
@@ -48,20 +52,20 @@ with_lags as (
             amazon_product_url,
             book_review_link,
             sunday_review_link
-        )) over (
-            partition by primary_isbn13
-            order by published_date
-        ) as prev_attrs
-    from running
+        )) OVER (
+            PARTITION BY primary_isbn13
+            ORDER BY published_date
+        ) AS prev_attrs
+    FROM running
 ),
 
-flagged as (
-    select
+flagged AS (
+    SELECT
         *,
-        case
-            when prev_top_rank is null then 1
-            when top_rank != prev_top_rank then 1
-            when struct(
+        CASE
+            WHEN prev_top_rank IS NULL THEN 1
+            WHEN top_rank != prev_top_rank THEN 1
+            WHEN struct(
                 title,
                 publisher,
                 description,
@@ -72,44 +76,44 @@ flagged as (
                 amazon_product_url,
                 book_review_link,
                 sunday_review_link
-            ) != prev_attrs then 1
-            else 0
-        end as is_new_version
-    from with_lags
+            ) != prev_attrs THEN 1
+            ELSE 0
+        END AS is_new_version
+    FROM with_lags
 ),
 
-banded as (
-    select
+banded AS (
+    SELECT
         *,
-        sum(is_new_version) over (
-            partition by primary_isbn13
-            order by published_date
-        ) as scd_band
-    from flagged
+        sum(is_new_version) OVER (
+            PARTITION BY primary_isbn13
+            ORDER BY published_date
+        ) AS scd_band
+    FROM flagged
 ),
 
-band_starts as (
-    select *
-    from banded
-    qualify row_number() over (
-        partition by primary_isbn13, scd_band
-        order by published_date
+band_starts AS (
+    SELECT *
+    FROM banded
+    QUALIFY row_number() OVER (
+        PARTITION BY primary_isbn13, scd_band
+        ORDER BY published_date
     ) = 1
 ),
 
-isbn_dates as (
-    select
+isbn_dates AS (
+    SELECT
         primary_isbn13,
-        max(published_date) as latest_published_date
-    from weekly
-    group by 1
+        max(published_date) AS latest_published_date
+    FROM weekly
+    GROUP BY 1
 ),
 
-with_valid_to as (
-    select
+with_valid_to AS (
+    SELECT
         b.primary_isbn13,
         b.top_rank,
-        b.published_date as valid_from,
+        b.published_date AS valid_from,
         b.title,
         b.publisher,
         b.description,
@@ -121,16 +125,16 @@ with_valid_to as (
         b.book_review_link,
         b.sunday_review_link,
         d.latest_published_date,
-        lead(b.published_date) over (
-            partition by b.primary_isbn13
-            order by b.published_date
-        ) as valid_to
-    from band_starts b
-    inner join isbn_dates d using (primary_isbn13)
+        lead(b.published_date) OVER (
+            PARTITION BY b.primary_isbn13
+            ORDER BY b.published_date
+        ) AS valid_to
+    FROM band_starts AS b
+    INNER JOIN isbn_dates AS d USING (primary_isbn13)
 )
 
-select
-    {{ dbt_utils.generate_surrogate_key(['primary_isbn13', 'valid_from']) }} as book_scd_key,
+SELECT
+    {{ generate_surrogate_key(['primary_isbn13', 'valid_from']) }} AS book_scd_key,
     primary_isbn13,
     title,
     publisher,
@@ -146,4 +150,4 @@ select
     latest_published_date,
     valid_from,
     valid_to
-from with_valid_to
+FROM with_valid_to

@@ -1,4 +1,4 @@
-select
+SELECT
     book_scd_key,
     primary_isbn13,
     title,
@@ -15,4 +15,4 @@ select
     latest_published_date,
     valid_from,
     valid_to
-from {{ ref('int_books_top_rank_scd') }}
+FROM {{ ref('int_books_top_rank_scd') }}
