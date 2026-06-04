@@ -27,7 +27,7 @@ jobs:
           version: "latest"
 
       - name: Install dependencies (PR branch)
-        run: uv sync --group dbt
+        run: uv sync --group dbt --group dev
 
       - name: Install Fusion runtime (PR branch)
         run: uv run dbt system update
@@ -72,9 +72,6 @@ jobs:
       - name: Install dbt packages (PR branch)
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
-
-      - name: Install dev dependencies (pre-commit)
-        run: uv sync --group dev
 
       - name: Parse dbt project (manifest for documentation checks)
         working-directory: dbt_nyt_analytics
