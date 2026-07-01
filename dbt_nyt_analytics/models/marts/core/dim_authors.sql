@@ -9,21 +9,21 @@ WITH article_authors AS (
     FROM {{ ref('int_authors_flattened') }}
     WHERE
         author_full_name IS NOT NULL
-        AND trim(author_full_name) != ''
+        AND TRIM(author_full_name) != ''
 ),
 
 book_authors AS (
     SELECT
         author_full_name,
-        cast(NULL AS string) AS firstname,
-        cast(NULL AS string) AS middlename,
-        cast(NULL AS string) AS lastname,
-        cast(NULL AS string) AS qualifier,
+        CAST(NULL AS STRING) AS firstname,
+        CAST(NULL AS STRING) AS middlename,
+        CAST(NULL AS STRING) AS lastname,
+        CAST(NULL AS STRING) AS qualifier,
         2 AS source_priority
     FROM {{ ref('int_best_sellers_authors_flattened') }}
     WHERE
         author_full_name IS NOT NULL
-        AND trim(author_full_name) != ''
+        AND TRIM(author_full_name) != ''
 ),
 
 combined AS (
@@ -40,7 +40,7 @@ deduped AS (
         lastname,
         qualifier
     FROM combined
-    QUALIFY row_number() OVER (
+    QUALIFY ROW_NUMBER() OVER (
         PARTITION BY author_full_name
         ORDER BY source_priority
     ) = 1

@@ -6,17 +6,17 @@ parsed AS (
     SELECT
         * EXCEPT (author),
         CASE
-            WHEN author IS NULL OR trim(author) = '' THEN NULL
-            ELSE array(
-                SELECT DISTINCT initcap(trim(author_name))
+            WHEN author IS NULL OR TRIM(author) = '' THEN NULL
+            ELSE ARRAY(
+                SELECT DISTINCT INITCAP(TRIM(author_name))
                 FROM
-                    unnest(
-                        split(
-                            regexp_replace(trim(author), r'(?i)\s+and\s+', '|||'),
+                    UNNEST(
+                        SPLIT(
+                            REGEXP_REPLACE(TRIM(author), r'(?i)\s+and\s+', '|||'),
                             '|||'
                         )
                     ) AS author_name
-                WHERE trim(author_name) != ''
+                WHERE TRIM(author_name) != ''
             )
         END AS authors
     FROM source

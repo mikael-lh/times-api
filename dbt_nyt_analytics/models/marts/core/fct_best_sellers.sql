@@ -27,7 +27,7 @@ with_book_keys AS (
         s.list_updated,
         b.book_key,
         bh.book_scd_key,
-        initcap(trim(s.author)) AS author_full_name,
+        INITCAP(TRIM(s.author)) AS author_full_name,
         s.list_display_name,
         s.rank_last_week,
         s.weeks_on_list,

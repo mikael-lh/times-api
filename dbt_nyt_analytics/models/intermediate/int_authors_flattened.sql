@@ -20,15 +20,15 @@ flattened AS (
         author.lastname,
         author.qualifier,
         -- Construct full name
-        trim(concat(
-            coalesce(author.firstname, ''),
+        TRIM(CONCAT(
+            COALESCE(author.firstname, ''),
             ' ',
-            coalesce(author.middlename, ''),
+            COALESCE(author.middlename, ''),
             ' ',
-            coalesce(author.lastname, '')
+            COALESCE(author.lastname, '')
         )) AS author_full_name
     FROM source
-    CROSS JOIN unnest(byline_person) AS author
+    CROSS JOIN UNNEST(byline_person) AS author
     WHERE
         author.lastname IS NOT NULL
         OR author.firstname IS NOT NULL

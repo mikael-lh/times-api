@@ -28,7 +28,7 @@ with_metrics AS (
         -- Dates
         published_date,
         updated_at,
-        date_diff(snapshot_date, published_date, DAY) AS days_since_published,
+        DATE_DIFF(snapshot_date, published_date, DAY) AS days_since_published,
 
         -- Categorization
         source,
@@ -43,10 +43,10 @@ with_metrics AS (
         url,
 
         -- Facets (for analysis)
-        array_length(des_facet) AS description_facet_count,
-        array_length(org_facet) AS organization_facet_count,
-        array_length(per_facet) AS person_facet_count,
-        array_length(geo_facet) AS geo_facet_count,
+        ARRAY_LENGTH(des_facet) AS description_facet_count,
+        ARRAY_LENGTH(org_facet) AS organization_facet_count,
+        ARRAY_LENGTH(per_facet) AS person_facet_count,
+        ARRAY_LENGTH(geo_facet) AS geo_facet_count,
 
         -- Raw facets for downstream
         des_facet,

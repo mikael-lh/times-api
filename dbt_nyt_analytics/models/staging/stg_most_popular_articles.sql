@@ -30,15 +30,15 @@ cleaned AS (
         safe.parse_timestamp('%Y-%m-%d %H:%M:%S', updated) AS updated_at,
 
         -- Categorization
-        coalesce(nullif(trim(source), ''), 'Unknown') AS source,
-        coalesce(nullif(trim(section), ''), 'Unknown') AS section,
-        coalesce(nullif(trim(subsection), ''), 'Unknown') AS subsection,
-        coalesce(nullif(trim(`type`), ''), 'Unknown') AS article_type,
+        COALESCE(NULLIF(TRIM(source), ''), 'Unknown') AS source,
+        COALESCE(NULLIF(TRIM(section), ''), 'Unknown') AS section,
+        COALESCE(NULLIF(TRIM(subsection), ''), 'Unknown') AS subsection,
+        COALESCE(NULLIF(TRIM(`type`), ''), 'Unknown') AS article_type,
 
         -- Content
-        trim(title) AS title,
-        trim(abstract) AS abstract,
-        trim(byline) AS byline,
+        TRIM(title) AS title,
+        TRIM(abstract) AS abstract,
+        TRIM(byline) AS byline,
         url,
 
         -- Facets (arrays)

@@ -9,7 +9,7 @@ WITH source AS (
     FROM {{ ref('int_best_sellers_authors_parsed') }}
     WHERE
         authors IS NOT NULL
-        AND array_length(authors) > 0
+        AND ARRAY_LENGTH(authors) > 0
 ),
 
 flattened AS (
@@ -21,8 +21,8 @@ flattened AS (
         primary_isbn13,
         author_name AS author_full_name
     FROM source
-    CROSS JOIN unnest(authors) AS author_name
-    WHERE trim(author_name) != ''
+    CROSS JOIN UNNEST(authors) AS author_name
+    WHERE TRIM(author_name) != ''
 )
 
 SELECT * FROM flattened
