@@ -16,13 +16,13 @@ WITH source AS (
     FROM {{ ref('stg_best_sellers') }}
     WHERE
         primary_isbn13 IS NOT NULL
-        AND trim(primary_isbn13) != ''
+        AND TRIM(primary_isbn13) != ''
 ),
 
 ranked AS (
     SELECT
         *,
-        row_number() OVER (
+        ROW_NUMBER() OVER (
             PARTITION BY primary_isbn13
             ORDER BY published_date DESC, list_name_encoded ASC
         ) AS recency_rank

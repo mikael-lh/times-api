@@ -5,7 +5,7 @@ WITH keywords AS (
     FROM {{ ref('int_keywords_flattened') }}
     WHERE
         keyword_value IS NOT NULL
-        AND trim(keyword_value) != ''
+        AND TRIM(keyword_value) != ''
 ),
 
 with_key AS (

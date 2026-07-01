@@ -26,26 +26,26 @@ cleaned AS (
 
         -- Dates
         pub_date,
-        extract(YEAR FROM pub_date) AS pub_year,
-        extract(MONTH FROM pub_date) AS pub_month,
+        EXTRACT(YEAR FROM pub_date) AS pub_year,
+        EXTRACT(MONTH FROM pub_date) AS pub_month,
 
         -- Categorization
-        coalesce(nullif(trim(section_name), ''), 'Unknown') AS section_name,
-        coalesce(nullif(trim(news_desk), ''), 'Unknown') AS news_desk,
-        coalesce(nullif(trim(type_of_material), ''), 'Unknown') AS type_of_material,
-        coalesce(nullif(trim(document_type), ''), 'Unknown') AS document_type,
+        COALESCE(NULLIF(TRIM(section_name), ''), 'Unknown') AS section_name,
+        COALESCE(NULLIF(TRIM(news_desk), ''), 'Unknown') AS news_desk,
+        COALESCE(NULLIF(TRIM(type_of_material), ''), 'Unknown') AS type_of_material,
+        COALESCE(NULLIF(TRIM(document_type), ''), 'Unknown') AS document_type,
 
         -- Content metrics
-        coalesce(word_count, 0) AS word_count,
+        COALESCE(word_count, 0) AS word_count,
 
         -- URLs
         web_url,
 
         -- Text fields
-        trim(headline_main) AS headline_main,
-        trim(byline_original) AS byline_original,
-        trim(abstract) AS abstract,
-        trim(snippet) AS snippet,
+        TRIM(headline_main) AS headline_main,
+        TRIM(byline_original) AS byline_original,
+        TRIM(abstract) AS abstract,
+        TRIM(snippet) AS snippet,
 
         -- Nested arrays (kept as-is for intermediate layer to flatten)
         keywords,
@@ -55,9 +55,9 @@ cleaned AS (
         multimedia_count_by_type,
 
         -- Derived: has content flags
-        coalesce(array_length(keywords) > 0, FALSE) AS has_keywords,
-        coalesce(array_length(byline_person) > 0, FALSE) AS has_authors,
-        coalesce(multimedia_count_by_type IS NOT NULL, FALSE) AS has_multimedia
+        COALESCE(ARRAY_LENGTH(keywords) > 0, FALSE) AS has_keywords,
+        COALESCE(ARRAY_LENGTH(byline_person) > 0, FALSE) AS has_authors,
+        COALESCE(multimedia_count_by_type IS NOT NULL, FALSE) AS has_multimedia
 
     FROM source
     WHERE article_id IS NOT NULL

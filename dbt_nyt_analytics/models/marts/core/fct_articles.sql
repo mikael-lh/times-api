@@ -21,7 +21,7 @@ WITH staged_articles AS (
 author_counts AS (
     SELECT
         article_id,
-        count(*) AS author_count
+        COUNT(*) AS author_count
     FROM {{ ref('int_authors_flattened') }}
     GROUP BY 1
 ),
@@ -29,8 +29,8 @@ author_counts AS (
 keyword_counts AS (
     SELECT
         article_id,
-        count(*) AS keyword_count,
-        countif(keyword_major = 'Y') AS major_keyword_count
+        COUNT(*) AS keyword_count,
+        COUNTIF(keyword_major = 'Y') AS major_keyword_count
     FROM {{ ref('int_keywords_flattened') }}
     GROUP BY 1
 ),
@@ -54,9 +54,9 @@ final AS (
 
         -- Metrics
         a.word_count,
-        coalesce(ac.author_count, 0) AS author_count,
-        coalesce(kc.keyword_count, 0) AS keyword_count,
-        coalesce(kc.major_keyword_count, 0) AS major_keyword_count,
+        COALESCE(ac.author_count, 0) AS author_count,
+        COALESCE(kc.keyword_count, 0) AS keyword_count,
+        COALESCE(kc.major_keyword_count, 0) AS major_keyword_count,
 
         -- Content
         a.headline_main,

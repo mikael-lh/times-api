@@ -8,10 +8,10 @@ cleaned AS (
         published_date,
         list_name_encoded,
         rank,
-        lower(trim(list_updated)) AS list_updated,
+        LOWER(TRIM(list_updated)) AS list_updated,
 
         -- List metadata
-        trim(list_display_name) AS list_display_name,
+        TRIM(list_display_name) AS list_display_name,
 
         -- Rank metrics
         rank_last_week,
@@ -30,18 +30,18 @@ cleaned AS (
         END AS dagger,
 
         -- Book identifiers and content
-        trim(primary_isbn13) AS primary_isbn13,
-        initcap(trim(title)) AS title,
-        trim(author) AS author,
-        trim(contributor) AS contributor,
-        trim(contributor_note) AS contributor_note,
-        trim(publisher) AS publisher,
-        trim(description) AS description,
+        TRIM(primary_isbn13) AS primary_isbn13,
+        INITCAP(TRIM(title)) AS title,
+        TRIM(author) AS author,
+        TRIM(contributor) AS contributor,
+        TRIM(contributor_note) AS contributor_note,
+        TRIM(publisher) AS publisher,
+        TRIM(description) AS description,
 
         -- Age group parsing (children's lists)
-        trim(age_group) AS age_group,
-        safe_cast(regexp_extract(age_group, r'(\d+)') AS int64) AS age_min,
-        safe_cast(regexp_extract(age_group, r'\d+\s*(?:-|to)\s*(\d+)') AS int64) AS age_max,
+        TRIM(age_group) AS age_group,
+        SAFE_CAST(REGEXP_EXTRACT(age_group, r'(\d+)') AS INT64) AS age_min,
+        SAFE_CAST(REGEXP_EXTRACT(age_group, r'\d+\s*(?:-|to)\s*(\d+)') AS INT64) AS age_max,
 
         -- Links
         book_image,

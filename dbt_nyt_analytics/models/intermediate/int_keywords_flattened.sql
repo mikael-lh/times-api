@@ -15,12 +15,12 @@ flattened AS (
         pub_date,
         pub_year,
         section_name,
-        lower(trim(keyword.name)) AS keyword_name,
-        lower(trim(keyword.value)) AS keyword_value,
+        LOWER(TRIM(keyword.name)) AS keyword_name,
+        LOWER(TRIM(keyword.value)) AS keyword_value,
         keyword.rank AS keyword_rank,
         keyword.major AS keyword_major
     FROM source
-    CROSS JOIN unnest(keywords) AS keyword
+    CROSS JOIN UNNEST(keywords) AS keyword
 )
 
 SELECT * FROM flattened
