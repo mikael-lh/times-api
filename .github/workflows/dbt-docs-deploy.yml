@@ -2,7 +2,7 @@ name: Deploy dbt docs
 
 on:
   workflow_run:
-    workflows: ["dbt Daily Run"]
+    workflows: ["dbt Daily Run", "dbt Deploy"]
     types: [completed]
 
 concurrency:
