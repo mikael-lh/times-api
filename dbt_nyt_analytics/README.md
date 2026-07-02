@@ -16,9 +16,10 @@ Function) into analytics-ready models.
 Schema separation is handled by `macros/generate_schema_name.sql`:
 `prod` uses bare schema names, `ci` uses the profile dataset (`ci_dbt`) or one
 dataset per PR (`ci_dbt_<number>` when `pr_number` is passed via `--vars`),
-anything else (typically `dev`) prefixes with `dev_`. Models use `+schema` in
-`dbt_project.yml`; snapshots use `+target_schema` (same macro, different
-config key).
+anything else (typically `dev`) prefixes with `dev_`. Models and snapshots
+both use `+schema` in `dbt_project.yml` (resolved via `generate_schema_name`).
+Avoid legacy `+target_schema` on snapshots — it bypasses the macro and writes
+to a fixed dataset in every environment.
 
 ## Models
 
@@ -33,6 +34,7 @@ config key).
 - `int_best_sellers_authors_parsed` – list entries with parsed `authors` array
 - `int_best_sellers_authors_flattened` – one row per (list entry, author)
 - `int_best_sellers_books` – one row per `primary_isbn13` (latest list metadata)
+- `int_books_snapshot_source` – book attributes + all-time `top_rank` for `books_snapshot`
 - `int_books_top_rank_scd` – SCD Type 2 book versions keyed on cumulative `top_rank` improvements and metadata changes (list-week `valid_from` / `valid_to`)
 
 **Core marts** (tables):
@@ -43,8 +45,8 @@ config key).
 - `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
 - `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current row per ISBN; `dim_books_history` = all top_rank SCD versions)
 
-**Snapshots** (`snapshots/`; schema via `+target_schema: dbt_snapshots` in `dbt_project.yml`):
-- `books_snapshot` – dbt-managed SCD Type 2 audit of book metadata and all-time `top_rank` on each run. Fact joins use `dim_books_history` from `int_books_top_rank_scd` (list-week validity dates).
+**Snapshots** (`snapshots/`; schema via `+schema: dbt_snapshots` in `dbt_project.yml`):
+- `books_snapshot` – dbt-managed SCD Type 2 audit of book metadata and all-time `top_rank` (YAML spec in `_snapshots.yml`; source query in `int_books_snapshot_source`). Fact joins use `dim_books_history` from `int_books_top_rank_scd` (list-week validity dates).
 **Analytics marts** (tables):
 - `agg_articles_by_month` – monthly volume + richness
 - `agg_author_performance` – author productivity
@@ -76,9 +78,8 @@ uv run dbt build --target prod        # production run
 | `ci` | OAuth (PR workflow overrides to `service-account-json`) | `ci_dbt_<PR number>` (single dataset; deleted when PR closes) |
 | `prod` | OAuth locally; CI overrides to `service-account-json` via `GCP_SA_KEY` | `dbt` |
 
-The committed `profiles.yml` uses OAuth so it's safe to read; both CI
-workflows overwrite `~/.dbt/profiles.yml` with a service-account variant
-at runtime.
+The committed `profiles.yml` uses OAuth so it's safe to read; CI/CD workflows
+overwrite `~/.dbt/profiles.yml` with a service-account variant at runtime.
 
 ## Common commands
 
@@ -137,15 +138,17 @@ Column docs in `_*.yml` remain a convention but are not enforced by the hook.
 trailing commas, etc.). See [`.sqlfluff`](../.sqlfluff) and
 [`sqlfluff_macros/`](sqlfluff_macros/) for Jinja stubs used at lint time.
 
-The PR workflow will then build only what you changed
-(`state:modified+`), deferred against the latest prod manifest.
+The PR workflow builds only what you changed (`state:modified+`), deferred
+against the latest prod manifest. After merge, [`dbt-deploy.yml`](../.github/workflows/dbt-deploy.yml)
+deploys the same slice to prod.
 
 ## CI/CD
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
-| [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml) | After successful `dbt Daily Run` | Downloads the docs site artifact and deploys to GitHub Pages via Actions. |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then full `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
+| [`dbt-deploy.yml`](../.github/workflows/dbt-deploy.yml) | Push to `main` touching `dbt_nyt_analytics/**` (+ manual) | Compiles prod manifest from pre-push `main` (`github.event.before`), then `dbt build --target prod --select state:modified+ --defer --favor-state --write-catalog` (full prod build if no prior state); uploads docs site artifact. |
+| [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml) | After successful `dbt Daily Run` or `dbt Deploy` | Downloads the `dbt-docs-site` artifact and deploys to GitHub Pages via Actions. |
 | [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion**: sqlfluff, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --target ci --select state:modified+ --defer --favor-state` into `ci_dbt_<PR number>`. |
 | [`dbt-pr-cleanup.yml`](../.github/workflows/dbt-pr-cleanup.yml) | PR closed (merged or not) touching `dbt_nyt_analytics/**` | Deletes `times-api-ingest:ci_dbt_<PR number>`. |
 

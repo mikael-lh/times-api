@@ -92,6 +92,13 @@ dbt build --select state:modified+ --defer --favor-state --state ../main-branch/
 `dbt source freshness` then full `dbt build --target prod` daily at
 08:00 UTC (after Most Popular ingest at 06:00 UTC).
 
+[`dbt-deploy.yml`](../.github/workflows/dbt-deploy.yml) runs on push to
+`main` when `dbt_nyt_analytics/**` changes: compile a prod manifest from
+pre-push `main`, then `dbt build --target prod --select state:modified+
+--defer --favor-state` (full prod build when no prior state exists). This
+is the post-merge CD step after [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml)
+validates the same slice in `ci_dbt_<PR number>`.
+
 ## Local pre-commit
 
 ```bash

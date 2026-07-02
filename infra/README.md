@@ -73,7 +73,7 @@ Functions deployment permissions).
 | Ingest SA (`GCP_SA_KEY_INGEST`) | Daily/weekly/archive ingest workflows | Storage Object Admin (or Storage Object Creator) on the bucket |
 | Deploy SA (`GCP_SA_KEY_DEPLOY`) | `deploy-function.yml` | Cloud Functions Admin + roles needed to bind Eventarc |
 | Runtime SA (function default or `SERVICE_ACCOUNT`) | The Cloud Function itself | BigQuery Job User (project), BigQuery Data Editor (staging/metadata/prod), Storage Object Viewer (bucket) |
-| dbt SA (`GCP_SA_KEY`) | `dbt-run.yml`, `dbt-pr.yml` | BigQuery Job User + BigQuery Data Editor on dbt-managed datasets |
+| dbt SA (`GCP_SA_KEY`) | `dbt-run.yml`, `dbt-deploy.yml`, `dbt-pr.yml` | BigQuery Job User + BigQuery Data Editor on dbt-managed datasets |
 
 ## Schema is the source of truth
 
