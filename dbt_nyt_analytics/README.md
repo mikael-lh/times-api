@@ -7,15 +7,16 @@ Function) into analytics-ready models.
 
 | Layer | Materialization | Schema (prod / ci / dev) | What it does |
 |---|---|---|---|
-| `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_staging` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
-| `intermediate/` | view | `dbt_intermediate` / `ci_dbt_intermediate` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
-| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_snapshots` / `dev_dbt_snapshots` | dbt-managed audit of book metadata changes on each run |
-| `marts/core/` | table | `dbt_core` / `ci_dbt_core` / `dev_dbt_core` | Facts, dimensions, bridges |
-| `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_analytics` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
+| `staging/` | incremental view (truncate + append on `pub_date` / `snapshot_date`) | `dbt_staging` / `ci_dbt_<n>` / `dev_dbt_staging` | Clean, standardize, cast types from `prod.*` source tables |
+| `intermediate/` | view | `dbt_intermediate` / `ci_dbt_<n>` / `dev_dbt_intermediate` | Flatten nested arrays (keywords, byline_person, best-seller authors) and build book spine |
+| `snapshots/` | snapshot (SCD Type 2) | `dbt_snapshots` / `ci_dbt_<n>` / `dev_dbt_snapshots` | dbt-managed audit of book metadata changes on each run |
+| `marts/core/` | table | `dbt_core` / `ci_dbt_<n>` / `dev_dbt_core` | Facts, dimensions, bridges |
+| `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_<n>` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
 Schema separation is handled by `macros/generate_schema_name.sql`:
-`prod` uses bare schema names, `ci` prefixes with `ci_`, anything else
-(typically `dev`) prefixes with `dev_`. Models use `+schema` in
+`prod` uses bare schema names, `ci` uses the profile dataset (`ci_dbt`) or one
+dataset per PR (`ci_dbt_<number>` when `pr_number` is passed via `--vars`),
+anything else (typically `dev`) prefixes with `dev_`. Models use `+schema` in
 `dbt_project.yml`; snapshots use `+target_schema` (same macro, different
 config key).
 
@@ -72,7 +73,7 @@ uv run dbt build --target prod        # production run
 | Target | Auth | Default dataset |
 |---|---|---|
 | `dev` | OAuth (`gcloud auth application-default login`) | `dev_dbt` |
-| `ci` | OAuth (PR workflow overrides to `service-account-json`) | `ci_dbt` |
+| `ci` | OAuth (PR workflow overrides to `service-account-json`) | `ci_dbt_<PR number>` (single dataset; deleted when PR closes) |
 | `prod` | OAuth locally; CI overrides to `service-account-json` via `GCP_SA_KEY` | `dbt` |
 
 The committed `profiles.yml` uses OAuth so it's safe to read; both CI
@@ -97,7 +98,7 @@ uv run dbt docs serve   # Fusion Docs v2 (local only, port 8580)
 
 | Macro | Purpose |
 |---|---|
-| `generate_schema_name` | Adds `dev_` / `ci_` prefix when `target.name` is not `prod`. |
+| `generate_schema_name` | `prod`: bare schema names; `ci`: profile dataset or `ci_dbt_<number>`; `dev`: `dev_` prefix. |
 | `get_incremental_filter(date_column)` | Append-only filter: `{{ date_column }} > (select max from {{ this }})`. First run loads all history. |
 
 ## Column documentation
@@ -145,7 +146,8 @@ The PR workflow will then build only what you changed
 |---|---|---|
 | [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
 | [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml) | After successful `dbt Daily Run` | Downloads the docs site artifact and deploys to GitHub Pages via Actions. |
-| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: `sqlfluff fix --check` + `sqlfluff lint`, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
+| [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion**: sqlfluff, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --target ci --select state:modified+ --defer --favor-state` into `ci_dbt_<PR number>`. |
+| [`dbt-pr-cleanup.yml`](../.github/workflows/dbt-pr-cleanup.yml) | PR closed (merged or not) touching `dbt_nyt_analytics/**` | Deletes `times-api-ingest:ci_dbt_<PR number>`. |
 
 To enable Pages-hosted docs, add `GCP_SA_KEY` (full service-account JSON
 with `bigquery.jobUser` + `bigquery.dataEditor`) as a repo secret, and set

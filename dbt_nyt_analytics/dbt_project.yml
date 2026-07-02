@@ -22,6 +22,8 @@ clean-targets:
 vars:
   # Default lookback for incremental models (can be overridden at runtime)
   incremental_lookback_days: 3
+  # CI PR builds pass --vars '{"pr_number": <n>}'; empty uses profile dataset (ci_dbt)
+  pr_number: ""
 
 models:
   nyt_analytics:

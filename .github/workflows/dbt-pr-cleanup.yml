@@ -1,0 +1,36 @@
+name: dbt PR Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - 'dbt_nyt_analytics/**'
+
+jobs:
+  cleanup_pr_dataset:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete PR BigQuery dataset
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          DATASET="times-api-ingest:ci_dbt_${PR_NUMBER}"
+          if bq show "${DATASET}" >/dev/null 2>&1; then
+            bq rm -r -f -d "${DATASET}"
+            echo "Deleted ${DATASET}"
+          else
+            echo "Dataset ${DATASET} not found; nothing to delete."
+          fi
