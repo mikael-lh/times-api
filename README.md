@@ -100,8 +100,10 @@ See per-component READMEs for full details:
 | [`books-ingest.yml`](.github/workflows/books-ingest.yml) | cron Thu 08:00 UTC | Best Sellers ingest → transform → GE → GCS |
 | [`archive-ingest.yml`](.github/workflows/archive-ingest.yml) | manual | Archive ingest → transform → GCS (resumable from GCS) |
 | [`deploy-function.yml`](.github/workflows/deploy-function.yml) | push to main (paths) | Deploy `nyt-bq-loader` Cloud Function |
-| [`dbt-run.yml`](.github/workflows/dbt-run.yml) | cron 08:00 UTC | `dbt build` + publish docs to GitHub Pages |
-| [`dbt-pr.yml`](.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | `dbt build --select state:modified+ --defer --favor-state` |
+| [`dbt-run.yml`](.github/workflows/dbt-run.yml) | cron 08:00 UTC + manual | Full prod `dbt build` + docs artifact |
+| [`dbt-deploy.yml`](.github/workflows/dbt-deploy.yml) | push to `main` (dbt paths) + manual | Prod `dbt build --select state:modified+` + docs artifact |
+| [`dbt-docs-deploy.yml`](.github/workflows/dbt-docs-deploy.yml) | After successful dbt run or deploy | Publish docs to GitHub Pages |
+| [`dbt-pr.yml`](.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | `dbt build --select state:modified+ --defer --favor-state` into `ci_dbt_<PR>` |
 
 ### Required GitHub secrets
 
@@ -110,7 +112,7 @@ See per-component READMEs for full details:
 | `NYTIMES_API_KEY` | All ingest workflows |
 | `GCP_SA_KEY_INGEST` | Ingest workflows uploading to GCS (Storage Object Creator) |
 | `GCP_SA_KEY_DEPLOY` | `deploy-function.yml` (Cloud Functions deploy) |
-| `GCP_SA_KEY` | `dbt-run.yml`, `dbt-pr.yml` (BigQuery jobUser + dataEditor) |
+| `GCP_SA_KEY` | `dbt-run.yml`, `dbt-deploy.yml`, `dbt-pr.yml` (BigQuery jobUser + dataEditor) |
 
 And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
 `deploy-function.yml` also reads `GCP_PROJECT`, `GCS_PREFIX`, `REGION`,
@@ -136,6 +138,7 @@ And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
 └── uv.lock                 # Locked deps for reproducible installs
 ```
 
-Live dbt docs are built in [`dbt-run.yml`](../.github/workflows/dbt-run.yml) and
-deployed by [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml)
-after a successful prod run (`https://mikael-lh.github.io/times-api/`).
+Live dbt docs are built in [`dbt-run.yml`](.github/workflows/dbt-run.yml) and
+[`dbt-deploy.yml`](.github/workflows/dbt-deploy.yml), then deployed by
+[`dbt-docs-deploy.yml`](.github/workflows/dbt-docs-deploy.yml) after a
+successful prod run (`https://mikael-lh.github.io/times-api/`).
