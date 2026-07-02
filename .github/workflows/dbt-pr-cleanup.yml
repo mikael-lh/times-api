@@ -27,7 +27,7 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          DATASET="times-api-ingest:dbt_pr_${PR_NUMBER}"
+          DATASET="times-api-ingest:ci_dbt_${PR_NUMBER}"
           if bq show "${DATASET}" >/dev/null 2>&1; then
             bq rm -r -f -d "${DATASET}"
             echo "Deleted ${DATASET}"

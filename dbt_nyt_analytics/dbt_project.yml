@@ -22,8 +22,6 @@ clean-targets:
 vars:
   # Default lookback for incremental models (can be overridden at runtime)
   incremental_lookback_days: 3
-  # CI PR builds override via --vars; local --target ci uses dbt_pr_local
-  pr_number: local
 
 models:
   nyt_analytics:
