@@ -1,5 +1,3 @@
-{{ config(materialized='view') }}
-
 WITH rank_metrics AS (
     SELECT
         primary_isbn13,
