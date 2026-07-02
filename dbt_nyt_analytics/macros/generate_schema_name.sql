@@ -1,20 +1,13 @@
 {% macro generate_schema_name(custom_schema_name, node) -%}
     {#
-    Custom schema naming to support dev/prod separation.
-
-    Behavior:
-    - CI target: ci_dbt when pr_number is unset; ci_dbt_<number> when --vars passes pr_number
-    - Dev target: Prefixes schemas with "dev_" (e.g., dev_dbt_staging)
-    - Prod target: Uses schema name as-is (e.g., dbt_staging)
+    prod: custom schema as-is (e.g. dbt_staging)
+    dev: dev_ prefix (e.g. dev_dbt_staging)
+    ci: profile dataset (ci_dbt) when pr_number is empty; ci_dbt_<n> when set via --vars
     #}
 
     {%- if target.name == 'ci' -%}
-        {%- set pr_number = var('pr_number', '') | string | trim -%}
-        {%- if pr_number == '' -%}
-            ci_dbt
-        {%- else -%}
-            ci_dbt_{{ pr_number }}
-        {%- endif -%}
+        {%- set pr = var('pr_number') | string | trim -%}
+        {{ target.schema if pr == '' else 'ci_dbt_' ~ pr }}
 
     {%- elif custom_schema_name is none -%}
         {{ target.schema }}

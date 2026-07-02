@@ -14,10 +14,11 @@ Function) into analytics-ready models.
 | `marts/analytics/` | table | `dbt_analytics` / `ci_dbt_<n>` / `dev_dbt_analytics` | Pre-aggregations for dashboard performance |
 
 Schema separation is handled by `macros/generate_schema_name.sql`:
-`prod` uses bare schema names, `ci` uses one dataset per PR (`ci_dbt_<number>`;
-`ci_dbt` when `pr_number` is unset), anything else (typically `dev`) prefixes
-with `dev_`. Models use `+schema` in `dbt_project.yml`; snapshots use
-`+target_schema` (same macro, different config key).
+`prod` uses bare schema names, `ci` uses the profile dataset (`ci_dbt`) or one
+dataset per PR (`ci_dbt_<number>` when `pr_number` is passed via `--vars`),
+anything else (typically `dev`) prefixes with `dev_`. Models use `+schema` in
+`dbt_project.yml`; snapshots use `+target_schema` (same macro, different
+config key).
 
 ## Models
 
@@ -97,7 +98,7 @@ uv run dbt docs serve   # Fusion Docs v2 (local only, port 8580)
 
 | Macro | Purpose |
 |---|---|
-| `generate_schema_name` | `prod`: bare schema names; `ci`: `ci_dbt` or `ci_dbt_<number>`; `dev`: `dev_` prefix. |
+| `generate_schema_name` | `prod`: bare schema names; `ci`: profile dataset or `ci_dbt_<number>`; `dev`: `dev_` prefix. |
 | `get_incremental_filter(date_column)` | Append-only filter: `{{ date_column }} > (select max from {{ this }})`. First run loads all history. |
 
 ## Column documentation
