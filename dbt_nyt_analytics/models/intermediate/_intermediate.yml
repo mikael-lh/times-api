@@ -113,6 +113,36 @@ models:
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
 
+  - name: int_books_snapshot_source
+    description: "Pre-snapshot transformation view combining book metadata with calculated cumulative top rank."
+    columns:
+      - name: primary_isbn13
+        description: "{{ doc('primary_isbn13') }}"
+      - name: title
+        description: "{{ doc('book_title') }}"
+      - name: publisher
+        description: "{{ doc('book_publisher') }}"
+      - name: description
+        description: "{{ doc('book_description') }}"
+      - name: age_group
+        description: "{{ doc('age_group') }}"
+      - name: age_min
+        description: "{{ doc('age_min') }}"
+      - name: age_max
+        description: "{{ doc('age_max') }}"
+      - name: book_image
+        description: "{{ doc('book_image') }}"
+      - name: amazon_product_url
+        description: "{{ doc('amazon_product_url') }}"
+      - name: book_review_link
+        description: "{{ doc('book_review_link') }}"
+      - name: sunday_review_link
+        description: "{{ doc('sunday_review_link') }}"
+      - name: latest_published_date
+        description: "{{ doc('latest_published_date') }}"
+      - name: top_rank
+        description: "{{ doc('top_rank') }}"
+
   - name: int_books_top_rank_scd
     description: "SCD Type 2 book versions driven by cumulative top_rank improvements and metadata changes. Weekly metadata uses the alphabetically first list_name_encoded when a book appears on multiple lists."
     columns:
