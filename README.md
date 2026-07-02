@@ -137,6 +137,6 @@ And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
 └── uv.lock                 # Locked deps for reproducible installs
 ```
 
-Live dbt docs are published from `dbt-run.yml` to the `gh-pages` branch
+Live dbt docs are published from `dbt-run.yml` via GitHub Actions Pages
 (`https://mikael-lh.github.io/times-api/`). Fusion builds artifacts; CI
-assembles the static Core docs UI for Pages.
+copies them with a vendored Core docs UI shell into `site/` and deploys.
