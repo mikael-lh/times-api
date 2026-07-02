@@ -21,7 +21,8 @@ jobs:
   dbt_run:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -93,18 +94,18 @@ jobs:
           if [ -n "${{ github.event.inputs.select }}" ]; then
             FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
           fi
-          uv run dbt build $FLAGS
+          uv run dbt build $FLAGS --write-catalog
       
-      - name: Generate dbt docs
+      - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
-        run: uv run dbt docs generate
-      
-      - name: Deploy dbt docs to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+        run: bash pages/prepare_site.sh
+
+      - name: Upload docs site artifact
+        uses: actions/upload-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: dbt_nyt_analytics/target
-          publish_branch: gh-pages
+          name: dbt-docs-site
+          path: dbt_nyt_analytics/site
+          retention-days: 1
 
       - name: Upload dbt artifacts
         uses: actions/upload-artifact@v4

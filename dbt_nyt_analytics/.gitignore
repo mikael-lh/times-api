@@ -1,5 +1,6 @@
 # dbt artifacts
 target/
+site/
 dbt_packages/
 logs/
 

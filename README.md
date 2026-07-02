@@ -137,4 +137,6 @@ And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
 └── uv.lock                 # Locked deps for reproducible installs
 ```
 
-Live dbt docs are published from `dbt-run.yml` to the `gh-pages` branch.
+Live dbt docs are built in [`dbt-run.yml`](../.github/workflows/dbt-run.yml) and
+deployed by [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml)
+after a successful prod run (`https://mikael-lh.github.io/times-api/`).
