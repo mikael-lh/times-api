@@ -1,0 +1,129 @@
+name: dbt Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'dbt_nyt_analytics/**'
+      - '.github/workflows/dbt-deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: dbt-prod-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v4
+
+      - name: Checkout previous commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.before }}
+          path: previous
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies (previous commit)
+        working-directory: previous
+        run: uv sync --group dbt
+
+      - name: Install dependencies (current commit)
+        run: uv sync --group dbt
+
+      - name: Configure dbt profile
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          nyt_bigquery:
+            target: prod
+            outputs:
+              prod:
+                type: bigquery
+                method: service-account-json
+                project: times-api-ingest
+                dataset: dbt
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          EOF
+
+      - name: Configure dbt Cloud Auth (CI)
+        env:
+          DBT_CLOUD_YML: ${{ secrets.DBT_CLOUD_YML }}
+        if: ${{ env.DBT_CLOUD_YML != '' }}
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/dbt_cloud.yml << 'EOF'
+          ${{ secrets.DBT_CLOUD_YML }}
+          EOF
+
+      - name: Compile previous prod manifest
+        working-directory: previous/dbt_nyt_analytics
+        run: |
+          uv run dbt deps
+          uv run dbt compile --target prod
+
+      - name: Install dbt packages (current commit)
+        working-directory: dbt_nyt_analytics
+        run: uv run dbt deps
+
+      - name: Deploy modified models to prod
+        working-directory: dbt_nyt_analytics
+        env:
+          PREVIOUS_SHA: ${{ github.event.before }}
+        run: |
+          PREV_MANIFEST="../previous/dbt_nyt_analytics/target/manifest.json"
+          if [ -f "$PREV_MANIFEST" ] && [ "$PREVIOUS_SHA" != "0000000000000000000000000000000000000000" ]; then
+            uv run dbt build \
+              --target prod \
+              --select state:modified+ \
+              --state ../previous/dbt_nyt_analytics/target/ \
+              --defer \
+              --favor-state \
+              --write-catalog
+          else
+            echo "No usable previous manifest; running full prod build"
+            uv run dbt build --target prod --write-catalog
+          fi
+
+      - name: Prepare static dbt docs site
+        working-directory: dbt_nyt_analytics
+        run: bash pages/prepare_site.sh
+
+      - name: Upload docs site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs-site
+          path: dbt_nyt_analytics/site
+          retention-days: 1
+
+      - name: Upload dbt artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dbt-artifacts
+          path: |
+            dbt_nyt_analytics/target/manifest.json
+            dbt_nyt_analytics/target/run_results.json
+            dbt_nyt_analytics/target/catalog.json
+            dbt_nyt_analytics/target/sources.json
+          retention-days: 7
