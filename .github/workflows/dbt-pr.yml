@@ -69,6 +69,14 @@ jobs:
                 keyfile_json: ${{ secrets.GCP_SA_KEY }}
           EOF
 
+      - name: Configure dbt Cloud Auth (CI)
+        if: "${{ secrets.DBT_CLOUD_YML != '' }}"
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/dbt_cloud.yml << 'EOF'
+          ${{ secrets.DBT_CLOUD_YML }}
+          EOF
+
       - name: Install dbt packages (PR branch)
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
