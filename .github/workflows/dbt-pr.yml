@@ -44,7 +44,7 @@ jobs:
                 type: bigquery
                 method: service-account-json
                 project: times-api-ingest
-                dataset: ci_dbt
+                dataset: dbt_pr_local
                 location: US
                 threads: 4
                 timeout_seconds: 300
@@ -101,8 +101,12 @@ jobs:
 
       - name: Build and test modified models
         working-directory: dbt_nyt_analytics
+        env:
+          DBT_PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           uv run dbt build \
+            --target ci \
+            --vars "{\"pr_number\": ${DBT_PR_NUMBER}}" \
             --select state:modified+ \
             --state ../main-branch/dbt_nyt_analytics/target/ \
             --defer \
