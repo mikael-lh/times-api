@@ -65,9 +65,8 @@ could be added.
 
 ## 4. Warehouse tests (dbt)
 
-CI and local runs use **dbt Fusion** (`dbt==2.0.0rc178` via uv). From the
-repo root, run `uv sync --group dbt` and `uv run dbt system update` once
-before `uv run dbt build`.
+CI and local runs use **dbt Fusion** (`dbt==2.0.0rc194` via uv). From the
+repo root, run `uv sync --group dbt` before `uv run dbt build`.
 
 Run as part of `uv run dbt build` (which is `dbt run` + `dbt test` for
 each model). Tests are declared in each `_*.yml`:

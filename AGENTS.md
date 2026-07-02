@@ -44,7 +44,7 @@ When blocked, ask the user to add **Cursor Cloud secrets** — do not reference 
 ### One-time setup on the VM (not in update script)
 
 - **dbt profiles**: create `~/.dbt/profiles.yml` with the `nyt_bigquery` profile (see `dbt_nyt_analytics/README.md` or `.github/workflows/dbt-pr.yml`) before `dbt parse`, `dbt debug`, or `dbt build`.
-- **First dbt Fusion runtime** after a fresh `uv sync --group dbt`: `uv run dbt system update` from repo root.
+- **dbt Fusion CLI**: install with `uv sync --group dbt` from repo root (pinned in `pyproject.toml`).
 
 ### Running quality checks
 
@@ -63,7 +63,6 @@ shellcheck infra/*.sh
 ### dbt (dev checkout on the VM)
 
 ```bash
-uv run dbt system update          # after first uv sync --group dbt
 cd dbt_nyt_analytics
 uv run dbt deps                   # also run by VM update script
 uv run dbt parse                  # needs ~/.dbt/profiles.yml
@@ -101,6 +100,6 @@ tmux -f /exec-daemon/tmux.portal.conf new-session -d -s "$SESSION_NAME" -c "/wor
 ### Gotchas
 
 - All Python commands use `uv run` from the repo root unless noted.
-- `dbt` is the Fusion CLI (`dbt==2.0.0rc178`); run `uv run dbt system update` after fresh `uv sync --group dbt`.
+- `dbt` is the Fusion CLI (`dbt==2.0.0rc194` via `uv sync --group dbt`).
 - Pre-commit's `dbt-parse-manifest` hook requires `~/.dbt/profiles.yml` and runs from `dbt_nyt_analytics/`.
 - Reinstalling deps with `uv sync` does not require restarting Streamlit if it is already running; restart if imports fail after dependency changes.

@@ -61,7 +61,6 @@ cd dbt_nyt_analytics
 $EDITOR profiles.yml                  # template lives here, NOT in ~/.dbt
 cp profiles.yml ~/.dbt/profiles.yml   # or symlink
 
-uv run dbt system update              # install Fusion runtime (after first uv sync)
 uv run dbt deps                       # install packages from packages.yml
 uv run dbt debug                      # test connection (default target: dev, oauth)
 uv run dbt build                      # build + test everything (dev)
@@ -144,7 +143,7 @@ The PR workflow will then build only what you changed
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
 | [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml) | After successful `dbt Daily Run` | Downloads the docs site artifact and deploys to GitHub Pages via Actions. |
 | [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: `sqlfluff fix --check` + `sqlfluff lint`, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
 
