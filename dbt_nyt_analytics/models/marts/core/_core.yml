@@ -309,3 +309,46 @@ models:
                 field: author_key
       - name: author_full_name
         description: "{{ doc('author_full_name') }}"
+
+  - name: dim_facets
+    description: "Dimension table of unique conformed facets (description, organization, person, geographic)."
+    columns:
+      - name: facet_key
+        description: "Surrogate key of the facet"
+        tests:
+          - unique
+          - not_null
+      - name: facet_type
+        description: "The type of facet (description, organization, person, geographic)"
+        tests:
+          - not_null
+      - name: facet_value
+        description: "The string value of the facet"
+        tests:
+          - not_null
+
+  - name: bridge_article_facets
+    description: "Bridge table resolving the many-to-many relationship between popular articles and their facets."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - article_id
+              - facet_key
+    columns:
+      - name: article_id
+        description: "Foreign key referencing the popular article"
+        tests:
+          - not_null
+      - name: facet_key
+        description: "Foreign key referencing the dim_facets table"
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_facets')
+                field: facet_key
+      - name: facet_type
+        description: "Denormalised facet type for query convenience"
+      - name: facet_value
+        description: "Denormalised facet value for query convenience"

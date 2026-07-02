@@ -64,6 +64,16 @@ jobs:
                 priority: interactive
                 keyfile_json: ${{ secrets.GCP_SA_KEY }}
           EOF
+
+      - name: Configure dbt Cloud Auth (CI)
+        env:
+          DBT_CLOUD_YML: ${{ secrets.DBT_CLOUD_YML }}
+        if: ${{ env.DBT_CLOUD_YML != '' }}
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/dbt_cloud.yml << 'EOF'
+          ${{ secrets.DBT_CLOUD_YML }}
+          EOF
       
       - name: Install dbt packages
         working-directory: dbt_nyt_analytics

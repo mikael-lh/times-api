@@ -6,7 +6,8 @@
             "field": "snapshot_date",
             "data_type": "date",
             "granularity": "day"
-        }
+        },
+        on_schema_change='sync_all_columns'
     )
 }}
 
@@ -42,17 +43,11 @@ with_metrics AS (
         byline,
         url,
 
-        -- Facets (for analysis)
+        -- Facet counts (for analysis)
         ARRAY_LENGTH(des_facet) AS description_facet_count,
         ARRAY_LENGTH(org_facet) AS organization_facet_count,
         ARRAY_LENGTH(per_facet) AS person_facet_count,
         ARRAY_LENGTH(geo_facet) AS geo_facet_count,
-
-        -- Raw facets for downstream
-        des_facet,
-        org_facet,
-        per_facet,
-        geo_facet,
 
         -- Keywords
         adx_keywords
