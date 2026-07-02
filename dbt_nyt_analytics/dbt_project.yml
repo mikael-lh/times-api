@@ -51,4 +51,4 @@ snapshots:
     +persist_docs:
       relation: true
       columns: true
-    +target_schema: dbt_snapshots
+    +schema: dbt_snapshots
