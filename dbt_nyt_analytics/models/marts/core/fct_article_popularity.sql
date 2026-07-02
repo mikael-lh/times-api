@@ -6,7 +6,8 @@
             "field": "snapshot_date",
             "data_type": "date",
             "granularity": "day"
-        }
+        },
+        on_schema_change='sync_all_columns'
     )
 }}
 
