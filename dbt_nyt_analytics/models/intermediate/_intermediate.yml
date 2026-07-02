@@ -135,3 +135,13 @@ models:
         description: "{{ doc('valid_to') }}"
       - name: latest_published_date
         description: "{{ doc('latest_published_date') }}"
+
+  - name: int_facets_flattened
+    description: "One row per popular article and facet combination. Flattens raw description, organization, person, and geographic facets."
+    columns:
+      - name: article_id
+        description: "{{ doc('article_id') }}"
+      - name: facet_type
+        description: "The type of the facet (description, organization, person, geographic)"
+      - name: facet_value
+        description: "The value of the facet string"
