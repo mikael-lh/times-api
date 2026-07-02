@@ -56,7 +56,6 @@ uv run python -m most_popular.validate_ge
 
 # Build dbt models against BigQuery (after one-time GCP setup)
 uv sync --group dbt
-uv run dbt system update
 cd dbt_nyt_analytics && uv run dbt build
 ```
 
