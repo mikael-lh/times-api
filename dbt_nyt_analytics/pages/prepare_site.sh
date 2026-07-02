@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 # Assemble a static dbt Docs site for GitHub Pages from Fusion build artifacts.
-# index.html is vendored in docs_site/ (from dbt-core 1.10.8 static docs UI).
+# index.html in this folder is vendored from dbt-core 1.10.8 static docs UI.
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PAGES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "${PAGES_DIR}/.." && pwd)"
 TARGET="${ROOT}/target"
 SITE="${ROOT}/site"
-DOCS_UI="${ROOT}/docs_site/index.html"
+DOCS_UI="${PAGES_DIR}/index.html"
 
 for artifact in manifest.json catalog.json; do
   if [[ ! -f "${TARGET}/${artifact}" ]]; then

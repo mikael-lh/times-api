@@ -139,4 +139,4 @@ And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
 
 Live dbt docs are published from `dbt-run.yml` via GitHub Actions Pages
 (`https://mikael-lh.github.io/times-api/`). Fusion builds artifacts; CI
-copies them with a vendored Core docs UI shell into `site/` and deploys.
+copies them with the vendored Core docs UI in `pages/` into `site/` and deploys.

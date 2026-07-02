@@ -106,7 +106,7 @@ jobs:
       
       - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
-        run: bash scripts/prepare_static_docs_site.sh
+        run: bash pages/prepare_site.sh
       
       - name: Upload dbt docs to GitHub Pages
         uses: actions/upload-pages-artifact@v3

@@ -91,7 +91,7 @@ uv run dbt run --full-refresh          # rebuild incremental tables
 uv run dbt compile --write-catalog --write-index --write-metadata --static-analysis strict
 uv run dbt docs serve   # Fusion Docs v2 (local only, port 8580)
 # Static site for GitHub Pages (after a build with --write-catalog):
-# bash scripts/prepare_static_docs_site.sh && python -m http.server -d site 8080
+# bash pages/prepare_site.sh && python -m http.server -d site 8080
 ```
 
 ## Custom macros
