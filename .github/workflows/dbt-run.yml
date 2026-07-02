@@ -93,17 +93,17 @@ jobs:
           if [ -n "${{ github.event.inputs.select }}" ]; then
             FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
           fi
-          uv run dbt build $FLAGS
+          uv run dbt build $FLAGS --write-catalog
       
-      - name: Generate dbt docs
+      - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
-        run: uv run dbt docs generate
+        run: bash scripts/prepare_static_docs_site.sh target site
       
       - name: Deploy dbt docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: dbt_nyt_analytics/target
+          publish_dir: dbt_nyt_analytics/site
           publish_branch: gh-pages
 
       - name: Upload dbt artifacts

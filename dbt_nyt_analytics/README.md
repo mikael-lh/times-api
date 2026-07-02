@@ -88,7 +88,10 @@ uv run dbt build --select +fct_articles   # model + ancestors
 uv run dbt build --select state:modified+ --defer --favor-state \
     --state ../main-branch/dbt_nyt_analytics/target/   # PR-style run
 uv run dbt run --full-refresh          # rebuild incremental tables
-uv run dbt docs generate && uv run dbt docs serve
+uv run dbt compile --write-catalog --write-index --write-metadata --static-analysis strict
+uv run dbt docs serve   # Fusion Docs v2 (local only, port 8580)
+# Static site for GitHub Pages (after a build with --write-catalog):
+# bash scripts/prepare_static_docs_site.sh target site && python -m http.server -d site 8080
 ```
 
 ## Custom macros
@@ -141,7 +144,7 @@ The PR workflow will then build only what you changed
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build` against prod; publishes `dbt docs generate` to GitHub Pages. |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc178` via uv): `dbt system update`, `dbt source freshness` on `most_popular_articles` and `best_sellers`, then `dbt build --write-catalog` against prod; publishes a static docs site (`manifest.json`, `catalog.json`, Core `index.html`) to GitHub Pages. |
 | [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion** on PR and `main`: `sqlfluff fix --check` + `sqlfluff lint`, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --select state:modified+ --defer --favor-state` on the PR branch. |
 
 To enable Pages-hosted docs, add `GCP_SA_KEY` (full service-account JSON
