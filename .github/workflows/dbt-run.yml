@@ -17,20 +17,12 @@ on:
         default: ''
         type: string
 
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   dbt_run:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      actions: write
 
     steps:
       - name: Checkout repository
@@ -107,18 +99,13 @@ jobs:
       - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
         run: bash pages/prepare_site.sh
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
-      
-      - name: Upload dbt docs to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: dbt_nyt_analytics/site
 
-      - name: Deploy dbt docs to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Upload docs site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-docs-site
+          path: dbt_nyt_analytics/site
+          retention-days: 1
 
       - name: Upload dbt artifacts
         uses: actions/upload-artifact@v4
