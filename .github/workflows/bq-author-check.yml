@@ -1,0 +1,159 @@
+name: BQ author_key check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install BigQuery client
+        run: uv pip install google-cloud-bigquery pandas
+
+      - name: Run author_key mismatch queries
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          uv run python <<'PY'
+          import json
+          import os
+
+          import pandas as pd
+          from google.cloud import bigquery
+          from google.oauth2 import service_account
+
+          creds = service_account.Credentials.from_service_account_info(
+              json.loads(os.environ["GCP_SA_KEY"])
+          )
+          client = bigquery.Client(credentials=creds, project="times-api-ingest")
+
+          queries = {
+              "overview": """
+              WITH bridge_counts AS (
+                SELECT
+                  published_date,
+                  list_name_encoded,
+                  rank,
+                  list_updated,
+                  COUNT(*) AS bridge_author_count
+                FROM `times-api-ingest.dbt_core.bridge_best_seller_authors`
+                GROUP BY 1, 2, 3, 4
+              ),
+              joined AS (
+                SELECT
+                  f.author_key AS fct_author_key,
+                  b.bridge_author_count
+                FROM `times-api-ingest.dbt_core.fct_best_sellers` f
+                LEFT JOIN bridge_counts b USING (published_date, list_name_encoded, rank, list_updated)
+              )
+              SELECT
+                COUNT(*) AS total_list_entries,
+                COUNTIF(bridge_author_count > 1) AS multi_author_entries,
+                COUNTIF(bridge_author_count > 1 AND fct_author_key IS NOT NULL) AS multi_author_with_fct_key,
+                COUNTIF(bridge_author_count > 1 AND fct_author_key IS NULL) AS multi_author_fct_key_null,
+                COUNTIF(bridge_author_count = 1 AND fct_author_key IS NULL) AS single_author_fct_key_null,
+                ROUND(100.0 * COUNTIF(bridge_author_count > 1) / COUNT(*), 2) AS pct_multi_author
+              FROM joined
+              """,
+              "fct_key_not_in_bridge": """
+              WITH bridge AS (
+                SELECT published_date, list_name_encoded, rank, list_updated, author_key
+                FROM `times-api-ingest.dbt_core.bridge_best_seller_authors`
+              ),
+              fct AS (
+                SELECT published_date, list_name_encoded, rank, list_updated, author_key
+                FROM `times-api-ingest.dbt_core.fct_best_sellers`
+                WHERE author_key IS NOT NULL
+              )
+              SELECT COUNT(*) AS fct_key_not_in_bridge
+              FROM fct
+              LEFT JOIN bridge b USING (published_date, list_name_encoded, rank, list_updated, author_key)
+              WHERE b.author_key IS NULL
+              """,
+              "multi_author_classification": """
+              WITH bridge AS (
+                SELECT
+                  published_date,
+                  list_name_encoded,
+                  rank,
+                  list_updated,
+                  STRING_AGG(DISTINCT CAST(author_key AS STRING) ORDER BY CAST(author_key AS STRING)) AS bridge_author_keys,
+                  COUNT(*) AS bridge_author_count
+                FROM `times-api-ingest.dbt_core.bridge_best_seller_authors`
+                GROUP BY 1, 2, 3, 4
+                HAVING COUNT(*) > 1
+              ),
+              fct AS (
+                SELECT
+                  published_date,
+                  list_name_encoded,
+                  rank,
+                  list_updated,
+                  author_key AS fct_author_key
+                FROM `times-api-ingest.dbt_core.fct_best_sellers`
+              )
+              SELECT
+                CASE
+                  WHEN f.fct_author_key IS NULL THEN 'fct_author_key_null'
+                  WHEN CAST(f.fct_author_key AS STRING) NOT IN UNNEST(SPLIT(b.bridge_author_keys, ',')) THEN 'fct_key_not_in_bridge'
+                  ELSE 'fct_key_is_one_of_many'
+                END AS mismatch_type,
+                COUNT(*) AS entry_count
+              FROM bridge b
+              JOIN fct f USING (published_date, list_name_encoded, rank, list_updated)
+              GROUP BY 1
+              ORDER BY 2 DESC
+              """,
+              "sample_rows": """
+              WITH bridge AS (
+                SELECT
+                  published_date,
+                  list_name_encoded,
+                  rank,
+                  list_updated,
+                  STRING_AGG(DISTINCT author_full_name ORDER BY author_full_name) AS bridge_authors,
+                  COUNT(*) AS bridge_author_count
+                FROM `times-api-ingest.dbt_core.bridge_best_seller_authors`
+                GROUP BY 1, 2, 3, 4
+                HAVING COUNT(*) > 1
+              ),
+              stg AS (
+                SELECT published_date, list_name_encoded, rank, list_updated, author AS raw_author_field, title
+                FROM `times-api-ingest.dbt_staging.stg_best_sellers`
+              ),
+              fct AS (
+                SELECT
+                  f.published_date,
+                  f.list_name_encoded,
+                  f.rank,
+                  f.list_updated,
+                  f.author_key AS fct_author_key,
+                  da.author_full_name AS fct_author_name
+                FROM `times-api-ingest.dbt_core.fct_best_sellers` f
+                LEFT JOIN `times-api-ingest.dbt_core.dim_authors` da
+                  ON f.author_key = da.author_key
+              )
+              SELECT
+                s.title,
+                s.raw_author_field,
+                b.bridge_authors,
+                b.bridge_author_count,
+                f.fct_author_name
+              FROM bridge b
+              JOIN stg s USING (published_date, list_name_encoded, rank, list_updated)
+              JOIN fct f USING (published_date, list_name_encoded, rank, list_updated)
+              ORDER BY b.bridge_author_count DESC, s.title
+              LIMIT 10
+              """,
+          }
+
+          for name, sql in queries.items():
+              print(f"\n=== {name} ===")
+              df = client.query(sql).to_dataframe()
+              print(df.to_string(index=False))
+          PY
