@@ -115,6 +115,7 @@ jobs:
       - name: Report fct_best_sellers author_key stats (PR 74 diagnostic)
         if: github.event.pull_request.number == 74
         run: |
+          uv sync --group dashboard
           uv run python <<'PY'
           import json
           import os
