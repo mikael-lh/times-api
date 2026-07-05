@@ -8,7 +8,7 @@
             "data_type": "date",
             "granularity": "month"
         },
-        cluster_by=['list_name_encoded', 'book_key', 'book_scd_key', 'author_key']
+        cluster_by=['list_name_encoded', 'book_key', 'book_scd_key']
     )
 }}
 
@@ -27,7 +27,6 @@ with_book_keys AS (
         s.list_updated,
         b.book_key,
         bh.book_scd_key,
-        INITCAP(TRIM(s.author)) AS author_full_name,
         s.list_display_name,
         s.rank_last_week,
         s.weeks_on_list,
@@ -41,25 +40,6 @@ with_book_keys AS (
             s.primary_isbn13 = bh.primary_isbn13
             AND s.published_date >= bh.valid_from
             AND (bh.valid_to IS NULL OR s.published_date < bh.valid_to)
-),
-
-final AS (
-    SELECT
-        b.published_date,
-        b.list_name_encoded,
-        b.rank,
-        b.list_updated,
-        b.book_key,
-        b.book_scd_key,
-        a.author_key,
-        b.list_display_name,
-        b.rank_last_week,
-        b.weeks_on_list,
-        b.asterisk,
-        b.dagger
-    FROM with_book_keys AS b
-    LEFT JOIN {{ ref('dim_authors') }} AS a
-        ON b.author_full_name = a.author_full_name
 )
 
-SELECT * FROM final
+SELECT * FROM with_book_keys

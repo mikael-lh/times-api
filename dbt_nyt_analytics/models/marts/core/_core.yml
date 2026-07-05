@@ -207,7 +207,9 @@ models:
         description: "{{ doc('valid_to') }}"
 
   - name: fct_best_sellers
-    description: "Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated)."
+    description: >
+      Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated).
+      Author attribution is via bridge_best_seller_authors (many-to-many); this fact carries book keys only.
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -251,15 +253,6 @@ models:
                 field: book_scd_key
               config:
                 where: "book_scd_key is not null"
-      - name: author_key
-        description: "{{ doc('author_key') }}"
-        tests:
-          - relationships:
-              arguments:
-                to: ref('dim_authors')
-                field: author_key
-              config:
-                where: "author_key is not null"
       - name: list_display_name
         description: "{{ doc('list_display_name') }}"
       - name: rank_last_week
