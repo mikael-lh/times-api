@@ -71,8 +71,14 @@ models:
       - name: firstname
         description: "{{ doc('firstname') }}"
         data_type: string
+      - name: middlename
+        description: "Author middle name from archive bylines."
+        data_type: string
       - name: lastname
         description: "{{ doc('lastname') }}"
+        data_type: string
+      - name: qualifier
+        description: "Author name qualifier from archive bylines."
         data_type: string
 
   - name: dim_keywords
