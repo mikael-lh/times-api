@@ -13,10 +13,32 @@ models:
         description: "{{ doc('total_articles') }}"
       - name: avg_word_count
         description: "{{ doc('avg_word_count') }}"
+      - name: total_word_count
+        description: "{{ doc('total_word_count') }}"
+      - name: max_word_count
+        description: "{{ doc('max_word_count') }}"
       - name: articles_with_authors
         description: "{{ doc('articles_with_authors') }}"
       - name: articles_with_keywords
         description: "{{ doc('articles_with_keywords') }}"
+      - name: articles_with_multimedia
+        description: "{{ doc('articles_with_multimedia') }}"
+      - name: avg_authors_per_article
+        description: "{{ doc('avg_authors_per_article') }}"
+      - name: avg_keywords_per_article
+        description: "{{ doc('avg_keywords_per_article') }}"
+      - name: unique_sections
+        description: "{{ doc('unique_sections') }}"
+      - name: unique_news_desks
+        description: "{{ doc('unique_news_desks') }}"
+      - name: unique_material_types
+        description: "{{ doc('unique_material_types') }}"
+      - name: pct_with_authors
+        description: "{{ doc('pct_with_authors') }}"
+      - name: pct_with_keywords
+        description: "{{ doc('pct_with_keywords') }}"
+      - name: pct_with_multimedia
+        description: "{{ doc('pct_with_multimedia') }}"
 
   - name: agg_author_performance
     description: "Author-level metrics aggregated across all their articles"
@@ -26,12 +48,36 @@ models:
         tests:
           - unique
           - not_null
+      - name: firstname
+        description: "{{ doc('firstname') }}"
+      - name: lastname
+        description: "{{ doc('lastname') }}"
       - name: total_articles
         description: "{{ doc('total_articles') }}"
       - name: first_article_date
         description: "{{ doc('first_article_date') }}"
       - name: last_article_date
         description: "{{ doc('last_article_date') }}"
+      - name: career_span_days
+        description: "{{ doc('career_span_days') }}"
+      - name: years_active
+        description: "{{ doc('years_active') }}"
+      - name: first_year
+        description: "{{ doc('first_year') }}"
+      - name: last_year
+        description: "{{ doc('last_year') }}"
+      - name: avg_word_count
+        description: "{{ doc('avg_word_count') }}"
+      - name: total_words_written
+        description: "{{ doc('total_words_written') }}"
+      - name: longest_article_words
+        description: "{{ doc('longest_article_words') }}"
+      - name: sections_written_for
+        description: "{{ doc('sections_written_for') }}"
+      - name: avg_keywords_per_article
+        description: "{{ doc('avg_keywords_per_article') }}"
+      - name: articles_per_year
+        description: "{{ doc('articles_per_year') }}"
 
   - name: agg_section_trends
     description: "Section and news desk trends by year"
@@ -45,10 +91,34 @@ models:
     columns:
       - name: section_name
         description: "{{ doc('section_name') }}"
+      - name: news_desk
+        description: "{{ doc('news_desk') }}"
       - name: pub_year
         description: "{{ doc('pub_year') }}"
       - name: article_count
         description: "{{ doc('article_count') }}"
+      - name: year_total
+        description: "{{ doc('year_total') }}"
+      - name: pct_of_year_total
+        description: "{{ doc('pct_of_year_total') }}"
+      - name: avg_word_count
+        description: "{{ doc('avg_word_count') }}"
+      - name: total_word_count
+        description: "{{ doc('total_word_count') }}"
+      - name: articles_with_authors
+        description: "{{ doc('articles_with_authors') }}"
+      - name: articles_with_keywords
+        description: "{{ doc('articles_with_keywords') }}"
+      - name: avg_authors
+        description: "{{ doc('avg_authors') }}"
+      - name: avg_keywords
+        description: "{{ doc('avg_keywords') }}"
+      - name: prior_year_count
+        description: "{{ doc('prior_year_count') }}"
+      - name: yoy_change
+        description: "{{ doc('yoy_change') }}"
+      - name: yoy_change_pct
+        description: "{{ doc('yoy_change_pct') }}"
 
   - name: agg_keyword_trends
     description: "Keyword trends by year for topic analysis"
@@ -60,9 +130,25 @@ models:
               - keyword_value
               - pub_year
     columns:
+      - name: keyword_name
+        description: "{{ doc('keyword_name') }}"
       - name: keyword_value
         description: "{{ doc('keyword_value') }}"
       - name: pub_year
         description: "{{ doc('pub_year') }}"
       - name: article_count
         description: "{{ doc('article_count') }}"
+      - name: keyword_occurrences
+        description: "{{ doc('keyword_occurrences') }}"
+      - name: rank_in_year
+        description: "{{ doc('rank_in_year') }}"
+      - name: prior_year_count
+        description: "{{ doc('prior_year_count') }}"
+      - name: yoy_change
+        description: "{{ doc('yoy_change') }}"
+      - name: yoy_change_pct
+        description: "{{ doc('yoy_change_pct') }}"
+      - name: prior_year_rank
+        description: "{{ doc('prior_year_rank') }}"
+      - name: rank_change
+        description: "{{ doc('rank_change') }}"
