@@ -258,7 +258,7 @@ models:
               - list_updated
       - dbt_utils.expression_is_true:
           arguments:
-            expression: "rank >= 1 and rank <= 15"
+            expression: "rank >= 1 and rank <= 35"
       - dbt_utils.expression_is_true:
           arguments:
             expression: "weeks_on_list is null or weeks_on_list >= 0"
