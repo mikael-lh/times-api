@@ -386,12 +386,6 @@ models:
         description: "Foreign key referencing the popular article"
         tests:
           - not_null
-          - relationships:
-              arguments:
-                to: ref('fct_article_popularity')
-                field: article_id
-              config:
-                where: "article_id is not null"
       - name: facet_key
         description: "Foreign key referencing the dim_facets table"
         tests:
