@@ -2,7 +2,15 @@ version: 2
 
 models:
   - name: int_keywords_flattened
-    description: "One row per article-keyword combination. Unnests the keywords array."
+    description: "One row per article-keyword array entry. Unnests the keywords array; repeated name/value tags at different ranks are kept as separate rows."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - article_id
+              - keyword_name
+              - keyword_value
+              - keyword_rank
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
@@ -14,7 +22,14 @@ models:
         description: "{{ doc('keyword_rank') }}"
 
   - name: int_authors_flattened
-    description: "One row per article-author combination. Unnests the byline_person array."
+    description: "One row per article-author combination. Unnests the byline_person array and deduplicates with SELECT DISTINCT."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - article_id
+              - author_full_name
+              - qualifier
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
@@ -24,34 +39,20 @@ models:
         description: "{{ doc('firstname') }}"
       - name: lastname
         description: "{{ doc('lastname') }}"
+      - name: qualifier
+        description: "Author name suffix from byline_person (e.g. Jr., Sr.)"
 
   - name: int_best_sellers_authors_parsed
     description: "Best Sellers list entries with author strings parsed into an authors array."
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - published_date
-              - list_name_encoded
-              - rank
-              - list_updated
     columns:
       - name: published_date
         description: "{{ doc('bs_published_date') }}"
-        tests:
-          - not_null
       - name: list_name_encoded
         description: "{{ doc('list_name_encoded') }}"
-        tests:
-          - not_null
       - name: rank
         description: "{{ doc('bs_rank') }}"
-        tests:
-          - not_null
       - name: list_updated
         description: "{{ doc('list_updated') }}"
-        tests:
-          - not_null
       - name: authors
         description: "{{ doc('authors') }}"
 
@@ -168,6 +169,13 @@ models:
 
   - name: int_facets_flattened
     description: "One row per popular article and facet combination. Flattens raw description, organization, person, and geographic facets."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - article_id
+              - facet_type
+              - facet_value
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"

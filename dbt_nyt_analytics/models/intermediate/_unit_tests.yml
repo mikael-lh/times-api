@@ -1,0 +1,20 @@
+version: 2
+
+unit_tests:
+  - name: test_author_parsing_splits_coauthors
+    model: int_best_sellers_authors_parsed
+    given:
+      - input: ref('stg_best_sellers')
+        rows:
+          - published_date: 2024-01-07
+            list_name_encoded: hardcover-fiction
+            rank: 1
+            list_updated: "2024-01-07"
+            author: "jane doe and john smith"
+    expect:
+      rows:
+        - published_date: 2024-01-07
+          list_name_encoded: hardcover-fiction
+          rank: 1
+          list_updated: "2024-01-07"
+          authors: ["Jane Doe", "John Smith"]

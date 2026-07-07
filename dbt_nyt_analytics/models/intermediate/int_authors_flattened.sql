@@ -19,7 +19,6 @@ flattened AS (
         author.middlename,
         author.lastname,
         author.qualifier,
-        -- Construct full name
         TRIM(CONCAT(
             COALESCE(author.firstname, ''),
             ' ',
@@ -29,9 +28,20 @@ flattened AS (
         )) AS author_full_name
     FROM source
     CROSS JOIN UNNEST(byline_person) AS author
-    WHERE
-        author.lastname IS NOT NULL
-        OR author.firstname IS NOT NULL
+),
+
+deduped AS (
+    SELECT DISTINCT
+        article_id,
+        pub_date,
+        pub_year,
+        section_name,
+        firstname,
+        middlename,
+        lastname,
+        qualifier,
+        author_full_name
+    FROM flattened
 )
 
-SELECT * FROM flattened
+SELECT * FROM deduped

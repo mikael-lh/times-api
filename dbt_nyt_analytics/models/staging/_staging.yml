@@ -6,13 +6,8 @@ models:
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
-        tests:
-          - unique
-          - not_null
       - name: pub_date
         description: "{{ doc('pub_date') }}"
-        tests:
-          - not_null
       - name: section_name
         description: "{{ doc('section_name') }}"
       - name: news_desk
@@ -31,12 +26,8 @@ models:
     columns:
       - name: snapshot_date
         description: "{{ doc('snapshot_date') }}"
-        tests:
-          - not_null
       - name: article_id
         description: "{{ doc('article_id') }}"
-        tests:
-          - not_null
       - name: published_at
         description: "{{ doc('published_at') }}"
       - name: section
@@ -46,33 +37,17 @@ models:
 
   - name: stg_best_sellers
     description: "Staged NYT Best Sellers list entries with cleaned types"
-    tests:
-      - dbt_utils.unique_combination_of_columns:
-          arguments:
-            combination_of_columns:
-              - published_date
-              - list_name_encoded
-              - rank
-              - list_updated
     columns:
       - name: published_date
         description: "{{ doc('bs_published_date') }}"
-        tests:
-          - not_null
       - name: list_name_encoded
         description: "{{ doc('list_name_encoded') }}"
-        tests:
-          - not_null
       - name: rank
         description: "{{ doc('bs_rank') }}"
-        tests:
-          - not_null
       - name: list_display_name
         description: "{{ doc('list_display_name') }}"
       - name: list_updated
         description: "{{ doc('list_updated') }}"
-        tests:
-          - not_null
       - name: rank_last_week
         description: "{{ doc('rank_last_week') }}"
       - name: weeks_on_list

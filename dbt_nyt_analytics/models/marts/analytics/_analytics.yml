@@ -35,6 +35,13 @@ models:
 
   - name: agg_section_trends
     description: "Section and news desk trends by year"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - section_name
+              - news_desk
+              - pub_year
     columns:
       - name: section_name
         description: "{{ doc('section_name') }}"
@@ -45,6 +52,13 @@ models:
 
   - name: agg_keyword_trends
     description: "Keyword trends by year for topic analysis"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - keyword_name
+              - keyword_value
+              - pub_year
     columns:
       - name: keyword_value
         description: "{{ doc('keyword_value') }}"
