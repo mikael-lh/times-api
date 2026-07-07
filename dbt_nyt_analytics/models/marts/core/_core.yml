@@ -102,6 +102,13 @@ models:
 
   - name: bridge_article_keywords
     description: "Bridge table resolving the many-to-many relationship between articles and keywords. One row per article-keyword pair."
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - article_id
+              - keyword_key
+              - keyword_rank
     columns:
       - name: article_id
         description: "Foreign key to fct_articles"
