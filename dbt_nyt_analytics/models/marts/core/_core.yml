@@ -13,20 +13,46 @@ models:
         tests:
           - unique
           - not_null
+      - name: uri
+        description: "{{ doc('uri') }}"
       - name: pub_date
         description: "{{ doc('pub_date') }}"
         tests:
           - not_null
+      - name: pub_year
+        description: "{{ doc('pub_year') }}"
+      - name: pub_month
+        description: "{{ doc('pub_month') }}"
       - name: section_name
         description: "{{ doc('section_name') }}"
       - name: news_desk
         description: "{{ doc('news_desk') }}"
+      - name: type_of_material
+        description: "{{ doc('type_of_material') }}"
+      - name: document_type
+        description: "{{ doc('document_type') }}"
       - name: word_count
         description: "{{ doc('word_count') }}"
       - name: author_count
         description: "{{ doc('author_count') }}"
       - name: keyword_count
         description: "{{ doc('keyword_count') }}"
+      - name: major_keyword_count
+        description: "{{ doc('major_keyword_count') }}"
+      - name: headline_main
+        description: "{{ doc('headline_main') }}"
+      - name: byline_original
+        description: "{{ doc('byline_original') }}"
+      - name: abstract
+        description: "{{ doc('abstract') }}"
+      - name: web_url
+        description: "{{ doc('web_url') }}"
+      - name: has_keywords
+        description: "{{ doc('has_keywords') }}"
+      - name: has_authors
+        description: "{{ doc('has_authors') }}"
+      - name: has_multimedia
+        description: "{{ doc('has_multimedia') }}"
 
   - name: fct_article_popularity
     description: "Fact table tracking article popularity over time from daily snapshots"
@@ -48,8 +74,42 @@ models:
         description: "{{ doc('article_id') }}"
         tests:
           - not_null
+      - name: uri
+        description: "{{ doc('uri') }}"
+      - name: asset_id
+        description: "{{ doc('asset_id') }}"
+      - name: published_date
+        description: "{{ doc('published_date') }}"
+      - name: updated_at
+        description: "{{ doc('updated_at') }}"
       - name: days_since_published
         description: "{{ doc('days_since_published') }}"
+      - name: source
+        description: "{{ doc('source') }}"
+      - name: section
+        description: "{{ doc('section') }}"
+      - name: subsection
+        description: "{{ doc('subsection') }}"
+      - name: article_type
+        description: "{{ doc('article_type') }}"
+      - name: title
+        description: "{{ doc('title') }}"
+      - name: abstract
+        description: "{{ doc('abstract') }}"
+      - name: byline
+        description: "{{ doc('byline') }}"
+      - name: url
+        description: "{{ doc('url') }}"
+      - name: description_facet_count
+        description: "{{ doc('description_facet_count') }}"
+      - name: organization_facet_count
+        description: "{{ doc('organization_facet_count') }}"
+      - name: person_facet_count
+        description: "{{ doc('person_facet_count') }}"
+      - name: geo_facet_count
+        description: "{{ doc('geo_facet_count') }}"
+      - name: adx_keywords
+        description: "{{ doc('adx_keywords') }}"
 
   - name: dim_authors
     description: "Conformed dimension of unique authors from archive articles and Best Sellers books."
@@ -72,13 +132,13 @@ models:
         description: "{{ doc('firstname') }}"
         data_type: string
       - name: middlename
-        description: "Author middle name from archive bylines."
+        description: "{{ doc('middlename') }}"
         data_type: string
       - name: lastname
         description: "{{ doc('lastname') }}"
         data_type: string
       - name: qualifier
-        description: "Author name qualifier from archive bylines."
+        description: "{{ doc('qualifier') }}"
         data_type: string
 
   - name: dim_keywords
@@ -111,7 +171,7 @@ models:
               - keyword_rank
     columns:
       - name: article_id
-        description: "Foreign key to fct_articles"
+        description: "{{ doc('article_id') }}"
         tests:
           - not_null
           - relationships:
@@ -119,7 +179,7 @@ models:
                 to: ref('fct_articles')
                 field: article_id
       - name: keyword_key
-        description: "Foreign key to dim_keywords"
+        description: "{{ doc('keyword_key') }}"
         tests:
           - not_null
           - relationships:
@@ -127,9 +187,9 @@ models:
                 to: ref('dim_keywords')
                 field: keyword_key
       - name: keyword_name
-        description: "{{ doc('keyword_name') }} Denormalised from dim_keywords for query convenience."
+        description: "{{ doc('keyword_name') }}"
       - name: keyword_value
-        description: "{{ doc('keyword_value') }} Denormalised from dim_keywords for query convenience."
+        description: "{{ doc('keyword_value') }}"
       - name: keyword_rank
         description: "{{ doc('keyword_rank') }}"
       - name: keyword_major
@@ -367,13 +427,13 @@ models:
         enforced: true
     columns:
       - name: facet_key
-        description: "Surrogate key of the facet"
+        description: "{{ doc('facet_key') }}"
         data_type: string
         tests:
           - unique
           - not_null
       - name: facet_type
-        description: "The type of facet (description, organization, person, geographic)"
+        description: "{{ doc('facet_type') }}"
         data_type: string
         tests:
           - not_null
@@ -381,7 +441,7 @@ models:
               arguments:
                 values: ['description', 'organization', 'person', 'geographic']
       - name: facet_value
-        description: "The string value of the facet"
+        description: "{{ doc('facet_value') }}"
         data_type: string
         tests:
           - not_null
@@ -396,11 +456,11 @@ models:
               - facet_key
     columns:
       - name: article_id
-        description: "Foreign key referencing the popular article"
+        description: "{{ doc('article_id') }}"
         tests:
           - not_null
       - name: facet_key
-        description: "Foreign key referencing the dim_facets table"
+        description: "{{ doc('facet_key') }}"
         tests:
           - not_null
           - relationships:
@@ -408,6 +468,6 @@ models:
                 to: ref('dim_facets')
                 field: facet_key
       - name: facet_type
-        description: "Denormalised facet type for query convenience"
+        description: "{{ doc('facet_type') }}"
       - name: facet_value
-        description: "Denormalised facet value for query convenience"
+        description: "{{ doc('facet_value') }}"

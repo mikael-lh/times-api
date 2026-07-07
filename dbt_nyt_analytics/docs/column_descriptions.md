@@ -299,6 +299,14 @@ Author first name.
 Author last name.
 {% enddocs %}
 
+{% docs middlename %}
+Author middle name from archive bylines.
+{% enddocs %}
+
+{% docs qualifier %}
+Author name suffix or qualifier from archive bylines (e.g., Jr., Sr.).
+{% enddocs %}
+
 {# ============================================================ #}
 {# Core mart columns                                            #}
 {# ============================================================ #}
@@ -355,6 +363,58 @@ Days elapsed between the article's publication date and the popularity snapshot 
 Whether the keyword is a major keyword for the article (Y/N).
 {% enddocs %}
 
+{% docs major_keyword_count %}
+Number of major keywords tagged on the article.
+{% enddocs %}
+
+{% docs has_keywords %}
+Whether the article has at least one tagged keyword.
+{% enddocs %}
+
+{% docs has_authors %}
+Whether the article has at least one credited author.
+{% enddocs %}
+
+{% docs has_multimedia %}
+Whether the article has associated multimedia assets.
+{% enddocs %}
+
+{% docs updated_at %}
+Parsed timestamp when the article was last updated in the Most Popular API.
+{% enddocs %}
+
+{% docs article_type %}
+Article type from the Most Popular API (e.g., Article).
+{% enddocs %}
+
+{% docs description_facet_count %}
+Number of description facets on the article in this popularity snapshot.
+{% enddocs %}
+
+{% docs organization_facet_count %}
+Number of organization facets on the article in this popularity snapshot.
+{% enddocs %}
+
+{% docs person_facet_count %}
+Number of person facets on the article in this popularity snapshot.
+{% enddocs %}
+
+{% docs geo_facet_count %}
+Number of geographic facets on the article in this popularity snapshot.
+{% enddocs %}
+
+{% docs facet_key %}
+Surrogate key for a conformed facet (hashed from facet_type and facet_value).
+{% enddocs %}
+
+{% docs facet_type %}
+Type of facet: description, organization, person, or geographic.
+{% enddocs %}
+
+{% docs facet_value %}
+String value of the facet.
+{% enddocs %}
+
 {# ============================================================ #}
 {# Analytics mart columns                                       #}
 {# ============================================================ #}
@@ -393,4 +453,124 @@ Date of the author's most recent published article.
 
 {% docs article_count %}
 Number of articles.
+{% enddocs %}
+
+{% docs total_word_count %}
+Total word count across articles in the aggregation grain.
+{% enddocs %}
+
+{% docs max_word_count %}
+Maximum word count among articles in the aggregation grain.
+{% enddocs %}
+
+{% docs articles_with_multimedia %}
+Count of articles with at least one multimedia asset.
+{% enddocs %}
+
+{% docs avg_authors_per_article %}
+Average number of credited authors per article.
+{% enddocs %}
+
+{% docs avg_keywords_per_article %}
+Average number of tagged keywords per article.
+{% enddocs %}
+
+{% docs unique_sections %}
+Count of distinct section names in the aggregation grain.
+{% enddocs %}
+
+{% docs unique_news_desks %}
+Count of distinct news desks in the aggregation grain.
+{% enddocs %}
+
+{% docs unique_material_types %}
+Count of distinct material types in the aggregation grain.
+{% enddocs %}
+
+{% docs pct_with_authors %}
+Percentage of articles with at least one credited author.
+{% enddocs %}
+
+{% docs pct_with_keywords %}
+Percentage of articles with at least one tagged keyword.
+{% enddocs %}
+
+{% docs pct_with_multimedia %}
+Percentage of articles with at least one multimedia asset.
+{% enddocs %}
+
+{% docs career_span_days %}
+Number of days between the author's first and last published article.
+{% enddocs %}
+
+{% docs years_active %}
+Count of distinct publication years in which the author published.
+{% enddocs %}
+
+{% docs first_year %}
+Earliest publication year for the author.
+{% enddocs %}
+
+{% docs last_year %}
+Most recent publication year for the author.
+{% enddocs %}
+
+{% docs total_words_written %}
+Total words written across all of the author's articles.
+{% enddocs %}
+
+{% docs longest_article_words %}
+Word count of the author's longest article.
+{% enddocs %}
+
+{% docs sections_written_for %}
+Count of distinct sections the author has written for.
+{% enddocs %}
+
+{% docs articles_per_year %}
+Average number of articles published per active year.
+{% enddocs %}
+
+{% docs year_total %}
+Total articles published in the year across all sections and desks.
+{% enddocs %}
+
+{% docs pct_of_year_total %}
+Section and desk share of total articles published in the year (percentage).
+{% enddocs %}
+
+{% docs avg_authors %}
+Average number of credited authors per article in the aggregation grain.
+{% enddocs %}
+
+{% docs avg_keywords %}
+Average number of tagged keywords per article in the aggregation grain.
+{% enddocs %}
+
+{% docs prior_year_count %}
+Metric value for the prior publication year (used for year-over-year comparisons).
+{% enddocs %}
+
+{% docs yoy_change %}
+Absolute year-over-year change from the prior year.
+{% enddocs %}
+
+{% docs yoy_change_pct %}
+Year-over-year percentage change from the prior year.
+{% enddocs %}
+
+{% docs keyword_occurrences %}
+Total keyword tag occurrences (includes multiple tags per article).
+{% enddocs %}
+
+{% docs rank_in_year %}
+Rank of the keyword by distinct article count within the publication year.
+{% enddocs %}
+
+{% docs prior_year_rank %}
+Rank of the keyword in the prior publication year.
+{% enddocs %}
+
+{% docs rank_change %}
+Change in year rank from the prior year (positive means moved up in rank).
 {% enddocs %}
