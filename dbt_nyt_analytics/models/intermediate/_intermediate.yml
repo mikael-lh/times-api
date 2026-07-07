@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: int_keywords_flattened
-    description: "One row per article-keyword combination. Unnests the keywords array and deduplicates repeated name/value tags, keeping the lowest rank."
+    description: "One row per article-keyword array entry. Unnests the keywords array; repeated name/value tags at different ranks are kept as separate rows."
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -10,6 +10,7 @@ models:
               - article_id
               - keyword_name
               - keyword_value
+              - keyword_rank
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
@@ -21,13 +22,14 @@ models:
         description: "{{ doc('keyword_rank') }}"
 
   - name: int_authors_flattened
-    description: "One row per article-author combination. Unnests the byline_person array, filters blank entries, and deduplicates repeated names."
+    description: "One row per article-author combination. Unnests the byline_person array and deduplicates with SELECT DISTINCT."
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
               - article_id
               - author_full_name
+              - qualifier
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
@@ -37,6 +39,8 @@ models:
         description: "{{ doc('firstname') }}"
       - name: lastname
         description: "{{ doc('lastname') }}"
+      - name: qualifier
+        description: "Author name suffix from byline_person (e.g. Jr., Sr.)"
 
   - name: int_best_sellers_authors_parsed
     description: "Best Sellers list entries with author strings parsed into an authors array."
