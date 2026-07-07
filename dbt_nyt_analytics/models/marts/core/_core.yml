@@ -3,6 +3,10 @@ version: 2
 models:
   - name: fct_articles
     description: "Core fact table for archive articles. One row per article."
+    tests:
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "word_count >= 0"
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
@@ -26,6 +30,15 @@ models:
 
   - name: fct_article_popularity
     description: "Fact table tracking article popularity over time from daily snapshots"
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - snapshot_date
+              - article_id
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "days_since_published >= 0"
     columns:
       - name: snapshot_date
         description: "{{ doc('snapshot_date') }}"
@@ -40,33 +53,46 @@ models:
 
   - name: dim_authors
     description: "Conformed dimension of unique authors from archive articles and Best Sellers books."
+    config:
+      contract:
+        enforced: true
     columns:
       - name: author_key
         description: "{{ doc('author_key') }}"
+        data_type: string
         tests:
           - unique
           - not_null
       - name: author_full_name
         description: "{{ doc('author_full_name') }}"
+        data_type: string
         tests:
           - not_null
       - name: firstname
         description: "{{ doc('firstname') }}"
+        data_type: string
       - name: lastname
         description: "{{ doc('lastname') }}"
+        data_type: string
 
   - name: dim_keywords
     description: "Dimension table of unique keywords"
+    config:
+      contract:
+        enforced: true
     columns:
       - name: keyword_key
         description: "{{ doc('keyword_key') }}"
+        data_type: string
         tests:
           - unique
           - not_null
       - name: keyword_name
         description: "{{ doc('keyword_name') }}"
+        data_type: string
       - name: keyword_value
         description: "{{ doc('keyword_value') }}"
+        data_type: string
 
   - name: bridge_article_keywords
     description: "Bridge table resolving the many-to-many relationship between articles and keywords. One row per article-keyword pair."
@@ -98,16 +124,28 @@ models:
 
   - name: dim_sections
     description: "Dimension table of unique sections and news desks"
+    config:
+      contract:
+        enforced: true
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns:
+              - section_name
+              - news_desk
     columns:
       - name: section_key
         description: "{{ doc('section_key') }}"
+        data_type: string
         tests:
           - unique
           - not_null
       - name: section_name
         description: "{{ doc('section_name') }}"
+        data_type: string
       - name: news_desk
         description: "{{ doc('news_desk') }}"
+        data_type: string
 
   - name: dim_books
     description: "Current-state book dimension (one row per primary_isbn13). Sourced from the active row in dim_books_history."
@@ -218,6 +256,12 @@ models:
               - list_name_encoded
               - rank
               - list_updated
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "rank >= 1 and rank <= 15"
+      - dbt_utils.expression_is_true:
+          arguments:
+            expression: "weeks_on_list is null or weeks_on_list >= 0"
     columns:
       - name: published_date
         description: "{{ doc('bs_published_date') }}"
@@ -305,18 +349,27 @@ models:
 
   - name: dim_facets
     description: "Dimension table of unique conformed facets (description, organization, person, geographic)."
+    config:
+      contract:
+        enforced: true
     columns:
       - name: facet_key
         description: "Surrogate key of the facet"
+        data_type: string
         tests:
           - unique
           - not_null
       - name: facet_type
         description: "The type of facet (description, organization, person, geographic)"
+        data_type: string
         tests:
           - not_null
+          - accepted_values:
+              arguments:
+                values: ['description', 'organization', 'person', 'geographic']
       - name: facet_value
         description: "The string value of the facet"
+        data_type: string
         tests:
           - not_null
 
@@ -333,6 +386,12 @@ models:
         description: "Foreign key referencing the popular article"
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('fct_article_popularity')
+                field: article_id
+              config:
+                where: "article_id is not null"
       - name: facet_key
         description: "Foreign key referencing the dim_facets table"
         tests:

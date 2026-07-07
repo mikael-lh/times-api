@@ -14,6 +14,9 @@ sources:
         columns:
           - name: article_id
             description: "{{ doc('article_id') }}"
+            tests:
+              - unique
+              - not_null
           - name: uri
             description: "{{ doc('uri') }}"
           - name: pub_date
