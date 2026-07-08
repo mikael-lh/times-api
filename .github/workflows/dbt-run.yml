@@ -77,6 +77,15 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
 
+      - name: Restore previous dbt state
+        uses: actions/cache/restore@v4
+        id: restore-dbt-state
+        with:
+          path: dbt-state
+          key: dbt-daily-state-${{ github.run_id }}
+          restore-keys: |
+            dbt-daily-state-
+
       - name: Check source freshness
         working-directory: dbt_nyt_analytics
         run: uv run dbt source freshness
@@ -84,14 +93,33 @@ jobs:
       - name: dbt build
         working-directory: dbt_nyt_analytics
         run: |
-          FLAGS=""
+          FLAGS="--write-catalog"
           if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
             FLAGS="$FLAGS --full-refresh"
           fi
           if [ -n "${{ github.event.inputs.select }}" ]; then
             FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
+          elif [ -f "../dbt-state/manifest.json" ] && [ -f "../dbt-state/sources.json" ]; then
+            echo "Prior state found; building state:modified+ and source_status:fresher+"
+            FLAGS="$FLAGS --select state:modified+ source_status:fresher+ --state ../dbt-state"
+          else
+            echo "No prior state; running full build"
           fi
-          uv run dbt build $FLAGS --write-catalog
+          uv run dbt build $FLAGS
+
+      - name: Save dbt state for next run
+        if: success()
+        run: |
+          mkdir -p dbt-state
+          cp dbt_nyt_analytics/target/manifest.json dbt-state/
+          cp dbt_nyt_analytics/target/sources.json dbt-state/
+
+      - name: Cache dbt state for next run
+        uses: actions/cache/save@v4
+        if: success()
+        with:
+          path: dbt-state
+          key: dbt-daily-state-${{ github.run_id }}
       
       - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
