@@ -2,7 +2,7 @@
     config(
         materialized='incremental',
         unique_key=['published_date', 'list_name_encoded', 'rank', 'list_updated'],
-        on_schema_change='append_new_columns',
+        on_schema_change='sync_all_columns',
         partition_by={
             "field": "published_date",
             "data_type": "date",
