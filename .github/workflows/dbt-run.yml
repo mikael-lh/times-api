@@ -77,14 +77,33 @@ jobs:
         working-directory: dbt_nyt_analytics
         run: uv run dbt deps
 
-      - name: Restore previous dbt state
-        uses: actions/cache/restore@v4
-        id: restore-dbt-state
+      - name: Find previous successful run
+        id: prev-run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PREV_RUN_ID=$(gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow=.github/workflows/dbt-run.yml \
+            --status=success \
+            --json databaseId \
+            --jq "map(select(.databaseId != ${{ github.run_id }})) | first | .databaseId // empty")
+          echo "run_id=${PREV_RUN_ID}" >> "$GITHUB_OUTPUT"
+          if [ -n "$PREV_RUN_ID" ]; then
+            echo "Previous successful run: ${PREV_RUN_ID}"
+          else
+            echo "No previous successful run found"
+          fi
+
+      - name: Download previous dbt artifacts
+        if: steps.prev-run.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
-          path: dbt-state
-          key: dbt-daily-state-${{ github.run_id }}
-          restore-keys: |
-            dbt-daily-state-
+          name: dbt-artifacts
+          path: previous-dbt-artifacts
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.prev-run.outputs.run_id }}
 
       - name: Check source freshness
         working-directory: dbt_nyt_analytics
@@ -92,6 +111,8 @@ jobs:
       
       - name: dbt build
         working-directory: dbt_nyt_analytics
+        env:
+          PREV_STATE: ../previous-dbt-artifacts/dbt_nyt_analytics/target
         run: |
           FLAGS="--write-catalog"
           if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
@@ -99,27 +120,13 @@ jobs:
           fi
           if [ -n "${{ github.event.inputs.select }}" ]; then
             FLAGS="$FLAGS --select ${{ github.event.inputs.select }}"
-          elif [ -f "../dbt-state/manifest.json" ] && [ -f "../dbt-state/sources.json" ]; then
-            echo "Prior state found; building state:modified+ and source_status:fresher+"
-            FLAGS="$FLAGS --select state:modified+ source_status:fresher+ --state ../dbt-state"
+          elif [ -f "$PREV_STATE/manifest.json" ] && [ -f "$PREV_STATE/sources.json" ]; then
+            echo "Prior artifacts found; building state:modified+ and source_status:fresher+"
+            FLAGS="$FLAGS --select state:modified+ source_status:fresher+ --state $PREV_STATE"
           else
-            echo "No prior state; running full build"
+            echo "No prior artifacts; running full build"
           fi
           uv run dbt build $FLAGS
-
-      - name: Save dbt state for next run
-        if: success()
-        run: |
-          mkdir -p dbt-state
-          cp dbt_nyt_analytics/target/manifest.json dbt-state/
-          cp dbt_nyt_analytics/target/sources.json dbt-state/
-
-      - name: Cache dbt state for next run
-        uses: actions/cache/save@v4
-        if: success()
-        with:
-          path: dbt-state
-          key: dbt-daily-state-${{ github.run_id }}
       
       - name: Prepare static dbt docs site
         working-directory: dbt_nyt_analytics
