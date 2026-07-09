@@ -88,6 +88,9 @@ uv run dbt build                       # everything (default: dev)
 uv run dbt build --select +fct_articles   # model + ancestors
 uv run dbt build --select state:modified+ --defer --favor-state \
     --state ../main-branch/dbt_nyt_analytics/target/   # PR-style run
+uv run dbt source freshness
+uv run dbt build --select "state:modified+ source_status:fresher+" \
+    --state ../previous-run/target/   # daily-style selective run
 uv run dbt run --full-refresh          # rebuild incremental tables
 uv run dbt compile --write-catalog --write-index --write-metadata --static-analysis strict
 uv run dbt docs serve   # Fusion Docs v2 (local only, port 8580)
@@ -146,7 +149,7 @@ deploys the same slice to prod.
 
 | Workflow | When | What |
 |---|---|---|
-| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 08:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then full `dbt build --write-catalog` against prod; uploads a static docs site artifact. |
+| [`dbt-run.yml`](../.github/workflows/dbt-run.yml) | Daily 10:00 UTC + manual | **dbt Fusion** (`dbt==2.0.0rc194` via uv): `dbt source freshness` on `most_popular_articles` and `best_sellers`, then selective `dbt build --select state:modified+ source_status:fresher+` using `dbt-artifacts` from the latest prior successful run (full build when none available); uploads a static docs site artifact. |
 | [`dbt-deploy.yml`](../.github/workflows/dbt-deploy.yml) | Push to `main` touching `dbt_nyt_analytics/**` (+ manual) | Compiles prod manifest from pre-push `main` (`github.event.before`), then `dbt build --target prod --select state:modified+ --defer --favor-state --write-catalog` (full prod build if no prior state); uploads docs site artifact. |
 | [`dbt-docs-deploy.yml`](../.github/workflows/dbt-docs-deploy.yml) | After successful `dbt Daily Run` or `dbt Deploy` | Downloads the `dbt-docs-site` artifact and deploys to GitHub Pages via Actions. |
 | [`dbt-pr.yml`](../.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | **dbt Fusion**: sqlfluff, dbt-checkpoint docs, compile prod manifest from `main`, then `dbt build --target ci --select state:modified+ --defer --favor-state` into `ci_dbt_<PR number>`. |
