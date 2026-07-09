@@ -112,7 +112,9 @@ jobs:
       - name: dbt build
         working-directory: dbt_nyt_analytics
         env:
-          PREV_STATE: ../previous-dbt-artifacts/dbt_nyt_analytics/target
+          # upload-artifact stores the four JSON files at the artifact root
+          # (not under dbt_nyt_analytics/target/)
+          PREV_STATE: ../previous-dbt-artifacts
         run: |
           FLAGS="--write-catalog"
           if [ "${{ github.event.inputs.full_refresh }}" = "true" ]; then
