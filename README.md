@@ -100,7 +100,7 @@ See per-component READMEs for full details:
 | [`books-ingest.yml`](.github/workflows/books-ingest.yml) | cron Thu 08:00 UTC | Best Sellers ingest → transform → GE → GCS |
 | [`archive-ingest.yml`](.github/workflows/archive-ingest.yml) | manual | Archive ingest → transform → GCS (resumable from GCS) |
 | [`deploy-function.yml`](.github/workflows/deploy-function.yml) | push to main (paths) | Deploy `nyt-bq-loader` Cloud Function |
-| [`dbt-run.yml`](.github/workflows/dbt-run.yml) | cron 08:00 UTC + manual | Selective prod `dbt build` (`state:modified+`, `source_status:fresher+`) + docs artifact |
+| [`dbt-run.yml`](.github/workflows/dbt-run.yml) | cron 10:00 UTC + manual | Selective prod `dbt build` (`state:modified+`, `source_status:fresher+`) + docs artifact |
 | [`dbt-deploy.yml`](.github/workflows/dbt-deploy.yml) | push to `main` (dbt paths) + manual | Prod `dbt build --select state:modified+` + docs artifact |
 | [`dbt-docs-deploy.yml`](.github/workflows/dbt-docs-deploy.yml) | After successful dbt run or deploy | Publish docs to GitHub Pages |
 | [`dbt-pr.yml`](.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | `dbt build --select state:modified+ --defer --favor-state` into `ci_dbt_<PR>` |

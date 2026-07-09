@@ -2,8 +2,8 @@ name: dbt Daily Run
 
 on:
   schedule:
-    # Run at 8:00 UTC daily (2 hours after ingestion at 6:00 UTC)
-    - cron: '0 8 * * *'
+    # Run at 10:00 UTC daily (4h after Most Popular ingest; 2h after Books on Thu)
+    - cron: '0 10 * * *'
   workflow_dispatch:
     inputs:
       full_refresh:

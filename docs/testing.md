@@ -89,8 +89,9 @@ dbt build --select state:modified+ --defer --favor-state --state ../main-branch/
 ```
 
 [`dbt-run.yml`](../.github/workflows/dbt-run.yml) runs
-`dbt source freshness` then a selective prod build daily at 08:00 UTC
-(after Most Popular ingest at 06:00 UTC). When artifacts from the latest
+`dbt source freshness` then a selective prod build daily at 10:00 UTC
+(four hours after Most Popular ingest at 06:00 UTC; two hours after Books
+ingest on Thursdays at 08:00 UTC). When artifacts from the latest
 prior successful daily run are available, it builds only `state:modified+`
 (code changes since last run) and `source_status:fresher+` (sources with
 new data plus downstream models); otherwise it falls back to a full build.
