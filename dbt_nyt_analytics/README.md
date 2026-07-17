@@ -38,7 +38,7 @@ to a fixed dataset in every environment.
 - `int_books_top_rank_scd` – SCD Type 2 book versions keyed on cumulative `top_rank` improvements and metadata changes (list-week `valid_from` / `valid_to`)
 
 **Core marts** (tables):
-- `fct_articles` – article facts (one row per article)
+- `fct_articles` – article facts (one row per article); also the primary semantic model (see [Semantic Layer](#semantic-layer))
 - `fct_article_popularity` – one row per (snapshot_date, article)
 - `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current top_rank) and `book_scd_key` (point-in-time top_rank version). Join `bridge_book_authors` on `book_key` for authors.
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
@@ -52,6 +52,16 @@ to a fixed dataset in every environment.
 - `agg_author_performance` – author productivity
 - `agg_section_trends` – section evolution by year
 - `agg_keyword_trends` – keyword YoY change
+
+## Semantic Layer
+
+`fct_articles` is configured as a dbt semantic model (inline in `models/marts/core/_core.yml`), exposing metrics like `article_count`, `total_word_count`, and `lengthy_articles` queryable via MetricFlow without writing bespoke SQL. Dimensions cover publication date, section, news desk, material type, and boolean flags.
+
+```bash
+# query examples — group-by uses <entity>__<dimension> syntax
+uv run dbt sl query --metrics article_count --group-by metric_time__month
+uv run dbt sl query --metrics article_count --group-by article_id__section_name
+```
 
 ## Quickstart
 
