@@ -40,9 +40,9 @@ to a fixed dataset in every environment.
 **Core marts** (tables):
 - `fct_articles` – article facts (one row per article)
 - `fct_article_popularity` – one row per (snapshot_date, article)
-- `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current top_rank) and `book_scd_key` (point-in-time top_rank version). Join `bridge_best_seller_authors` for authors.
+- `fct_best_sellers` – Best Sellers list entry facts (incremental); carries `book_key` (current top_rank) and `book_scd_key` (point-in-time top_rank version). Join `bridge_book_authors` on `book_key` for authors.
 - `bridge_article_keywords` – many-to-many resolver between articles and keywords (one row per pair)
-- `bridge_best_seller_authors` – many-to-many resolver between list entries and authors
+- `bridge_book_authors` – many-to-many resolver between books and authors
 - `dim_authors`, `dim_keywords`, `dim_sections`, `dim_books`, `dim_books_history` – surrogate-keyed dimensions (`dim_books` = current row per ISBN; `dim_books_history` = all top_rank SCD versions)
 
 **Snapshots** (`snapshots/`; schema via `+schema: dbt_snapshots` in `dbt_project.yml`):
