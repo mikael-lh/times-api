@@ -320,7 +320,7 @@ models:
   - name: fct_best_sellers
     description: >
       Fact table for Best Sellers list entries. One row per (published_date, list, rank, list_updated).
-      Author attribution is via bridge_best_seller_authors (many-to-many); this fact carries book keys only.
+      Author attribution is via bridge_book_authors (many-to-many); join on book_key.
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
@@ -381,34 +381,23 @@ models:
       - name: dagger
         description: "{{ doc('dagger') }}"
 
-  - name: bridge_best_seller_authors
-    description: "Bridge table resolving the many-to-many relationship between Best Sellers list entries and authors."
+  - name: bridge_book_authors
+    description: "Bridge table resolving the many-to-many relationship between books and authors."
     tests:
       - dbt_utils.unique_combination_of_columns:
           arguments:
             combination_of_columns:
-              - published_date
-              - list_name_encoded
-              - rank
-              - list_updated
+              - book_key
               - author_key
     columns:
-      - name: published_date
-        description: "{{ doc('bs_published_date') }}"
+      - name: book_key
+        description: "{{ doc('book_key') }}"
         tests:
           - not_null
-      - name: list_name_encoded
-        description: "{{ doc('list_name_encoded') }}"
-        tests:
-          - not_null
-      - name: rank
-        description: "{{ doc('bs_rank') }}"
-        tests:
-          - not_null
-      - name: list_updated
-        description: "{{ doc('list_updated') }}"
-        tests:
-          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_books')
+                field: book_key
       - name: author_key
         description: "{{ doc('author_key') }}"
         tests:
