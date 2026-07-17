@@ -3,6 +3,26 @@ version: 2
 models:
   - name: fct_articles
     description: "Core fact table for archive articles. One row per article."
+    semantic_model:
+      enabled: true
+    agg_time_dimension: pub_date
+    metrics:
+      - name: article_count
+        description: "Count of unique articles."
+        type: simple
+        agg: count
+        expr: article_id
+      - name: total_word_count
+        description: "Total word count across all articles."
+        type: simple
+        agg: sum
+        expr: word_count
+      - name: lengthy_articles
+        description: "Count of articles with more than 2000 words."
+        type: simple
+        agg: count
+        expr: article_id
+        filter: "word_count > 2000"
     tests:
       - dbt_utils.expression_is_true:
           arguments:
@@ -10,6 +30,9 @@ models:
     columns:
       - name: article_id
         description: "{{ doc('article_id') }}"
+        entity:
+          type: primary
+          name: article_id
         tests:
           - unique
           - not_null
@@ -17,6 +40,9 @@ models:
         description: "{{ doc('uri') }}"
       - name: pub_date
         description: "{{ doc('pub_date') }}"
+        granularity: day
+        dimension:
+          type: time
         tests:
           - not_null
       - name: pub_year
@@ -25,12 +51,20 @@ models:
         description: "{{ doc('pub_month') }}"
       - name: section_name
         description: "{{ doc('section_name') }}"
+        dimension:
+          type: categorical
       - name: news_desk
         description: "{{ doc('news_desk') }}"
+        dimension:
+          type: categorical
       - name: type_of_material
         description: "{{ doc('type_of_material') }}"
+        dimension:
+          type: categorical
       - name: document_type
         description: "{{ doc('document_type') }}"
+        dimension:
+          type: categorical
       - name: word_count
         description: "{{ doc('word_count') }}"
       - name: author_count
@@ -49,10 +83,16 @@ models:
         description: "{{ doc('web_url') }}"
       - name: has_keywords
         description: "{{ doc('has_keywords') }}"
+        dimension:
+          type: categorical
       - name: has_authors
         description: "{{ doc('has_authors') }}"
+        dimension:
+          type: categorical
       - name: has_multimedia
         description: "{{ doc('has_multimedia') }}"
+        dimension:
+          type: categorical
 
   - name: fct_article_popularity
     description: "Fact table tracking article popularity over time from daily snapshots"
