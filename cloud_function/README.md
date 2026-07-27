@@ -1,21 +1,15 @@
 # Cloud Function – GCS → BigQuery loader
 
-Gen2 Cloud Function (`nyt-bq-loader`) triggered by Eventarc on Cloud
-Storage **Audit Logs** (`storage.objects.create`) for objects under
-`GCS_PREFIX/` only (path pattern filter). It routes the new file to
+Gen2 Cloud Function (`nyt-bq-loader`) triggered by Eventarc on every GCS
+`object.finalize` event in the ingest bucket. It routes the new file to
 the right loader, MERGEs into the prod table, and records the load in a
 manifest table.
-
-Direct `object.finalize` triggers cannot filter by object path; Audit Logs
-are required so prod and PR-specific functions on the same bucket do not
-wake each other.
 
 ## Files
 
 | File | Role |
 |---|---|
 | `main.py` | Entrypoint. Receives the Cloud Event, filters by GCS path prefix, dispatches to a loader. |
-| `event_paths.py` | Pure helpers: strip `GCS_PREFIX/` safely; parse bucket/object from GCS or Audit Log payloads. |
 | `config.py` | Reads required env vars (no defaults — fails fast). |
 | `load_archive.py` | Archive loader: temp table → DATE cast → staging → MERGE → manifest. |
 | `load_most_popular.py` | Most Popular loader: injects `snapshot_date` from the GCS path. |
@@ -25,7 +19,7 @@ wake each other.
 
 ## Dispatch
 
-`main.py` strips `GCS_PREFIX/` (directory boundary only — so
+`main.py` strips `GCS_PREFIX/` (directory boundary only, so
 `nyt-ingest-pr-123/` is not treated as `nyt-ingest`) and matches on a slim
 folder name:
 
@@ -88,18 +82,6 @@ The function's service account needs:
 - **BigQuery Data Editor** on the three datasets (staging, metadata, prod)
 - **BigQuery Job User** at project level
 - **Storage Object Viewer** on the GCS bucket
-
-## Eventarc / Audit Logs
-
-Deploy uses Audit Log triggers with a path pattern:
-
-```text
-resourceName=/projects/_/buckets/$GCS_BUCKET/objects/$GCS_PREFIX/**
-```
-
-Enable **Cloud Storage Data Access** audit logs (at least `DATA_WRITE`) for
-the project before the first deploy with this trigger; otherwise uploads
-will not invoke the function.
 
 ## Deployment
 

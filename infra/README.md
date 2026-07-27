@@ -48,13 +48,6 @@ REGION=europe-west1 \
 `REGION` must match the GCS bucket region for the Eventarc trigger.
 `SERVICE_ACCOUNT` is optional; if set, the function runs as that SA.
 
-The deploy configures an **Audit Log** trigger filtered to
-`storage.objects.create` under `gs://$GCS_BUCKET/$GCS_PREFIX/**`. Direct
-GCS `object.finalize` triggers cannot path-filter; enable Cloud Storage
-**Data Access** audit logs (`DATA_WRITE`) on the project so uploads fire
-the function. The function also ignores objects outside `GCS_PREFIX/` in
-code (directory-boundary strip only).
-
 ### Required GitHub Actions variables
 
 The deploy workflow reads them as `vars.*`:
