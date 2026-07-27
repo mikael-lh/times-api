@@ -1,0 +1,87 @@
+# Tear down E2E CI resources for a closed PR (CI bucket prefix, CF, BQ datasets).
+name: E2E CI Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+      - "archive/**"
+      - "most_popular/**"
+      - "books/**"
+      - "cloud_function/**"
+      - "schema/**"
+      - "infra/**"
+      - "dbt_nyt_analytics/models/sources.yml"
+      - "dbt_nyt_analytics/dbt_project.yml"
+      - ".github/workflows/e2e-ci.yml"
+      - ".github/workflows/e2e-ci-cleanup.yml"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      PR_NUMBER: ${{ github.event.pull_request.number }}
+      GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+      REGION: ${{ vars.REGION }}
+      GCS_BUCKET_CI: ${{ vars.GCS_BUCKET_CI }}
+      GCS_PREFIX: e2e-pr-${{ github.event.pull_request.number }}
+      FUNCTION_NAME: nyt-bq-loader-e2e-pr-${{ github.event.pull_request.number }}
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_DEPLOY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Delete PR Cloud Function
+        run: |
+          if [ -z "${REGION}" ] || [ -z "${GCP_PROJECT}" ]; then
+            echo "GCP_PROJECT/REGION not set; skip function delete."
+            exit 0
+          fi
+          gcloud functions delete "${FUNCTION_NAME}" \
+            --gen2 \
+            --region="${REGION}" \
+            --project="${GCP_PROJECT}" \
+            --quiet || echo "Function ${FUNCTION_NAME} not found or already deleted."
+
+      - name: Delete CI GCS prefix
+        run: |
+          if [ -z "${GCS_BUCKET_CI}" ]; then
+            echo "GCS_BUCKET_CI not set; skip GCS cleanup."
+            exit 0
+          fi
+          gsutil -m rm -r "gs://${GCS_BUCKET_CI}/${GCS_PREFIX}" || echo "Prefix not found; nothing to delete."
+
+      - name: Authenticate to Google Cloud (dbt SA for datasets)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Delete CI BigQuery datasets
+        run: |
+          PROJECT="${GCP_PROJECT:-times-api-ingest}"
+          for DS in \
+            "ci_staging_${PR_NUMBER}" \
+            "ci_metadata_${PR_NUMBER}" \
+            "ci_prod_${PR_NUMBER}" \
+            "ci_dbt_${PR_NUMBER}"
+          do
+            REF="${PROJECT}:${DS}"
+            if bq show "${REF}" >/dev/null 2>&1; then
+              bq rm -r -f -d "${REF}"
+              echo "Deleted ${REF}"
+            else
+              echo "Dataset ${REF} not found; nothing to delete."
+            fi
+          done

@@ -104,6 +104,8 @@ See per-component READMEs for full details:
 | [`dbt-deploy.yml`](.github/workflows/dbt-deploy.yml) | push to `main` (dbt paths) + manual | Prod `dbt build --select state:modified+` + docs artifact |
 | [`dbt-docs-deploy.yml`](.github/workflows/dbt-docs-deploy.yml) | After successful dbt run or deploy | Publish docs to GitHub Pages |
 | [`dbt-pr.yml`](.github/workflows/dbt-pr.yml) | PR touching `dbt_nyt_analytics/**` | `dbt build --select state:modified+ --defer --favor-state` into `ci_dbt_<PR>` |
+| [`e2e-ci.yml`](.github/workflows/e2e-ci.yml) | PR touching ingest/CF/deps paths | Full smoke: 3 APIs → GE → CI bucket CF → `dbt build` into `ci_dbt_<PR>` |
+| [`e2e-ci-cleanup.yml`](.github/workflows/e2e-ci-cleanup.yml) | PR closed (same paths) | Delete E2E CF, CI GCS prefix, `ci_*_<PR>` datasets |
 
 ### Required GitHub secrets
 
@@ -112,12 +114,15 @@ See per-component READMEs for full details:
 | `NYTIMES_API_KEY` | All ingest workflows |
 | `GCP_SA_KEY_INGEST` | Ingest workflows uploading to GCS (Storage Object Creator) |
 | `GCP_SA_KEY_DEPLOY` | `deploy-function.yml` (Cloud Functions deploy) |
-| `GCP_SA_KEY` | `dbt-run.yml`, `dbt-deploy.yml`, `dbt-pr.yml` (BigQuery jobUser + dataEditor) |
+| `GCP_SA_KEY` | `dbt-run.yml`, `dbt-deploy.yml`, `dbt-pr.yml`, E2E dbt step (BigQuery jobUser + dataEditor) |
 
-And one repo **variable**: `GCS_BUCKET` (bucket name, no `gs://`).
-`deploy-function.yml` also reads `GCP_PROJECT`, `GCS_PREFIX`, `REGION`,
-`FUNCTION_NAME`, and the three BQ dataset variables — see
-[`infra/README.md`](infra/README.md).
+Repo **variables**:
+- `GCS_BUCKET` — prod ingest bucket (no `gs://`)
+- `GCS_BUCKET_CI` — dedicated E2E CI bucket (prod loader must not listen here)
+- `deploy-function.yml` / E2E also use `GCP_PROJECT`, `GCS_PREFIX`, `REGION`,
+  `FUNCTION_NAME`, and the three BQ dataset variables — see
+  [`infra/README.md`](infra/README.md). Optional `FUNCTION_RUNTIME_SA` for
+  the Cloud Function runtime identity.
 
 ## Repository layout
 
