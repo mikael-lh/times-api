@@ -46,12 +46,14 @@ def gcs_to_bigquery(cloud_event: CloudEvent) -> tuple[str, int]:
 
         logger.info(f"Received event for gs://{bucket}/{name}")
 
-        # Remove prefix if present
-        object_path = name
-        if object_path.startswith(GCS_PREFIX + "/"):
-            object_path = object_path[len(GCS_PREFIX) + 1 :]
-        elif object_path.startswith(GCS_PREFIX):
-            object_path = object_path[len(GCS_PREFIX) :]
+        # Require directory boundary (prefix + "/") so names like
+        # nyt-ingest-pr-123/... are not treated as under nyt-ingest.
+        prefix_folder = GCS_PREFIX + "/"
+        if not name.startswith(prefix_folder):
+            logger.info("Ignoring object outside %s: %s", prefix_folder, name)
+            return "File ignored (outside GCS_PREFIX)", 200
+
+        object_path = name[len(prefix_folder) :]
 
         # Filter: only process archive_slim or most_popular_slim
         if object_path.startswith(ARCHIVE_SLIM_PREFIX):

@@ -19,7 +19,8 @@ manifest table.
 
 ## Dispatch
 
-`main.py` strips `GCS_PREFIX` from the object path and matches on a slim
+`main.py` strips `GCS_PREFIX/` (directory boundary only, so
+`nyt-ingest-pr-123/` is not treated as `nyt-ingest`) and matches on a slim
 folder name:
 
 | Path prefix | Loader | Dedup key |
