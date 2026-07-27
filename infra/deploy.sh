@@ -63,6 +63,12 @@ cp "$REPO_ROOT/schema"/*.json "$REPO_ROOT/cloud_function/schema/"
 echo "✓ Schema files copied"
 echo ""
 
+# Eventarc path filter: direct GCS finalized events only support bucket+type filters.
+# Audit Logs + resourceName path pattern limits invocations to this GCS_PREFIX folder,
+# so a PR-specific function (nyt-ingest-pr-123/) does not wake the prod function.
+# Requires Cloud Storage Data Access audit logs (ADMIN_READ / DATA_WRITE) in the project.
+TRIGGER_RESOURCE_PATTERN="/projects/_/buckets/${GCS_BUCKET}/objects/${GCS_PREFIX}/**"
+
 # Build gcloud command
 DEPLOY_CMD=(
   gcloud functions deploy "$FUNCTION_NAME"
@@ -71,8 +77,10 @@ DEPLOY_CMD=(
   --region="$REGION"
   --source="./cloud_function"
   --entry-point=gcs_to_bigquery
-  --trigger-event-filters="type=google.cloud.storage.object.v1.finalized"
-  --trigger-event-filters="bucket=$GCS_BUCKET"
+  --trigger-event-filters="type=google.cloud.audit.log.v1.written"
+  --trigger-event-filters="serviceName=storage.googleapis.com"
+  --trigger-event-filters="methodName=storage.objects.create"
+  --trigger-event-filters-path-pattern="resourceName=${TRIGGER_RESOURCE_PATTERN}"
   --set-env-vars="GCP_PROJECT=$GCP_PROJECT,GCS_BUCKET=$GCS_BUCKET,GCS_PREFIX=$GCS_PREFIX,BQ_STAGING_DATASET=$BQ_STAGING_DATASET,BQ_METADATA_DATASET=$BQ_METADATA_DATASET,BQ_PROD_DATASET=$BQ_PROD_DATASET"
   --project="$GCP_PROJECT"
   --max-instances=10
@@ -92,9 +100,12 @@ echo "Running: ${DEPLOY_CMD[*]}"
 echo ""
 echo "✅ Cloud Function deployed successfully!"
 echo "Function: $FUNCTION_NAME"
-echo "Trigger: GCS bucket $GCS_BUCKET (object.finalize)"
+echo "Trigger: Audit Logs storage.objects.create"
+echo "Path filter: $TRIGGER_RESOURCE_PATTERN"
 echo ""
-echo "The function will process files matching:"
+echo "The function will process files under gs://$GCS_BUCKET/$GCS_PREFIX/ matching:"
 echo "  - archive_slim/*.ndjson"
 echo "  - most_popular_slim/*/*.ndjson"
 echo "  - books_slim/*/overview.ndjson"
+echo ""
+echo "Prerequisite: enable Cloud Storage Data Access audit logs for this project"
