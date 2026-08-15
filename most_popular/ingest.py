@@ -7,9 +7,10 @@ Designed to run once daily (via cron or scheduler).
 API Endpoint: GET https://api.nytimes.com/svc/mostpopular/v2/viewed/{period}.json
 Period options: 1, 7, or 30 (days)
 
-Output: most_popular_raw/{date}/viewed_30.json
+Output: most_popular_raw/{date}/viewed_{period}.json
 """
 
+import argparse
 import json
 import os
 from datetime import datetime
@@ -111,15 +112,25 @@ def ingest_most_viewed(
     return True
 
 
-def main():
-    """Main entry point: fetch most viewed articles for last 30 days."""
+def main() -> None:
+    """Main entry point: fetch most viewed articles for the given period."""
+    parser = argparse.ArgumentParser(description="Ingest NYT Most Popular viewed articles")
+    parser.add_argument(
+        "--period",
+        type=int,
+        choices=(1, 7, 30),
+        default=PERIOD,
+        help="Lookback period in days (default: 30)",
+    )
+    args = parser.parse_args()
+
     print(f"=== NYT Most Popular Ingestion: {datetime.now().isoformat()} ===")
-    success = ingest_most_viewed(period=PERIOD)
+    success = ingest_most_viewed(period=args.period)
     if success:
         print("Ingestion completed successfully.")
     else:
         print("Ingestion failed.")
-        exit(1)
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

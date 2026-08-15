@@ -4,7 +4,8 @@ sources:
   - name: nyt_raw
     description: "Raw NYT article data loaded from GCS to BigQuery"
     database: times-api-ingest
-    schema: prod
+    # Override in CI E2E via --vars '{"nyt_raw_schema": "ci_prod_<PR>"}'
+    schema: "{{ var('nyt_raw_schema', 'prod') }}"
     tables:
       - name: archive_articles
         description: "Historical NYT articles from the Archive API (1851-present)"

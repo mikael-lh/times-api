@@ -24,6 +24,8 @@ vars:
   incremental_lookback_days: 3
   # CI PR builds pass --vars '{"pr_number": <n>}'; empty uses profile dataset (ci_dbt)
   pr_number: ""
+  # Raw source dataset (prod by default; E2E CI passes ci_prod_<PR>)
+  nyt_raw_schema: "prod"
 
 models:
   nyt_analytics:

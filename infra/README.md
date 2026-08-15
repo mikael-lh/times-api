@@ -16,6 +16,17 @@ if a required variable is missing.
 GCP_PROJECT=your-project ./infra/create_bq_tables.sh
 ```
 
+Dataset names default to `staging`, `metadata`, and `prod`. Override for
+CI / PR-isolated lanes:
+
+```bash
+GCP_PROJECT=your-project \
+BQ_STAGING_DATASET=ci_staging_123 \
+BQ_METADATA_DATASET=ci_metadata_123 \
+BQ_PROD_DATASET=ci_prod_123 \
+./infra/create_bq_tables.sh
+```
+
 Creates:
 
 - Dataset `staging` with `archive_articles`, `most_popular_articles`, `best_sellers` (transient; truncated after each load).

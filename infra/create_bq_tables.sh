@@ -4,11 +4,11 @@ set -euo pipefail
 # One-time BigQuery setup: create dataset and tables for NYT pipeline
 # Run once per GCP project before deploying the Cloud Function
 
-# Configuration
+# Configuration (dataset names overridable for CI / PR-isolated lanes)
 GCP_PROJECT="${GCP_PROJECT:-}"
-BQ_STAGING_DATASET="staging"
-BQ_METADATA_DATASET="metadata"
-BQ_PROD_DATASET="prod"
+BQ_STAGING_DATASET="${BQ_STAGING_DATASET:-staging}"
+BQ_METADATA_DATASET="${BQ_METADATA_DATASET:-metadata}"
+BQ_PROD_DATASET="${BQ_PROD_DATASET:-prod}"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && git rev-parse --show-toplevel)"
 SCHEMA_DIR="$REPO_ROOT/schema"
 
@@ -18,8 +18,9 @@ if [[ -z "$GCP_PROJECT" ]]; then
   echo ""
   echo "Usage:"
   echo "  GCP_PROJECT=my-project ./infra/create_bq_tables.sh"
+  echo "  GCP_PROJECT=my-project BQ_PROD_DATASET=ci_prod_123 ./infra/create_bq_tables.sh"
   echo ""
-  echo "This will create three datasets: staging, metadata, prod"
+  echo "Default datasets: staging, metadata, prod (override via BQ_*_DATASET)"
   exit 1
 fi
 

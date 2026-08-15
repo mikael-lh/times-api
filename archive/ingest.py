@@ -4,8 +4,11 @@ NYT Archive API – ingestion only.
 Fetches raw archive JSON per month and saves to archive_raw/YYYY/MM.json.
 Uses 12 seconds sleep between API calls to respect rate limits.
 Skips months that already exist in GCS (idempotent, safe to resume when GCS_BUCKET is set).
+
+For a single month (e.g. CI smoke): ``python -m archive.ingest --year 2019 --month 1``.
 """
 
+import argparse
 import json
 import os
 import subprocess
@@ -97,7 +100,34 @@ def ingest_month(year: int, month: int, skip_existing: bool = True) -> str:
     return "fetched"
 
 
-def main():
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Ingest NYT Archive API months")
+    parser.add_argument(
+        "--year",
+        type=int,
+        help="Fetch only this year (requires --month)",
+    )
+    parser.add_argument(
+        "--month",
+        type=int,
+        help="Fetch only this month 1-12 (requires --year)",
+    )
+    args = parser.parse_args()
+
+    if (args.year is None) ^ (args.month is None):
+        parser.error("--year and --month must be used together")
+
+    if args.year is not None and args.month is not None:
+        if args.month < 1 or args.month > 12:
+            parser.error("--month must be between 1 and 12")
+        print(f"=== NYT Archive Ingestion (single month): {args.year}/{args.month:02d} ===")
+        # Skip GCS resume check for one-off CI fetches unless GCS_BUCKET is intentionally set.
+        result = ingest_month(args.year, args.month, skip_existing=False)
+        if result == "error":
+            raise SystemExit(1)
+        print("Ingestion completed successfully.")
+        return
+
     months_to_fetch = [(y, m) for y in range(START_YEAR, END_YEAR) for m in range(1, 13)]
     max_requests = int(os.getenv("ARCHIVE_MAX_REQUESTS", "0"))
     requests_this_run = 0

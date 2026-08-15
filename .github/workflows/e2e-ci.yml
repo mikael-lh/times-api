@@ -1,0 +1,235 @@
+# End-to-end CI: NYT APIs → transform/GE → CI GCS bucket → Cloud Function → dbt (ci_dbt_<PR>).
+# Uses a dedicated CI bucket (vars.GCS_BUCKET_CI) so the prod loader is never woken.
+name: E2E CI (ingest → load → dbt)
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "pyproject.toml"
+      - "uv.lock"
+      - "archive/**"
+      - "most_popular/**"
+      - "books/**"
+      - "cloud_function/**"
+      - "schema/**"
+      - "infra/**"
+      - "dbt_nyt_analytics/models/sources.yml"
+      - "dbt_nyt_analytics/dbt_project.yml"
+      - ".github/workflows/e2e-ci.yml"
+  workflow_dispatch:
+    inputs:
+      archive_year:
+        description: "Archive year to fetch (single month)"
+        required: false
+        default: "2019"
+      archive_month:
+        description: "Archive month to fetch (1-12)"
+        required: false
+        default: "1"
+      books_published_date:
+        description: "Books overview published_date (YYYY-MM-DD); empty = latest"
+        required: false
+        default: ""
+
+concurrency:
+  group: e2e-ci-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  GCS_PREFIX: e2e-pr-${{ github.event.pull_request.number || github.run_id }}
+  ARCHIVE_YEAR: ${{ github.event.inputs.archive_year || '2019' }}
+  ARCHIVE_MONTH: ${{ github.event.inputs.archive_month || '1' }}
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require CI bucket var
+        run: |
+          if [ -z "${{ vars.GCS_BUCKET_CI }}" ]; then
+            echo "Set repository variable GCS_BUCKET_CI to a bucket dedicated to E2E CI."
+            exit 1
+          fi
+          if [ -z "${{ vars.GCP_PROJECT }}" ] || [ -z "${{ vars.REGION }}" ]; then
+            echo "Set repository variables GCP_PROJECT and REGION."
+            exit 1
+          fi
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --group dev --group dbt
+
+      - name: Create .env with API key
+        run: echo "NYTIMES_API_KEY=${{ secrets.NYTIMES_API_KEY }}" > .env
+
+      - name: Ingest archive (single month)
+        run: uv run python -m archive.ingest --year "${ARCHIVE_YEAR}" --month "${ARCHIVE_MONTH}"
+
+      - name: Transform archive
+        run: uv run python -m archive.transform
+
+      - name: Ingest most popular
+        run: uv run python -m most_popular.ingest --period 30
+
+      - name: Transform most popular
+        run: uv run python -m most_popular.transform
+
+      - name: Validate most popular (GE)
+        run: uv run python -m most_popular.validate_ge
+
+      - name: Ingest books
+        run: |
+          ARGS=""
+          DATE="${{ github.event.inputs.books_published_date }}"
+          if [ -n "$DATE" ]; then
+            ARGS="--published-date ${DATE}"
+          fi
+          uv run python -m books.ingest $ARGS --overwrite
+
+      - name: Transform books
+        run: uv run python -m books.transform
+
+      - name: Validate books (GE)
+        run: uv run python -m books.validate_ge
+
+      - name: Authenticate to Google Cloud (deploy + load)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_DEPLOY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Create CI BigQuery datasets/tables
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          BQ_STAGING_DATASET: ci_staging_${{ github.event.pull_request.number || github.run_id }}
+          BQ_METADATA_DATASET: ci_metadata_${{ github.event.pull_request.number || github.run_id }}
+          BQ_PROD_DATASET: ci_prod_${{ github.event.pull_request.number || github.run_id }}
+        run: |
+          chmod +x infra/create_bq_tables.sh
+          ./infra/create_bq_tables.sh
+
+      - name: Deploy PR-specific Cloud Function (CI bucket)
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          GCS_BUCKET: ${{ vars.GCS_BUCKET_CI }}
+          GCS_PREFIX: ${{ env.GCS_PREFIX }}
+          BQ_STAGING_DATASET: ci_staging_${{ github.event.pull_request.number || github.run_id }}
+          BQ_METADATA_DATASET: ci_metadata_${{ github.event.pull_request.number || github.run_id }}
+          BQ_PROD_DATASET: ci_prod_${{ github.event.pull_request.number || github.run_id }}
+          FUNCTION_NAME: nyt-bq-loader-e2e-pr-${{ github.event.pull_request.number || github.run_id }}
+          REGION: ${{ vars.REGION }}
+          SERVICE_ACCOUNT: ${{ vars.FUNCTION_RUNTIME_SA }}
+        run: |
+          chmod +x infra/deploy.sh
+          ./infra/deploy.sh
+
+      - name: Authenticate to Google Cloud (ingest upload)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY_INGEST }}
+
+      - name: Upload slim files to CI bucket
+        env:
+          BUCKET: ${{ vars.GCS_BUCKET_CI }}
+        run: |
+          gsutil -m cp -r archive_slim "gs://${BUCKET}/${GCS_PREFIX}/"
+          gsutil -m cp -r most_popular_slim "gs://${BUCKET}/${GCS_PREFIX}/"
+          gsutil -m cp -r books_slim "gs://${BUCKET}/${GCS_PREFIX}/"
+
+      - name: Resolve uploaded object paths
+        id: paths
+        run: |
+          ARCHIVE_REL=$(find archive_slim -type f -name '*.ndjson' | head -1)
+          MP_REL=$(find most_popular_slim -type f -name '*.ndjson' | head -1)
+          BOOKS_REL=$(find books_slim -type f -name '*.ndjson' | head -1)
+          echo "archive_path=${GCS_PREFIX}/${ARCHIVE_REL}" >> "$GITHUB_OUTPUT"
+          echo "mp_path=${GCS_PREFIX}/${MP_REL}" >> "$GITHUB_OUTPUT"
+          echo "books_path=${GCS_PREFIX}/${BOOKS_REL}" >> "$GITHUB_OUTPUT"
+          echo "Archive: ${GCS_PREFIX}/${ARCHIVE_REL}"
+          echo "Most popular: ${GCS_PREFIX}/${MP_REL}"
+          echo "Books: ${GCS_PREFIX}/${BOOKS_REL}"
+
+      - name: Wait for Cloud Function loads (manifest)
+        env:
+          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+          META_DATASET: ci_metadata_${{ github.event.pull_request.number || github.run_id }}
+          ARCHIVE_PATH: ${{ steps.paths.outputs.archive_path }}
+          MP_PATH: ${{ steps.paths.outputs.mp_path }}
+          BOOKS_PATH: ${{ steps.paths.outputs.books_path }}
+        run: |
+          set -euo pipefail
+          DEADLINE=$((SECONDS + 600))
+          while true; do
+            COUNT=$(bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false --format=csv --max_rows=1 \
+              "SELECT COUNT(*) FROM \`${GCP_PROJECT}.${META_DATASET}.load_manifest\`
+               WHERE (source = 'archive_slim' AND path = '${ARCHIVE_PATH}')
+                  OR (source = 'most_popular_slim' AND path = '${MP_PATH}')
+                  OR (source = 'books_slim' AND path = '${BOOKS_PATH}')" | tail -n 1)
+            echo "Manifest matches: ${COUNT}/3"
+            if [ "${COUNT}" = "3" ]; then
+              echo "All three files loaded."
+              break
+            fi
+            if [ "$SECONDS" -ge "$DEADLINE" ]; then
+              echo "Timed out waiting for load_manifest rows."
+              bq --project_id="$GCP_PROJECT" query --use_legacy_sql=false --format=pretty \
+                "SELECT source, path, loaded_at FROM \`${GCP_PROJECT}.${META_DATASET}.load_manifest\` ORDER BY loaded_at DESC LIMIT 20" || true
+              exit 1
+            fi
+            sleep 15
+          done
+
+      - name: Authenticate to Google Cloud (dbt)
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Configure dbt profile (CI)
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          nyt_bigquery:
+            target: ci
+            outputs:
+              ci:
+                type: bigquery
+                method: service-account-json
+                project: times-api-ingest
+                dataset: ci_dbt
+                location: US
+                threads: 4
+                timeout_seconds: 300
+                priority: interactive
+                keyfile_json: ${{ secrets.GCP_SA_KEY }}
+          EOF
+
+      - name: dbt deps
+        working-directory: dbt_nyt_analytics
+        run: uv run dbt deps
+
+      - name: dbt build against CI raw sources
+        working-directory: dbt_nyt_analytics
+        env:
+          DBT_PR_NUMBER: ${{ github.event.pull_request.number || github.run_id }}
+          NYT_RAW_SCHEMA: ci_prod_${{ github.event.pull_request.number || github.run_id }}
+        run: |
+          uv run dbt build \
+            --target ci \
+            --vars "{\"pr_number\": ${DBT_PR_NUMBER}, \"nyt_raw_schema\": \"${NYT_RAW_SCHEMA}\"}" \
+            --select "source:nyt_raw+"
